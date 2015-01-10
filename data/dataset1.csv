@@ -1,0 +1,24 @@
+//ModbusScope version;0.5.0
+//Start time;25-12-2014 22:01:48
+//End time;25-12-2014 22:02:01
+//Slave IP;127.0.0.1:502
+//Slave ID;1
+//Time-out;1000
+//Poll interval;1000
+//Communication success;13
+//Communication errors;0
+
+Time (ms);Register 40001;Register 40002
+48;0;0
+1049;2;4
+2049;4;8
+3058;6;12
+4059;8;16
+5058;10;20
+6059;0;0
+7058;2;4
+8059;4;8
+9059;6;12
+10058;8;16
+11058;10;20
+12059;0;0
