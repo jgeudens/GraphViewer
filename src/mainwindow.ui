@@ -16,20 +16,16 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
-        <item>
-         <widget class="QCustomPlot" name="customPlot" native="true">
-          <property name="minimumSize">
-           <size>
-            <width>10</width>
-            <height>0</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QCustomPlot" name="customPlot" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>10</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -45,6 +41,13 @@
      <height>25</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionLoadDataFile"/>
+   </widget>
+   <addaction name="menuFile"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -101,6 +104,11 @@
   <action name="actionImportDataFile">
    <property name="text">
     <string>Import Data File...</string>
+   </property>
+  </action>
+  <action name="actionLoadDataFile">
+   <property name="text">
+    <string>Load Data File...</string>
    </property>
   </action>
  </widget>
