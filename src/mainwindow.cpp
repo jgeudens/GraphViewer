@@ -1,4 +1,5 @@
 
+#include "datatypes.h"
 #include "datafileparser.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -42,11 +43,11 @@ void MainWindow::getDataFileSettings()
         {
             // TODO
             QList<QList<double> > data;
+            QStringList labels;
 
-
-            if (parser.parseData(_dataFileSettings.fieldSeparator, _dataFileSettings.dataRow, _dataFileSettings.dataColumn, data))
+            if (parser.parseData(_dataFileSettings, data, labels))
             {
-                _graphViewer->setupGraph(&data);
+                _graphViewer->setupGraph(&data, &labels);
             }
 
         }

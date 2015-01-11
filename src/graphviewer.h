@@ -14,7 +14,7 @@ class GraphViewer : public QObject
 public:
     explicit GraphViewer(QCustomPlot * pPlot, QObject *parent);
 
-    void setupGraph(QList<QList<double> > *pDataLists);
+    void setupGraph(QList<QList<double> > *pDataLists, QStringList *pLabels);
 
 private slots:
     void generateTickLabels();

@@ -65,7 +65,7 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
 }
 
 
-void GraphViewer::setupGraph(QList<QList<double> > * pDataLists)
+void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * pLabels)
 {
    const QVector<double> timeData = pDataLists->at(0).toVector();
 
@@ -81,7 +81,7 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists)
         QVector<double> graphData = pDataLists->at(i).toVector();
         _pPlot->graph(i - 1)->addData(timeData, graphData);
 
-        //pGraph->setName(dataLists[i]);
+        pGraph->setName(pLabels->at(i));
 
         QPen pen;
         pen.setColor(_colorlist[colorIndex]);
@@ -91,9 +91,9 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists)
         pGraph->setPen(pen);
    }
 
+   _pPlot->legend->setVisible(true);
    _pPlot->rescaleAxes();
    _pPlot->replot();
-   _pPlot->legend->setVisible(true);
 
 }
 

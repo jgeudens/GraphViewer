@@ -18,12 +18,13 @@ Dialog::~Dialog()
     delete _ui;
 }
 
-void Dialog::getDataSettings(DataFileSettings * pSettings)
+void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
 {
     pSettings->path = _settings.path;
-    pSettings->dataColumn = _ui->spinDataColumn->value();
-    pSettings->dataRow = _ui->spinDataRow->value();
+    pSettings->dataColumn = _ui->spinDataColumn->value() - 1; // 1 based to 0 based
+    pSettings->dataRow = _ui->spinDataRow->value() - 1; // 1 based to 0 based
     pSettings->fieldSeparator = _ui->lineFieldSeperator->text();
+    pSettings->labelRow = _ui->spinLabelRow->value() - 1; // 1 based to 0 based
 }
 
 void Dialog::selectDataFile()

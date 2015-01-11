@@ -32,4 +32,5 @@ HEADERS += \
     ../libraries/qcustomplot/qcustomplot.h \
     ../src/datafileparser.h \
     ../src/dialog.h \
-    ../src/graphviewer.h
+    ../src/graphviewer.h \
+    ../src/datatypes.h

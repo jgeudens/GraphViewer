@@ -1,6 +1,7 @@
 
 #include <QtWidgets>
 #include <QMessageBox>
+#include "datatypes.h"
 #include "datafileparser.h"
 
 DataFileParser::DataFileParser()
@@ -52,13 +53,13 @@ bool DataFileParser::loadDataFile(QString dataFilePath)
 }
 
 
-bool DataFileParser::parseData(QString fieldSeparator, quint32 dataRow, quint32 dataColumn, QList<QList<double> > &dataRows)
+bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QList<double> > &dataRows, QStringList &labels)
 {
     QString line;
     bool bRet = true;
 
     // Get number of rows
-    const quint32 expectedFields = _fileContents[dataRow].split(fieldSeparator).size() - dataColumn;
+    const quint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.dataColumn;
 
     // Init data row QLists to empty list
     QList<double> t;
@@ -67,35 +68,54 @@ bool DataFileParser::parseData(QString fieldSeparator, quint32 dataRow, quint32 
         dataRows.append(t);
     }
 
-    for (quint32 index = dataRow; index < _fileContents.size(); index++)
+    //Read labels
+    QStringList tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
+    if ((tmpLabels.size() - settings.dataColumn) != (qint32)expectedFields)
     {
-        const quint32 lineIndex = index - 1;
+        showError(tr("Can't read labels. Incorrect count"));
+        bRet = false;
+    }
 
-        QStringList paramList = _fileContents[lineIndex].split(fieldSeparator);
-        if (paramList.size() != (qint32)expectedFields)
+    // Process labels
+    if (bRet)
+    {
+        for (qint32 i = settings.dataColumn; i < tmpLabels.size(); i++)
         {
-            bRet = false;
-            break;
+            labels.append(tmpLabels[i]);
         }
+    }
 
-        for (qint32 i = 0; i < paramList.size(); i++)
+
+    if (bRet)
+    {
+        for (quint32 index = settings.dataRow; index < _fileContents.size(); index++)
         {
-            bool bError = false;
-            const double number = paramList[i].toDouble(&bError);
-
-            if (bError == false)
+            QStringList paramList = _fileContents[index].split(settings.fieldSeparator);
+            if ((paramList.size() - settings.dataColumn) != (qint32)expectedFields)
             {
-                QString error = QString(tr("Invalid data (while processing data)\n Line:\"%1\"").arg(line));
-                showError(error);
                 bRet = false;
                 break;
             }
-            else
-            {
-                dataRows[i].append(number);
-            }
-        }
 
+            for (qint32 i = settings.dataColumn; i < paramList.size(); i++)
+            {
+                bool bError = false;
+                const double number = paramList[i].toDouble(&bError);
+
+                if (bError == false)
+                {
+                    QString error = QString(tr("Invalid data (while processing data)\n Line:\"%1\"").arg(line));
+                    showError(error);
+                    bRet = false;
+                    break;
+                }
+                else
+                {
+                    dataRows[i - settings.dataColumn].append(number);
+                }
+            }
+
+        }
     }
 
     return bRet;

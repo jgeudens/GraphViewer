@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+#include "datatypes.h"
+
 namespace Ui {
 class Dialog;
 }
@@ -13,19 +15,10 @@ class Dialog : public QDialog
 
 public:
 
-
-    typedef struct
-    {
-      QString path;
-      QString fieldSeparator;
-      quint32 dataRow;
-      quint32 dataColumn;
-    } DataFileSettings;
-
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
 
-    void getDataSettings(DataFileSettings * pSettings);
+    void getDataSettings(DataTypes::DataFileSettings * pSettings);
 
 private slots:
     void selectDataFile();
@@ -33,7 +26,7 @@ private slots:
 private:
     Ui::Dialog * _ui;
 
-    DataFileSettings _settings;
+    DataTypes::DataFileSettings _settings;
 
 };
 

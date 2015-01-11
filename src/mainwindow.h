@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 
+#include "datatypes.h"
 #include "graphviewer.h"
 #include "dialog.h"
 
@@ -24,7 +25,7 @@ private slots:
 private:
     Ui::MainWindow * _ui;
 
-    Dialog::DataFileSettings _dataFileSettings;
+    DataTypes::DataFileSettings _dataFileSettings;
     GraphViewer * _graphViewer;
 };
 

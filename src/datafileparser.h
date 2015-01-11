@@ -5,6 +5,7 @@
 #include "QStringList"
 #include "QList"
 #include "QFile"
+#include "datatypes.h"
 
 class DataFileParser : public QObject
 {
@@ -13,7 +14,7 @@ class DataFileParser : public QObject
 public:
     DataFileParser();
     bool loadDataFile(QString dataFilePath);
-    bool parseData(QString fieldSeparator, quint32 dataRow, quint32 dataColumn, QList<QList<double> > &dataRows);
+    bool parseData(DataTypes::DataFileSettings &settings, QList<QList<double> > &dataRows, QStringList &labels);
 
 private:
 
