@@ -13,6 +13,7 @@ class DataFileParser : public QObject
 public:
     DataFileParser();
     bool loadDataFile(QString dataFilePath);
+    bool parseData(QString fieldSeparator, quint32 dataRow, quint32 dataColumn, QList<QList<double> > &dataRows);
 
 private:
 

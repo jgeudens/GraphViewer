@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 
+#include "graphviewer.h"
 #include "dialog.h"
 
 namespace Ui {
@@ -23,7 +24,8 @@ private slots:
 private:
     Ui::MainWindow * _ui;
 
-    Dialog::DataFileSettings dataFileSettings;
+    Dialog::DataFileSettings _dataFileSettings;
+    GraphViewer * _graphViewer;
 };
 
 #endif // MAINWINDOW_H

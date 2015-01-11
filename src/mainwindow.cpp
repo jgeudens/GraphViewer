@@ -1,15 +1,16 @@
 
 #include "datafileparser.h"
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
-    _ui(new Ui::MainWindow)
+    _ui(new Ui::MainWindow),
+    _graphViewer(NULL)
 {
     _ui->setupUi(this);
     
+    _graphViewer = new GraphViewer(_ui->customPlot, this);
     
     /*
     TODO: enable
@@ -33,17 +34,22 @@ void MainWindow::getDataFileSettings()
 
     if (dialog.exec())
     {
-        dialog.getDataSettings(&dataFileSettings);
+        dialog.getDataSettings(&_dataFileSettings);
 
-       DataFileParser parser;
+        DataFileParser parser;
 
-       if (parser.loadDataFile(dataFileSettings.path))
-       {
-           // TODO
-       }
+        if (parser.loadDataFile(_dataFileSettings.path))
+        {
+            // TODO
+            QList<QList<double> > data;
 
 
+            if (parser.parseData(_dataFileSettings.fieldSeparator, _dataFileSettings.dataRow, _dataFileSettings.dataColumn, data))
+            {
+                _graphViewer->setupGraph(&data);
+            }
+
+        }
     }
-
 }
 

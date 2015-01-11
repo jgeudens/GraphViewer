@@ -20,7 +20,8 @@ SOURCES +=  \
     ../src/main.cpp \
     ../libraries/qcustomplot/qcustomplot.cpp \
     ../src/datafileparser.cpp \
-    ../src/dialog.cpp
+    ../src/dialog.cpp \
+    ../src/graphviewer.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
@@ -30,4 +31,5 @@ HEADERS += \
     ../src/mainwindow.h \
     ../libraries/qcustomplot/qcustomplot.h \
     ../src/datafileparser.h \
-    ../src/dialog.h
+    ../src/dialog.h \
+    ../src/graphviewer.h
