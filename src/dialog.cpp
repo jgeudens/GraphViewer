@@ -14,7 +14,11 @@ Dialog::Dialog(QWidget *parent) :
     _ui->comboFieldSeparator->addItem(" . (point)", ".");
     _ui->comboFieldSeparator->addItem(" tab", "\t");
 
+    _ui->comboPreset->addItem("Manual");
+    _ui->comboPreset->addItem("STMStudio");
+
     connect(_ui->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
+    connect(_ui->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
 }
 
 Dialog::~Dialog()
@@ -44,5 +48,23 @@ void Dialog::selectDataFile()
     {
         _settings.path = dialog.selectedFiles().first();
         _ui->lineDataFile->setText(QFileInfo(_settings.path).fileName());
+    }
+}
+
+void Dialog::presetSelected(int index)
+{
+    switch (index) {
+    case 0:
+        // Manual
+        break;
+    case 1:
+        //Set STMStudio preset
+        _ui->spinDataColumn->setValue(2);
+        _ui->spinDataRow->setValue(9);
+        _ui->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
+        _ui->spinLabelRow->setValue(7);
+        break;
+    default:
+        break;
     }
 }

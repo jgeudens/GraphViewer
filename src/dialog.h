@@ -22,6 +22,7 @@ public:
 
 private slots:
     void selectDataFile();
+    void presetSelected(int index);
 
 private:
     Ui::Dialog * _ui;
