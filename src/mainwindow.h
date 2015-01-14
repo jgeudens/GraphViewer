@@ -21,12 +21,15 @@ public:
 
 private slots:
     void getDataFileSettings();
+    void exitApplication();
 
 private:
     Ui::MainWindow * _ui;
 
     DataTypes::DataFileSettings _dataFileSettings;
     GraphViewer * _graphViewer;
+
+    static const QString _cWindowTitle;
 };
 
 #endif // MAINWINDOW_H

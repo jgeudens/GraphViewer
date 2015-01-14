@@ -46,69 +46,19 @@
      <string>File</string>
     </property>
     <addaction name="actionLoadDataFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
-  <action name="actionStart">
-   <property name="text">
-    <string>Start</string>
-   </property>
-  </action>
-  <action name="actionStop">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Stop</string>
-   </property>
-  </action>
-  <action name="actionExportDataCsv">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Export Data...</string>
-   </property>
-  </action>
-  <action name="actionLoadProjectFile">
-   <property name="text">
-    <string>Load Project File...</string>
-   </property>
-  </action>
-  <action name="actionExportImage">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Export Image...</string>
-   </property>
-  </action>
-  <action name="actionAbout">
-   <property name="text">
-    <string>About...</string>
-   </property>
-  </action>
-  <action name="actionReloadProjectFile">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Reload Project File</string>
-   </property>
-  </action>
-  <action name="actionImportDataFile">
-   <property name="text">
-    <string>Import Data File...</string>
-   </property>
-  </action>
   <action name="actionLoadDataFile">
    <property name="text">
     <string>Load Data File...</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>

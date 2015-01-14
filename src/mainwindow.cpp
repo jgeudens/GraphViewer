@@ -4,12 +4,16 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
+
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _ui(new Ui::MainWindow),
     _graphViewer(NULL)
 {
     _ui->setupUi(this);
+
+    this->setWindowTitle(_cWindowTitle);
     
     _graphViewer = new GraphViewer(_ui->customPlot, this);
     
@@ -22,6 +26,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     */
 
     connect(_ui->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
+    connect(_ui->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
 }
 
 MainWindow::~MainWindow()
@@ -37,20 +42,29 @@ void MainWindow::getDataFileSettings()
     {
         dialog.getDataSettings(&_dataFileSettings);
 
-        DataFileParser parser;
-
-        if (parser.loadDataFile(_dataFileSettings.path))
+        if (dialog.result() == QDialog::Accepted)
         {
-            // TODO
-            QList<QList<double> > data;
-            QStringList labels;
+            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
 
-            if (parser.parseData(_dataFileSettings, data, labels))
+            DataFileParser parser;
+
+            if (parser.loadDataFile(_dataFileSettings.path))
             {
-                _graphViewer->setupGraph(&data, &labels);
-            }
+                // TODO
+                QList<QList<double> > data;
+                QStringList labels;
 
+                if (parser.parseData(_dataFileSettings, data, labels))
+                {
+                    _graphViewer->setupGraph(&data, &labels);
+                }
+            }
         }
     }
+}
+
+void MainWindow::exitApplication()
+{
+    QApplication::quit();
 }
 

@@ -70,7 +70,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
 
     //Read labels
     QStringList tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
-    if ((tmpLabels.size() - settings.dataColumn) != (qint32)expectedFields)
+    if ((tmpLabels.size() - (qint32)settings.dataColumn) != (qint32)expectedFields)
     {
         showError(tr("Can't read labels. Incorrect count"));
         bRet = false;
@@ -88,10 +88,10 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
 
     if (bRet)
     {
-        for (quint32 index = settings.dataRow; index < _fileContents.size(); index++)
+        for (qint32 index = settings.dataRow; index < _fileContents.size(); index++)
         {
             QStringList paramList = _fileContents[index].split(settings.fieldSeparator);
-            if ((paramList.size() - settings.dataColumn) != (qint32)expectedFields)
+            if ((paramList.size() - settings.dataColumn) != expectedFields)
             {
                 bRet = false;
                 break;
@@ -113,6 +113,12 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
                 {
                     dataRows[i - settings.dataColumn].append(number);
                 }
+            }
+
+            // Make sure we break the loop on an error
+            if (bRet == false)
+            {
+                break;
             }
 
         }
