@@ -23,6 +23,9 @@ public:
 private slots:
     void selectDataFile();
     void presetSelected(int index);
+    void fieldSeparatorSelected(int index);
+
+    void done(int r);
 
 private:
     Ui::Dialog * _ui;

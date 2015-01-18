@@ -1,6 +1,7 @@
 
 #include <QFileDialog>
 
+#include "util.h"
 #include "dialog.h"
 #include "ui_dialog.h"
 
@@ -11,14 +12,16 @@ Dialog::Dialog(QWidget *parent) :
     _ui->setupUi(this);
 
     _ui->comboFieldSeparator->addItem(" ; (point comma)", ";");
-    _ui->comboFieldSeparator->addItem(" . (point)", ".");
+    _ui->comboFieldSeparator->addItem(" , (comma)", ",");
     _ui->comboFieldSeparator->addItem(" tab", "\t");
+    _ui->comboFieldSeparator->addItem(" custom", "custom");
 
     _ui->comboPreset->addItem("Manual");
     _ui->comboPreset->addItem("STMStudio");
 
     connect(_ui->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_ui->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+    connect(_ui->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
 }
 
 Dialog::~Dialog()
@@ -31,8 +34,16 @@ void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
     pSettings->path = _settings.path;
     pSettings->dataColumn = _ui->spinDataColumn->value() - 1; // 1 based to 0 based
     pSettings->dataRow = _ui->spinDataRow->value() - 1; // 1 based to 0 based
-    pSettings->fieldSeparator = _ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString();
     pSettings->labelRow = _ui->spinLabelRow->value() - 1; // 1 based to 0 based
+
+    if (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+    {
+        pSettings->fieldSeparator = _ui->lineCustomFieldSeparator->text();
+    }
+    else
+    {
+        pSettings->fieldSeparator = _ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString();
+    }
 }
 
 void Dialog::selectDataFile()
@@ -67,4 +78,61 @@ void Dialog::presetSelected(int index)
     default:
         break;
     }
+}
+
+
+void Dialog::fieldSeparatorSelected(int index)
+{
+    if (_ui->comboFieldSeparator->itemData(index).toString().toLower() == "custom")
+    {
+        _ui->lineCustomFieldSeparator->setEnabled(true);
+    }
+    else
+    {
+        _ui->lineCustomFieldSeparator->setEnabled(false);
+    }
+}
+
+void Dialog::done(int r)
+{
+    bool bStop = true;
+
+    if(QDialog::Accepted == r)  // ok was pressed
+    {
+        // Validate the data
+
+        if (bStop)
+        {
+            if (!QFileInfo(_settings.path).exists())
+            {
+                bStop = false;
+                Util::showError(tr("Data file doesn't exist"));
+            }
+        }
+
+        if (bStop)
+        {
+            if (
+                    (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+                    && (_ui->lineCustomFieldSeparator->text().isEmpty())
+                )
+            {
+                bStop = false;
+                Util::showError(tr("Custom field separator isn't defined correctly"));
+            }
+        }
+
+
+    }
+    else
+    {
+        // cancel, close or exc was pressed
+        bStop = true;
+    }
+
+    if (bStop)
+    {
+        QDialog::done(r);
+    }
+
 }

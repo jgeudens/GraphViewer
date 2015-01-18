@@ -33,4 +33,5 @@ HEADERS += \
     ../src/datafileparser.h \
     ../src/dialog.h \
     ../src/graphviewer.h \
-    ../src/datatypes.h
+    ../src/datatypes.h \
+    ../src/util.h

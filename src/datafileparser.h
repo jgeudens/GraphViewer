@@ -18,7 +18,6 @@ public:
 
 private:
 
-    void showError(QString text);
     bool readLineFromFile(QFile *file, QString *pLine);
 
     QStringList _fileContents;

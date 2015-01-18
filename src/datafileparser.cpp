@@ -1,7 +1,9 @@
 
 #include <QtWidgets>
 #include <QMessageBox>
+
 #include "datatypes.h"
+#include "util.h"
 #include "datafileparser.h"
 
 DataFileParser::DataFileParser()
@@ -39,13 +41,13 @@ bool DataFileParser::loadDataFile(QString dataFilePath)
 
         if (!bResult)
         {
-            showError(tr("Error while reading data file: %1").arg(dataFilePath));
+            Util::showError(tr("Error while reading data file: %1").arg(dataFilePath));
             bRet = false;
         }
     }
     else
     {
-        showError(tr("Couldn't open data file: %1").arg(dataFilePath));
+        Util::showError(tr("Couldn't open data file: %1").arg(dataFilePath));
         bRet = false;
     }
 
@@ -59,21 +61,35 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
     bool bRet = true;
 
     // Get number of rows
-    const quint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.dataColumn;
+    const qint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.dataColumn;
 
-    // Init data row QLists to empty list
-    QList<double> t;
-    for (quint32 i = 0; i < expectedFields; i++)
+    // Check number of expected fields
+    if (expectedFields < 2)
     {
-        dataRows.append(t);
+        Util::showError(tr("Can't parse data. Are you sure field separator and column are correct?"));
+        bRet = false;
     }
 
     //Read labels
-    QStringList tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
-    if ((tmpLabels.size() - (qint32)settings.dataColumn) != (qint32)expectedFields)
+    QStringList tmpLabels;
+    if (bRet)
     {
-        showError(tr("Can't read labels. Incorrect count"));
-        bRet = false;
+        tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
+        if ((tmpLabels.size() - (qint32)settings.dataColumn) != expectedFields)
+        {
+            Util::showError(tr("Can't read labels. Incorrect count"));
+            bRet = false;
+        }
+    }
+
+    if (bRet)
+    {
+        // Init data row QLists to empty list
+        QList<double> t;
+        for (qint32 i = 0; i < expectedFields; i++)
+        {
+            dataRows.append(t);
+        }
     }
 
     // Process labels
@@ -91,7 +107,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
         for (qint32 index = settings.dataRow; index < _fileContents.size(); index++)
         {
             QStringList paramList = _fileContents[index].split(settings.fieldSeparator);
-            if ((paramList.size() - settings.dataColumn) != expectedFields)
+            if ((paramList.size() - (qint32)settings.dataColumn) != expectedFields)
             {
                 bRet = false;
                 break;
@@ -105,7 +121,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
                 if (bError == false)
                 {
                     QString error = QString(tr("Invalid data (while processing data)\n Line:\"%1\"").arg(line));
-                    showError(error);
+                    Util::showError(error);
                     bRet = false;
                     break;
                 }
@@ -144,16 +160,6 @@ bool DataFileParser::readLineFromFile(QFile * file, QString *pLine)
     }
 
     return bRet;
-}
-
-void DataFileParser::showError(QString text)
-{
-    QMessageBox msgBox;
-    msgBox.setWindowTitle(tr("CsvGraphViewer"));
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText(text);
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.exec();
 }
 
 
