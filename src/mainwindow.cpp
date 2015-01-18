@@ -44,8 +44,6 @@ void MainWindow::getDataFileSettings()
 
         if (dialog.result() == QDialog::Accepted)
         {
-            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
-
             DataFileParser parser;
 
             if (parser.loadDataFile(_dataFileSettings.path))
@@ -57,6 +55,8 @@ void MainWindow::getDataFileSettings()
                 if (parser.parseData(_dataFileSettings, data, labels))
                 {
                     _graphViewer->setupGraph(&data, &labels);
+
+                    setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
                 }
             }
         }

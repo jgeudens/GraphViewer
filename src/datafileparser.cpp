@@ -60,7 +60,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
     QString line;
     bool bRet = true;
 
-    // Get number of rows
+    // Get number of rows (from dataRow)
     const qint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.dataColumn;
 
     // Check number of expected fields
@@ -77,7 +77,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
         tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
         if ((tmpLabels.size() - (qint32)settings.dataColumn) != expectedFields)
         {
-            Util::showError(tr("Can't read labels. Incorrect count"));
+            Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
             bRet = false;
         }
     }
@@ -109,6 +109,8 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
             QStringList paramList = _fileContents[index].split(settings.fieldSeparator);
             if ((paramList.size() - (qint32)settings.dataColumn) != expectedFields)
             {
+                QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
+                Util::showError(txt);
                 bRet = false;
                 break;
             }
