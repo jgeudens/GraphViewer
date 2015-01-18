@@ -14,7 +14,7 @@ public:
         QString path;
         QString fieldSeparator;
         quint32 dataRow;
-        quint32 dataColumn;
+        quint32 column;
         quint32 labelRow;
     } DataFileSettings;
 

@@ -41,12 +41,12 @@
        <item row="8" column="0">
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>Data Column</string>
+          <string>Column</string>
          </property>
         </widget>
        </item>
        <item row="8" column="1">
-        <widget class="QSpinBox" name="spinDataColumn">
+        <widget class="QSpinBox" name="spinColumn">
          <property name="minimum">
           <number>1</number>
          </property>
@@ -160,7 +160,7 @@
   <tabstop>lineDataFile</tabstop>
   <tabstop>btnDataFile</tabstop>
   <tabstop>comboFieldSeparator</tabstop>
-  <tabstop>spinDataColumn</tabstop>
+  <tabstop>spinColumn</tabstop>
   <tabstop>spinLabelRow</tabstop>
   <tabstop>spinDataRow</tabstop>
   <tabstop>buttonBox</tabstop>

@@ -61,7 +61,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
     bool bRet = true;
 
     // Get number of rows (from dataRow)
-    const qint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.dataColumn;
+    const qint32 expectedFields = _fileContents[settings.dataRow].split(settings.fieldSeparator).size() - settings.column;
 
     // Check number of expected fields
     if (expectedFields < 2)
@@ -75,7 +75,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
     if (bRet)
     {
         tmpLabels = _fileContents[settings.labelRow].split(settings.fieldSeparator);
-        if ((tmpLabels.size() - (qint32)settings.dataColumn) != expectedFields)
+        if ((tmpLabels.size() - (qint32)settings.column) != expectedFields)
         {
             Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
             bRet = false;
@@ -95,7 +95,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
     // Process labels
     if (bRet)
     {
-        for (qint32 i = settings.dataColumn; i < tmpLabels.size(); i++)
+        for (qint32 i = settings.column; i < tmpLabels.size(); i++)
         {
             labels.append(tmpLabels[i]);
         }
@@ -107,7 +107,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
         for (qint32 index = settings.dataRow; index < _fileContents.size(); index++)
         {
             QStringList paramList = _fileContents[index].split(settings.fieldSeparator);
-            if ((paramList.size() - (qint32)settings.dataColumn) != expectedFields)
+            if ((paramList.size() - (qint32)settings.column) != expectedFields)
             {
                 QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
                 Util::showError(txt);
@@ -115,7 +115,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
                 break;
             }
 
-            for (qint32 i = settings.dataColumn; i < paramList.size(); i++)
+            for (qint32 i = settings.column; i < paramList.size(); i++)
             {
                 bool bError = false;
                 const double number = paramList[i].toDouble(&bError);
@@ -129,7 +129,7 @@ bool DataFileParser::parseData(DataTypes::DataFileSettings &settings, QList<QLis
                 }
                 else
                 {
-                    dataRows[i - settings.dataColumn].append(number);
+                    dataRows[i - settings.column].append(number);
                 }
             }
 

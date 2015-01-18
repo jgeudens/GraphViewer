@@ -32,7 +32,7 @@ Dialog::~Dialog()
 void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
 {
     pSettings->path = _settings.path;
-    pSettings->dataColumn = _ui->spinDataColumn->value() - 1; // 1 based to 0 based
+    pSettings->column = _ui->spinColumn->value() - 1; // 1 based to 0 based
     pSettings->dataRow = _ui->spinDataRow->value() - 1; // 1 based to 0 based
     pSettings->labelRow = _ui->spinLabelRow->value() - 1; // 1 based to 0 based
 
@@ -70,7 +70,7 @@ void Dialog::presetSelected(int index)
         break;
     case 1:
         //Set STMStudio preset
-        _ui->spinDataColumn->setValue(2);
+        _ui->spinColumn->setValue(2);
         _ui->spinDataRow->setValue(9);
         _ui->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
         _ui->spinLabelRow->setValue(7);
