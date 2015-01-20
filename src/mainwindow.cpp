@@ -6,7 +6,7 @@
 
 const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
 
-MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     _ui(new Ui::MainWindow),
     _graphViewer(NULL)
@@ -16,17 +16,11 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     this->setWindowTitle(_cWindowTitle);
     
     _graphViewer = new GraphViewer(_ui->customPlot, this);
-    
-    /*
-    TODO: enable
-    if (cmdArguments.size() > 1)
-    {
-        loadProjectFile(cmdArguments[1]);
-    }
-    */
 
     connect(_ui->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
+    connect(_ui->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
     connect(_ui->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
+
 }
 
 MainWindow::~MainWindow()
@@ -44,21 +38,28 @@ void MainWindow::getDataFileSettings()
 
         if (dialog.result() == QDialog::Accepted)
         {
-            DataFileParser parser;
+            _parser.setDataFileSettings(_dataFileSettings);
 
-            if (parser.loadDataFile(_dataFileSettings.path))
-            {
-                // TODO
-                QList<QList<double> > data;
-                QStringList labels;
+            updateGraph();
+        }
+    }
+}
 
-                if (parser.parseData(_dataFileSettings, data, labels))
-                {
-                    _graphViewer->setupGraph(&data, &labels);
+void MainWindow::updateGraph()
+{
+    if (_parser.loadDataFile())
+    {
+        // TODO
+        QList<QList<double> > data;
+        QStringList labels;
 
-                    setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
-                }
-            }
+        if (_parser.parseData(data, labels))
+        {
+            _graphViewer->setupGraph(&data, &labels);
+
+            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
+
+            _ui->actionReloadDataFile->setEnabled(true);
         }
     }
 }
@@ -66,5 +67,10 @@ void MainWindow::getDataFileSettings()
 void MainWindow::exitApplication()
 {
     QApplication::quit();
+}
+
+void MainWindow::reloadDataFile()
+{
+    updateGraph();
 }
 

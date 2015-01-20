@@ -10,10 +10,10 @@
 const QList<QColor> GraphViewer::_colorlist = QList<QColor>() << QColor("blue")
                                                            << QColor("green")
                                                            << QColor("red")
-                                                           << QColor("yellow")
                                                            << QColor("orange")
                                                            << QColor("purple")
                                                            << QColor("black")
+                                                           << QColor("yellow")
                                                            ;
 
 GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :

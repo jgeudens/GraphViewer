@@ -46,6 +46,7 @@
      <string>File</string>
     </property>
     <addaction name="actionLoadDataFile"/>
+    <addaction name="actionReloadDataFile"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -59,6 +60,14 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionReloadDataFile">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Reload Data File</string>
    </property>
   </action>
  </widget>

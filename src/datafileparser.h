@@ -13,14 +13,17 @@ class DataFileParser : public QObject
 
 public:
     DataFileParser();
-    bool loadDataFile(QString dataFilePath);
-    bool parseData(DataTypes::DataFileSettings &settings, QList<QList<double> > &dataRows, QStringList &labels);
+    void setDataFileSettings(DataTypes::DataFileSettings &settings);
+    bool loadDataFile(void);
+    bool parseData(QList<QList<double> > &dataRows, QStringList &labels);
 
 private:
 
     bool readLineFromFile(QFile *file, QString *pLine);
 
     QStringList _fileContents;
+
+   DataTypes::DataFileSettings _parseSettings;
 
 };
 
