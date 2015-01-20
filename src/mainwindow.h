@@ -24,6 +24,8 @@ private slots:
     void getDataFileSettings();
     void exitApplication();
     void reloadDataFile();
+    void prepareImageExport();
+    void showAbout();
 
 private:
     void updateGraph();

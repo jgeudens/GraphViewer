@@ -97,6 +97,18 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * p
 
 }
 
+void GraphViewer::exportGraphImage(QString imageFile)
+{
+    if (!_pPlot->savePng(imageFile))
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(tr("CsvGraphViewer"));
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Save to png file (%1) failed").arg(imageFile));
+        msgBox.exec();
+    }
+}
+
 void GraphViewer::generateTickLabels()
 {
     QVector<double> ticks = _pPlot->xAxis->tickVector();

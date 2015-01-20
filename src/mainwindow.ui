@@ -48,9 +48,18 @@
     <addaction name="actionLoadDataFile"/>
     <addaction name="actionReloadDataFile"/>
     <addaction name="separator"/>
+    <addaction name="actionExportImage"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>?</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menu"/>
   </widget>
   <action name="actionLoadDataFile">
    <property name="text">
@@ -68,6 +77,19 @@
    </property>
    <property name="text">
     <string>Reload Data File</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About...</string>
+   </property>
+  </action>
+  <action name="actionExportImage">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Export Image</string>
    </property>
   </action>
  </widget>

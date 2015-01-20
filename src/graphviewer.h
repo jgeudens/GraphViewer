@@ -15,6 +15,7 @@ public:
     explicit GraphViewer(QCustomPlot * pPlot, QObject *parent);
 
     void setupGraph(QList<QList<double> > *pDataLists, QStringList *pLabels);
+    void exportGraphImage(QString imageFile);
 
 private slots:
     void generateTickLabels();
@@ -22,6 +23,7 @@ private slots:
     void mousePress();
     void mouseWheel();
     //void mouseMove(QMouseEvent *event);
+
 
 private:
 
