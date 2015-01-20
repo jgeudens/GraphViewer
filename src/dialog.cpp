@@ -11,7 +11,7 @@ Dialog::Dialog(QWidget *parent) :
 {
     _ui->setupUi(this);
 
-    _ui->comboFieldSeparator->addItem(" ; (point comma)", ";");
+    _ui->comboFieldSeparator->addItem(" ; (semicolon)", ";");
     _ui->comboFieldSeparator->addItem(" , (comma)", ",");
     _ui->comboFieldSeparator->addItem(" tab", "\t");
     _ui->comboFieldSeparator->addItem(" custom", "custom");
