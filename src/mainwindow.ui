@@ -58,7 +58,18 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuGraph">
+    <property name="title">
+     <string>Graph</string>
+    </property>
+    <addaction name="actionAutoScaleXAxis"/>
+    <addaction name="actionAutoScaleYAxis"/>
+    <addaction name="separator"/>
+    <addaction name="actionSetManualScaleXAxis"/>
+    <addaction name="actionSetManualScaleYAxis"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuGraph"/>
    <addaction name="menu"/>
   </widget>
   <action name="actionLoadDataFile">
@@ -90,6 +101,38 @@
    </property>
    <property name="text">
     <string>Export Image</string>
+   </property>
+  </action>
+  <action name="actionAutoScaleXAxis">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Auto scale x-axis</string>
+   </property>
+  </action>
+  <action name="actionAutoScaleYAxis">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Auto scale y-axis</string>
+   </property>
+  </action>
+  <action name="actionSetManualScaleXAxis">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Set Manual scale x-axis...</string>
+   </property>
+  </action>
+  <action name="actionSetManualScaleYAxis">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Set Manual scale y-axis...</string>
    </property>
   </action>
  </widget>

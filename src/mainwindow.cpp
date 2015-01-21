@@ -1,6 +1,7 @@
 
 #include "datatypes.h"
 #include "datafileparser.h"
+#include "axisscaledialog.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -22,6 +23,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
     connect(_ui->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_ui->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
+
+    connect(_ui->actionAutoScaleXAxis, SIGNAL(triggered()), _graphViewer, SLOT(autoScaleXAxis()));
+    connect(_ui->actionAutoScaleYAxis, SIGNAL(triggered()), _graphViewer, SLOT(autoScaleYAxis()));
+
+    connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
+    connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 }
 
 MainWindow::~MainWindow()
@@ -35,10 +42,9 @@ void MainWindow::getDataFileSettings()
 
     if (dialog.exec())
     {
-        dialog.getDataSettings(&_dataFileSettings);
-
         if (dialog.result() == QDialog::Accepted)
         {
+            dialog.getDataSettings(&_dataFileSettings);
             _parser.setDataFileSettings(_dataFileSettings);
 
             updateGraph();
@@ -62,6 +68,11 @@ void MainWindow::updateGraph()
 
             _ui->actionReloadDataFile->setEnabled(true);
             _ui->actionExportImage->setEnabled(true);
+
+            _ui->actionAutoScaleXAxis->setEnabled(true);
+            _ui->actionAutoScaleYAxis->setEnabled(true);
+            _ui->actionSetManualScaleXAxis->setEnabled(true);
+            _ui->actionSetManualScaleYAxis->setEnabled(true);
         }
         else
         {
@@ -80,6 +91,11 @@ void MainWindow::updateGraph()
 
         _ui->actionReloadDataFile->setEnabled(false);
         _ui->actionExportImage->setEnabled(false);
+
+        _ui->actionAutoScaleXAxis->setEnabled(false);
+        _ui->actionAutoScaleYAxis->setEnabled(false);
+        _ui->actionSetManualScaleXAxis->setEnabled(false);
+        _ui->actionSetManualScaleYAxis->setEnabled(false);
     }
 }
 
@@ -142,3 +158,30 @@ void MainWindow::showAbout()
     msgBox.setText(aboutTxt);
     msgBox.exec();
 }
+
+void MainWindow::showXAxisScaleDialog()
+{
+    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_X);
+
+    if (scaleDialog.exec())
+    {
+        if (scaleDialog.result() == QDialog::Accepted)
+        {
+            _graphViewer->manualScaleXAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+        }
+    }
+}
+
+void MainWindow::showYAxisScaleDialog()
+{
+    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_Y);
+
+    if (scaleDialog.exec())
+    {
+        if (scaleDialog.result() == QDialog::Accepted)
+        {
+            _graphViewer->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+        }
+    }
+}
+

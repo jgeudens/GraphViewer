@@ -21,11 +21,13 @@ SOURCES +=  \
     ../libraries/qcustomplot/qcustomplot.cpp \
     ../src/datafileparser.cpp \
     ../src/dialog.cpp \
-    ../src/graphviewer.cpp
+    ../src/graphviewer.cpp \
+    ../src/axisscaledialog.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
-    ../src/dialog.ui
+    ../src/dialog.ui \
+    ../src/axisscaledialog.ui
 
 HEADERS += \
     ../src/mainwindow.h \
@@ -34,4 +36,5 @@ HEADERS += \
     ../src/dialog.h \
     ../src/graphviewer.h \
     ../src/datatypes.h \
-    ../src/util.h
+    ../src/util.h \
+    ../src/axisscaledialog.h

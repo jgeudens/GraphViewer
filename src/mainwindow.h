@@ -26,6 +26,8 @@ private slots:
     void reloadDataFile();
     void prepareImageExport();
     void showAbout();
+    void showXAxisScaleDialog();
+    void showYAxisScaleDialog();
 
 private:
     void updateGraph();

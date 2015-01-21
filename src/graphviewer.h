@@ -17,14 +17,18 @@ public:
     void clear();
     void setupGraph(QList<QList<double> > *pDataLists, QStringList *pLabels);
     void exportGraphImage(QString imageFile);
+    void manualScaleXAxis(qint64 min, qint64 max);
+    void manualScaleYAxis(qint64 min, qint64 max);
+
+public slots:
+    void autoScaleXAxis();
+    void autoScaleYAxis(); 
 
 private slots:
     void generateTickLabels();
     void selectionChanged();
     void mousePress();
     void mouseWheel();
-    //void mouseMove(QMouseEvent *event);
-
 
 private:
 

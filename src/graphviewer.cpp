@@ -113,6 +113,30 @@ void GraphViewer::exportGraphImage(QString imageFile)
     }
 }
 
+void GraphViewer::manualScaleXAxis(qint64 min, qint64 max)
+{
+    _pPlot->xAxis->setRange(min, max);
+    _pPlot->replot();
+}
+
+void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
+{
+    _pPlot->yAxis->setRange(min, max);
+    _pPlot->replot();
+}
+
+void GraphViewer::autoScaleXAxis()
+{
+    _pPlot->xAxis->rescale();
+    _pPlot->replot();
+}
+
+void GraphViewer::autoScaleYAxis()
+{
+    _pPlot->yAxis->rescale();
+    _pPlot->replot();
+}
+
 void GraphViewer::generateTickLabels()
 {
     QVector<double> ticks = _pPlot->xAxis->tickVector();
@@ -206,26 +230,3 @@ void GraphViewer::mouseWheel()
        _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
    }
 }
-
-#if 0
-void GraphViewer::mouseMove(QMouseEvent *event)
-{
-    if(event->buttons() & Qt::LeftButton)
-    {
-        if (_pPlot->axisRect()->rangeDrag() == Qt::Horizontal)
-        {
-            emit updateXScalingUi(ScopeGui::SCALE_MANUAL); // change to manual scaling
-        }
-        else if (_pPlot->axisRect()->rangeDrag() == Qt::Vertical)
-        {
-            emit updateYScalingUi(ScopeGui::SCALE_MANUAL); // change to manual scaling
-        }
-        else
-        {
-            // Both
-            emit updateXScalingUi(ScopeGui::SCALE_MANUAL); // change to manual scaling
-            emit updateYScalingUi(ScopeGui::SCALE_MANUAL); // change to manual scaling
-        }
-    }
-}
-#endif
