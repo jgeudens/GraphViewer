@@ -4,8 +4,6 @@
 #include <QLocale>
 
 #include "graphviewer.h"
-#include "qcustomplot.h"
-
 
 const QList<QColor> GraphViewer::_colorlist = QList<QColor>() << QColor("blue")
                                                            << QColor("green")
@@ -61,7 +59,7 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    // connect slots that takes care that when an axis is selected, only that direction can be dragged and zoomed:
    connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
-   //connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(mouseMove(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
 }
 
 void GraphViewer::clear()
@@ -229,4 +227,10 @@ void GraphViewer::mouseWheel()
    {
        _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
    }
+}
+
+void GraphViewer::axisDoubleClicked(QCPAxis * axis)
+{
+    axis->rescale();
+    _pPlot->replot();
 }

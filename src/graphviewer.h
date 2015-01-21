@@ -5,8 +5,7 @@
 #include <QVector>
 #include <QMouseEvent>
 
-// Foward declaration
-class QCustomPlot;
+#include "qcustomplot.h"
 
 class GraphViewer : public QObject
 {
@@ -29,6 +28,7 @@ private slots:
     void selectionChanged();
     void mousePress();
     void mouseWheel();
+    void axisDoubleClicked(QCPAxis * axis);
 
 private:
 
