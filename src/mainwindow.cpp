@@ -48,9 +48,9 @@ void MainWindow::getDataFileSettings()
 
 void MainWindow::updateGraph()
 {
+    bool bFailed = false;
     if (_parser.loadDataFile())
     {
-        // TODO
         QList<QList<double> > data;
         QStringList labels;
 
@@ -63,6 +63,23 @@ void MainWindow::updateGraph()
             _ui->actionReloadDataFile->setEnabled(true);
             _ui->actionExportImage->setEnabled(true);
         }
+        else
+        {
+            bFailed = true;
+        }
+    }
+    else
+    {
+        bFailed = true;
+    }
+
+    if (bFailed)
+    {
+        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
+        _graphViewer->clear();
+
+        _ui->actionReloadDataFile->setEnabled(false);
+        _ui->actionExportImage->setEnabled(false);
     }
 }
 

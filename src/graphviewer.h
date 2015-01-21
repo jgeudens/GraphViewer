@@ -14,6 +14,7 @@ class GraphViewer : public QObject
 public:
     explicit GraphViewer(QCustomPlot * pPlot, QObject *parent);
 
+    void clear();
     void setupGraph(QList<QList<double> > *pDataLists, QStringList *pLabels);
     void exportGraphImage(QString imageFile);
 

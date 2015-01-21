@@ -13,9 +13,12 @@ public:
     {
         QString path;
         QString fieldSeparator;
+        QString groupSeparator;
+        QString decimalSeparator;
         quint32 dataRow;
         quint32 column;
         quint32 labelRow;
+
     } DataFileSettings;
 
 private:

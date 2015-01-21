@@ -15,6 +15,8 @@ void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
     _parseSettings.column = settings.column;
     _parseSettings.dataRow = settings.dataRow;
     _parseSettings.fieldSeparator = settings.fieldSeparator;
+    _parseSettings.groupSeparator = settings.groupSeparator;
+    _parseSettings.decimalSeparator = settings.decimalSeparator;
     _parseSettings.labelRow = settings.labelRow;
     _parseSettings.path = settings.path;
 }
@@ -66,7 +68,6 @@ bool DataFileParser::loadDataFile()
 
 bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &labels)
 {
-    QString line;
     bool bRet = true;
 
     // Get number of rows (from dataRow)
@@ -127,11 +128,20 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
             for (qint32 i = _parseSettings.column; i < paramList.size(); i++)
             {
                 bool bError = false;
-                const double number = paramList[i].toDouble(&bError);
 
+                // Remove group separator
+                QString tmpData = paramList[i].simplified().replace(_parseSettings.groupSeparator, "");
+
+                // Replace decimal point if needed
+                if (QLocale::system().decimalPoint() != _parseSettings.decimalSeparator)
+                {
+                    tmpData = tmpData.replace(_parseSettings.decimalSeparator, QLocale::system().decimalPoint());
+                }
+
+                const double number = QLocale::system().toDouble(tmpData, &bError);
                 if (bError == false)
                 {
-                    QString error = QString(tr("Invalid data (while processing data)\n Line:\"%1\"").arg(line));
+                    QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
                     Util::showError(error);
                     bRet = false;
                     break;

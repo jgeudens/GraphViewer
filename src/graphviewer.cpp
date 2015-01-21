@@ -64,6 +64,10 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    //connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(mouseMove(QMouseEvent*)));
 }
 
+void GraphViewer::clear()
+{
+    _pPlot->clearGraphs();
+}
 
 void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * pLabels)
 {

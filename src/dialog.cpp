@@ -15,9 +15,44 @@ Dialog::Dialog(QWidget *parent) :
     _ui->comboFieldSeparator->addItem(" , (comma)", ",");
     _ui->comboFieldSeparator->addItem(" tab", "\t");
     _ui->comboFieldSeparator->addItem(" custom", "custom");
+    if (QLocale::system().decimalPoint() == ',')
+    {
+        _ui->comboFieldSeparator->setCurrentIndex(0);
+    }
+    else
+    {
+        _ui->comboFieldSeparator->setCurrentIndex(1);
+    }
 
     _ui->comboPreset->addItem("Manual");
     _ui->comboPreset->addItem("STMStudio");
+
+    _ui->comboDecimalSeparator->addItem(" , (comma)", ",");
+    _ui->comboDecimalSeparator->addItem(" . (point)", ".");
+    if (QLocale::system().decimalPoint() == '.')
+    {
+        _ui->comboDecimalSeparator->setCurrentIndex(1);
+    }
+    else
+    {
+        _ui->comboDecimalSeparator->setCurrentIndex(0);
+    }
+
+    _ui->comboGroupSeparator->addItem(" , (comma)", ",");
+    _ui->comboGroupSeparator->addItem(" . (point)", ".");
+    _ui->comboGroupSeparator->addItem("   (space)", " ");
+    if (QLocale::system().groupSeparator() == ',')
+    {
+        _ui->comboGroupSeparator->setCurrentIndex(0);
+    }
+    else if (QLocale::system().groupSeparator() == '.')
+    {
+        _ui->comboGroupSeparator->setCurrentIndex(1);
+    }
+    else
+    {
+        _ui->comboGroupSeparator->setCurrentIndex(2);
+    }
 
     connect(_ui->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_ui->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
@@ -44,6 +79,9 @@ void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
     {
         pSettings->fieldSeparator = _ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString();
     }
+
+    pSettings->decimalSeparator = _ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString();
+    pSettings->groupSeparator = _ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString();
 }
 
 void Dialog::selectDataFile()
@@ -73,6 +111,8 @@ void Dialog::presetSelected(int index)
         _ui->spinColumn->setValue(2);
         _ui->spinDataRow->setValue(9);
         _ui->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
+        _ui->comboGroupSeparator->setCurrentIndex(0); // TODO: hardcoded
+        _ui->comboDecimalSeparator->setCurrentIndex(1); // TODO: hardcoded
         _ui->spinLabelRow->setValue(7);
         break;
     default:
