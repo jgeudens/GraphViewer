@@ -6,6 +6,7 @@
 #include "QList"
 #include "QFile"
 #include "datatypes.h"
+#include <QFileSystemWatcher>
 
 class DataFileParser : public QObject
 {
@@ -17,6 +18,12 @@ public:
     bool loadDataFile(void);
     bool parseData(QList<QList<double> > &dataRows, QStringList &labels);
 
+signals:
+    void fileChanged();
+
+private slots:
+    void fileChange(QString);
+
 private:
 
     bool readLineFromFile(QFile *file, QString *pLine);
@@ -24,6 +31,7 @@ private:
     QStringList _fileContents;
 
    DataTypes::DataFileSettings _parseSettings;
+   QFileSystemWatcher *_fileWatcher;
 
 };
 

@@ -6,8 +6,10 @@
 #include "util.h"
 #include "datafileparser.h"
 
-DataFileParser::DataFileParser()
+DataFileParser::DataFileParser() :
+    _fileWatcher(new QFileSystemWatcher())
 {
+    connect(_fileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
 }
 
 void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
@@ -19,6 +21,7 @@ void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
     _parseSettings.decimalSeparator = settings.decimalSeparator;
     _parseSettings.labelRow = settings.labelRow;
     _parseSettings.path = settings.path;
+    _parseSettings.dynamicSession = settings.dynamicSession;
 }
 
 
@@ -55,6 +58,17 @@ bool DataFileParser::loadDataFile()
             Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.path));
             bRet = false;
         }
+
+        if(_fileWatcher->files().length() > 0)
+        {
+            _fileWatcher->removePaths(_fileWatcher->files());
+        }
+        if(_fileWatcher->directories().length() > 0)
+        {
+            _fileWatcher->removePaths(_fileWatcher->directories());
+        }
+
+        _fileWatcher->addPath(_parseSettings.path);
     }
     else
     {
@@ -63,6 +77,14 @@ bool DataFileParser::loadDataFile()
     }
 
     return bRet;
+}
+
+void DataFileParser::fileChange(QString path)
+{
+    if(path == _parseSettings.path)
+    {
+        emit fileChanged();
+    }
 }
 
 
