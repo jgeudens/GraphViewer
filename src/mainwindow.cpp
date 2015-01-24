@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
+
+    connect(&_parser, SIGNAL(fileChanged()), this, SLOT(dataFileChange()));
 }
 
 MainWindow::~MainWindow()
@@ -107,6 +109,30 @@ void MainWindow::exitApplication()
 void MainWindow::reloadDataFile()
 {
     updateGraph();
+}
+
+void MainWindow::dataFileChange()
+{
+    static QMutex mutex;
+
+    if(mutex.tryLock())
+    {
+        if(_dataFileSettings.dynamicSession)
+        {
+            reloadDataFile();
+        }
+        else
+        {
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Data file changed", "Reload data file?", QMessageBox::Yes|QMessageBox::No);
+            if(reply == QMessageBox::Yes)
+            {
+                reloadDataFile();
+            }
+        }
+
+        mutex.unlock();
+    }
 }
 
 void MainWindow::prepareImageExport()
