@@ -199,10 +199,15 @@
  <tabstops>
   <tabstop>lineDataFile</tabstop>
   <tabstop>btnDataFile</tabstop>
+  <tabstop>comboPreset</tabstop>
   <tabstop>comboFieldSeparator</tabstop>
+  <tabstop>lineCustomFieldSeparator</tabstop>
+  <tabstop>comboDecimalSeparator</tabstop>
+  <tabstop>comboGroupSeparator</tabstop>
   <tabstop>spinColumn</tabstop>
   <tabstop>spinLabelRow</tabstop>
   <tabstop>spinDataRow</tabstop>
+  <tabstop>dynamicSession</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
