@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMenu>
 
 #include "datafileparser.h"
 #include "datatypes.h"
@@ -28,6 +29,8 @@ private slots:
     void showAbout();
     void showXAxisScaleDialog();
     void showYAxisScaleDialog();
+    void showHideGraph(bool bState);
+
 
 private:
     void updateGraph();
@@ -36,6 +39,8 @@ private:
     DataTypes::DataFileSettings _dataFileSettings;
     GraphViewer * _graphViewer;
     DataFileParser _parser;
+
+    QMenu * _graphShowHide;
 
     static const QString _cWindowTitle;
 };

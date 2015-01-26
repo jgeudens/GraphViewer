@@ -18,6 +18,7 @@ public:
     void exportGraphImage(QString imageFile);
     void manualScaleXAxis(qint64 min, qint64 max);
     void manualScaleYAxis(qint64 min, qint64 max);
+    void showGraph(quint32 index, bool bShow);
 
 public slots:
     void autoScaleXAxis();

@@ -29,6 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
+
+    _graphShowHide = new QMenu("Show/Hide");
+    _graphShowHide->setEnabled(false);
+    _ui->menuGraph->addSeparator();
+    _ui->menuGraph->addMenu(_graphShowHide);
 }
 
 MainWindow::~MainWindow()
@@ -73,6 +78,23 @@ void MainWindow::updateGraph()
             _ui->actionAutoScaleYAxis->setEnabled(true);
             _ui->actionSetManualScaleXAxis->setEnabled(true);
             _ui->actionSetManualScaleYAxis->setEnabled(true);
+
+            // Clear actions
+            _graphShowHide->clear();
+
+            // Add menu-items
+            for (qint32 i = 1; i < labels.size(); i++)
+            {
+                QAction *act = _graphShowHide->addAction(labels[i]);
+
+                act->setData(i - 1);
+                act->setCheckable(true);
+                act->setChecked(true);
+
+                QObject::connect(act, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
+            }
+
+            _graphShowHide->setEnabled(true);
         }
         else
         {
@@ -96,6 +118,8 @@ void MainWindow::updateGraph()
         _ui->actionAutoScaleYAxis->setEnabled(false);
         _ui->actionSetManualScaleXAxis->setEnabled(false);
         _ui->actionSetManualScaleYAxis->setEnabled(false);
+
+        _graphShowHide->setEnabled(false);
     }
 }
 
@@ -183,5 +207,12 @@ void MainWindow::showYAxisScaleDialog()
             _graphViewer->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
         }
     }
+}
+
+void MainWindow::showHideGraph(bool bState)
+{
+    QAction * pAction = qobject_cast<QAction *>(QObject::sender());
+
+    _graphViewer->showGraph(pAction->data().toInt(), bState);
 }
 

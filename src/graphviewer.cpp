@@ -123,6 +123,12 @@ void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
     _pPlot->replot();
 }
 
+void GraphViewer::showGraph(quint32 index, bool bShow)
+{
+    _pPlot->graph(index)->setVisible(bShow);
+    _pPlot->replot();
+}
+
 void GraphViewer::autoScaleXAxis()
 {
     _pPlot->xAxis->rescale();
