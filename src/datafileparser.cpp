@@ -27,27 +27,27 @@ bool DataFileParser::loadDataFile()
 {
     bool bRet = true;
     QString line;
-    QFile* file = new QFile(_parseSettings.path);
+    QFile file(_parseSettings.path);
 
     /* If we can't open it, let's show an error message. */
-    if (file->open(QIODevice::ReadOnly | QIODevice::Text))
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
 
         _fileContents.clear();
 
-        bool bResult = readLineFromFile(file, &line);
+        bool bResult = readLineFromFile(&file, &line);
         while (bResult)
         {
             _fileContents.append(line);
 
             // Check end of file
-            if (file->atEnd())
+            if (file.atEnd())
             {
                 break;
             }
 
             // Read next line
-            bResult = readLineFromFile(file, &line);
+            bResult = readLineFromFile(&file, &line);
         }
 
         if (!bResult)
