@@ -82,6 +82,7 @@ void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
 
     pSettings->decimalSeparator = _ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString();
     pSettings->groupSeparator = _ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString();
+    pSettings->bDynamicSession = (_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
 }
 
 void Dialog::selectDataFile()

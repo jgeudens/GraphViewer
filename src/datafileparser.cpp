@@ -6,8 +6,10 @@
 #include "util.h"
 #include "datafileparser.h"
 
-DataFileParser::DataFileParser()
+DataFileParser::DataFileParser() :
+    _fileWatcher(new QFileSystemWatcher())
 {
+    connect(_fileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
 }
 
 void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
@@ -19,6 +21,7 @@ void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
     _parseSettings.decimalSeparator = settings.decimalSeparator;
     _parseSettings.labelRow = settings.labelRow;
     _parseSettings.path = settings.path;
+    _parseSettings.bDynamicSession = settings.bDynamicSession;
 }
 
 
@@ -35,26 +38,38 @@ bool DataFileParser::loadDataFile()
 
         _fileContents.clear();
 
-        bool bResult = readLineFromFile(&file, &line);
-        while (bResult)
+        do
         {
-            _fileContents.append(line);
-
-            // Check end of file
-            if (file.atEnd())
+            bool bResult = readLineFromFile(&file, &line);
+            if(bResult)
+            {
+                if(line.simplified() != "")
+                {
+                    _fileContents.append(line);
+                }
+            }
+            else
             {
                 break;
             }
+        } while(!file.atEnd());
 
-            // Read next line
-            bResult = readLineFromFile(&file, &line);
-        }
-
-        if (!bResult)
+        if (!file.atEnd())
         {
             Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.path));
             bRet = false;
         }
+
+        if(_fileWatcher->files().length() > 0)
+        {
+            _fileWatcher->removePaths(_fileWatcher->files());
+        }
+        if(_fileWatcher->directories().length() > 0)
+        {
+            _fileWatcher->removePaths(_fileWatcher->directories());
+        }
+
+        _fileWatcher->addPath(_parseSettings.path);
     }
     else
     {
@@ -63,6 +78,14 @@ bool DataFileParser::loadDataFile()
     }
 
     return bRet;
+}
+
+void DataFileParser::fileChange(QString path)
+{
+    if(path == _parseSettings.path)
+    {
+        emit fileChanged();
+    }
 }
 
 

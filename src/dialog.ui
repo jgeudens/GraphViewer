@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>395</width>
-    <height>393</height>
+    <height>429</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -170,6 +170,26 @@
          </property>
         </widget>
        </item>
+       <item row="12" column="1">
+        <widget class="QCheckBox" name="checkDynamicSession">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="toolTip">
+          <string>Enables auto reload</string>
+         </property>
+         <property name="text">
+          <string>Dynamic session</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>
@@ -179,10 +199,15 @@
  <tabstops>
   <tabstop>lineDataFile</tabstop>
   <tabstop>btnDataFile</tabstop>
+  <tabstop>comboPreset</tabstop>
   <tabstop>comboFieldSeparator</tabstop>
+  <tabstop>lineCustomFieldSeparator</tabstop>
+  <tabstop>comboDecimalSeparator</tabstop>
+  <tabstop>comboGroupSeparator</tabstop>
   <tabstop>spinColumn</tabstop>
   <tabstop>spinLabelRow</tabstop>
   <tabstop>spinDataRow</tabstop>
+  <tabstop>checkDynamicSession</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>

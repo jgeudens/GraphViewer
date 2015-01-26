@@ -34,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
     _graphShowHide->setEnabled(false);
     _ui->menuGraph->addSeparator();
     _ui->menuGraph->addMenu(_graphShowHide);
+
+    connect(&_parser, SIGNAL(fileChanged()), this, SLOT(dataFileChange()));
+
 }
 
 MainWindow::~MainWindow()
@@ -131,6 +134,34 @@ void MainWindow::exitApplication()
 void MainWindow::reloadDataFile()
 {
     updateGraph();
+}
+
+void MainWindow::dataFileChange()
+{
+    static QMutex mutex;
+
+    if(mutex.tryLock())
+    {
+        QFile file(_dataFileSettings.path);
+        if(file.size() > 0)
+        {
+            if(_dataFileSettings.bDynamicSession)
+            {
+                reloadDataFile();
+            }
+            else
+            {
+                QMessageBox::StandardButton reply;
+                reply = QMessageBox::question(this, "Data file changed", "Reload data file?", QMessageBox::Yes|QMessageBox::No);
+                if(reply == QMessageBox::Yes)
+                {
+                    reloadDataFile();
+                }
+            }
+        }
+
+        mutex.unlock();
+    }
 }
 
 void MainWindow::prepareImageExport()

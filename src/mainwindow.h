@@ -25,6 +25,7 @@ private slots:
     void getDataFileSettings();
     void exitApplication();
     void reloadDataFile();
+    void dataFileChange();
     void prepareImageExport();
     void showAbout();
     void showXAxisScaleDialog();
