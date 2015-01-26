@@ -43,10 +43,7 @@ bool DataFileParser::loadDataFile()
             bool bResult = readLineFromFile(&file, &line);
             if(bResult)
             {
-                if(line.simplified() != "")
-                {
-                    _fileContents.append(line);
-                }
+                _fileContents.append(line);
             }
             else
             {
@@ -139,39 +136,43 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     {
         for (qint32 index = _parseSettings.dataRow; index < _fileContents.size(); index++)
         {
-            QStringList paramList = _fileContents[index].split(_parseSettings.fieldSeparator);
-            if ((paramList.size() - (qint32)_parseSettings.column) != expectedFields)
+            // ignore empty lines
+            if(_fileContents[index].simplified() != "")
             {
-                QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
-                Util::showError(txt);
-                bRet = false;
-                break;
-            }
-
-            for (qint32 i = _parseSettings.column; i < paramList.size(); i++)
-            {
-                bool bError = false;
-
-                // Remove group separator
-                QString tmpData = paramList[i].simplified().replace(_parseSettings.groupSeparator, "");
-
-                // Replace decimal point if needed
-                if (QLocale::system().decimalPoint() != _parseSettings.decimalSeparator)
+                QStringList paramList = _fileContents[index].split(_parseSettings.fieldSeparator);
+                if ((paramList.size() - (qint32)_parseSettings.column) != expectedFields)
                 {
-                    tmpData = tmpData.replace(_parseSettings.decimalSeparator, QLocale::system().decimalPoint());
-                }
-
-                const double number = QLocale::system().toDouble(tmpData, &bError);
-                if (bError == false)
-                {
-                    QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
-                    Util::showError(error);
+                    QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
+                    Util::showError(txt);
                     bRet = false;
                     break;
                 }
-                else
+
+                for (qint32 i = _parseSettings.column; i < paramList.size(); i++)
                 {
-                    dataRows[i - _parseSettings.column].append(number);
+                    bool bError = false;
+
+                    // Remove group separator
+                    QString tmpData = paramList[i].simplified().replace(_parseSettings.groupSeparator, "");
+
+                    // Replace decimal point if needed
+                    if (QLocale::system().decimalPoint() != _parseSettings.decimalSeparator)
+                    {
+                        tmpData = tmpData.replace(_parseSettings.decimalSeparator, QLocale::system().decimalPoint());
+                    }
+
+                    const double number = QLocale::system().toDouble(tmpData, &bError);
+                    if (bError == false)
+                    {
+                        QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
+                        Util::showError(error);
+                        bRet = false;
+                        break;
+                    }
+                    else
+                    {
+                        dataRows[i - _parseSettings.column].append(number);
+                    }
                 }
             }
 
