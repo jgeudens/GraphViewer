@@ -117,17 +117,21 @@ void MainWindow::dataFileChange()
 
     if(mutex.tryLock())
     {
-        if(_dataFileSettings.dynamicSession)
+        QFile file(_dataFileSettings.path);
+        if(file.size() > 0)
         {
-            reloadDataFile();
-        }
-        else
-        {
-            QMessageBox::StandardButton reply;
-            reply = QMessageBox::question(this, "Data file changed", "Reload data file?", QMessageBox::Yes|QMessageBox::No);
-            if(reply == QMessageBox::Yes)
+            if(_dataFileSettings.bDynamicSession)
             {
                 reloadDataFile();
+            }
+            else
+            {
+                QMessageBox::StandardButton reply;
+                reply = QMessageBox::question(this, "Data file changed", "Reload data file?", QMessageBox::Yes|QMessageBox::No);
+                if(reply == QMessageBox::Yes)
+                {
+                    reloadDataFile();
+                }
             }
         }
 

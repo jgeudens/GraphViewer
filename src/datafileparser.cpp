@@ -21,7 +21,7 @@ void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
     _parseSettings.decimalSeparator = settings.decimalSeparator;
     _parseSettings.labelRow = settings.labelRow;
     _parseSettings.path = settings.path;
-    _parseSettings.dynamicSession = settings.dynamicSession;
+    _parseSettings.bDynamicSession = settings.bDynamicSession;
 }
 
 
@@ -30,30 +30,31 @@ bool DataFileParser::loadDataFile()
 {
     bool bRet = true;
     QString line;
-    QFile* file = new QFile(_parseSettings.path);
+    QFile file(_parseSettings.path);
 
     /* If we can't open it, let's show an error message. */
-    if (file->open(QIODevice::ReadOnly | QIODevice::Text))
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
 
         _fileContents.clear();
 
-        bool bResult = readLineFromFile(file, &line);
-        while (bResult)
+        do
         {
-            _fileContents.append(line);
-
-            // Check end of file
-            if (file->atEnd())
+            bool bResult = readLineFromFile(&file, &line);
+            if(bResult)
+            {
+                if(line.simplified() != "")
+                {
+                    _fileContents.append(line);
+                }
+            }
+            else
             {
                 break;
             }
+        } while(!file.atEnd());
 
-            // Read next line
-            bResult = readLineFromFile(file, &line);
-        }
-
-        if (!bResult)
+        if (!file.atEnd())
         {
             Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.path));
             bRet = false;
