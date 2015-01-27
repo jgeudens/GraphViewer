@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "datatypes.h"
+#include "dataparsersettings.h"
 
 namespace Ui {
 class Dialog;
@@ -18,7 +18,7 @@ public:
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
 
-    void getDataSettings(DataTypes::DataFileSettings * pSettings);
+    void getDataSettings(DataParserSettings *pSettings);
 
 private slots:
     void selectDataFile();
@@ -30,7 +30,7 @@ private slots:
 private:
     Ui::Dialog * _ui;
 
-    DataTypes::DataFileSettings _settings;
+    DataParserSettings _settings;
 
 };
 

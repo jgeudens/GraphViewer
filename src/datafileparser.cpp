@@ -2,7 +2,7 @@
 #include <QtWidgets>
 #include <QMessageBox>
 
-#include "datatypes.h"
+#include "dataparsersettings.h"
 #include "util.h"
 #include "datafileparser.h"
 
@@ -12,25 +12,17 @@ DataFileParser::DataFileParser() :
     connect(_fileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
 }
 
-void DataFileParser::setDataFileSettings(DataTypes::DataFileSettings &settings)
+void DataFileParser::setDataFileSettings(DataParserSettings &settings)
 {
-    _parseSettings.column = settings.column;
-    _parseSettings.dataRow = settings.dataRow;
-    _parseSettings.fieldSeparator = settings.fieldSeparator;
-    _parseSettings.groupSeparator = settings.groupSeparator;
-    _parseSettings.decimalSeparator = settings.decimalSeparator;
-    _parseSettings.labelRow = settings.labelRow;
-    _parseSettings.path = settings.path;
-    _parseSettings.bDynamicSession = settings.bDynamicSession;
+    settings.copyTo(&_parseSettings);
 }
-
 
 // Return false on error
 bool DataFileParser::loadDataFile()
 {
     bool bRet = true;
     QString line;
-    QFile file(_parseSettings.path);
+    QFile file(_parseSettings.getPath());
 
     /* If we can't open it, let's show an error message. */
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -53,7 +45,7 @@ bool DataFileParser::loadDataFile()
 
         if (!file.atEnd())
         {
-            Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.path));
+            Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.getPath()));
             bRet = false;
         }
 
@@ -66,11 +58,11 @@ bool DataFileParser::loadDataFile()
             _fileWatcher->removePaths(_fileWatcher->directories());
         }
 
-        _fileWatcher->addPath(_parseSettings.path);
+        _fileWatcher->addPath(_parseSettings.getPath());
     }
     else
     {
-        Util::showError(tr("Couldn't open data file: %1").arg(_parseSettings.path));
+        Util::showError(tr("Couldn't open data file: %1").arg(_parseSettings.getPath()));
         bRet = false;
     }
 
@@ -79,7 +71,7 @@ bool DataFileParser::loadDataFile()
 
 void DataFileParser::fileChange(QString path)
 {
-    if(path == _parseSettings.path)
+    if(path == _parseSettings.getPath())
     {
         emit fileChanged();
     }
@@ -91,7 +83,7 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     bool bRet = true;
 
     // Get number of rows (from dataRow)
-    const qint32 expectedFields = _fileContents[_parseSettings.dataRow].split(_parseSettings.fieldSeparator).size() - _parseSettings.column;
+    const qint32 expectedFields = _fileContents[_parseSettings.getDataRow()].split(_parseSettings.getFieldSeparator()).size() - _parseSettings.getColumn();
 
     // Check number of expected fields
     if (expectedFields < 2)
@@ -104,8 +96,8 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     QStringList tmpLabels;
     if (bRet)
     {
-        tmpLabels = _fileContents[_parseSettings.labelRow].split(_parseSettings.fieldSeparator);
-        if ((tmpLabels.size() - (qint32)_parseSettings.column) != expectedFields)
+        tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
+        if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
         {
             Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
             bRet = false;
@@ -125,7 +117,7 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     // Process labels
     if (bRet)
     {
-        for (qint32 i = _parseSettings.column; i < tmpLabels.size(); i++)
+        for (qint32 i = _parseSettings.getColumn(); i < tmpLabels.size(); i++)
         {
             labels.append(tmpLabels[i]);
         }
@@ -134,13 +126,13 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
 
     if (bRet)
     {
-        for (qint32 index = _parseSettings.dataRow; index < _fileContents.size(); index++)
+        for (qint32 index = _parseSettings.getDataRow(); index < _fileContents.size(); index++)
         {
             // ignore empty lines
             if(_fileContents[index].simplified() != "")
             {
-                QStringList paramList = _fileContents[index].split(_parseSettings.fieldSeparator);
-                if ((paramList.size() - (qint32)_parseSettings.column) != expectedFields)
+                QStringList paramList = _fileContents[index].split(_parseSettings.getFieldSeparator());
+                if ((paramList.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
                 {
                     QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
                     Util::showError(txt);
@@ -148,17 +140,17 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
                     break;
                 }
 
-                for (qint32 i = _parseSettings.column; i < paramList.size(); i++)
+                for (qint32 i = _parseSettings.getColumn(); i < paramList.size(); i++)
                 {
                     bool bError = false;
 
                     // Remove group separator
-                    QString tmpData = paramList[i].simplified().replace(_parseSettings.groupSeparator, "");
+                    QString tmpData = paramList[i].simplified().replace(_parseSettings.getGroupSeparator(), "");
 
                     // Replace decimal point if needed
-                    if (QLocale::system().decimalPoint() != _parseSettings.decimalSeparator)
+                    if (QLocale::system().decimalPoint() != _parseSettings.getDecimalSeparator())
                     {
-                        tmpData = tmpData.replace(_parseSettings.decimalSeparator, QLocale::system().decimalPoint());
+                        tmpData = tmpData.replace(_parseSettings.getDecimalSeparator(), QLocale::system().decimalPoint());
                     }
 
                     const double number = QLocale::system().toDouble(tmpData, &bError);
@@ -171,7 +163,7 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
                     }
                     else
                     {
-                        dataRows[i - _parseSettings.column].append(number);
+                        dataRows[i - _parseSettings.getColumn()].append(number);
                     }
                 }
             }

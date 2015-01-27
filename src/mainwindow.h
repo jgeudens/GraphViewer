@@ -5,7 +5,7 @@
 #include <QMenu>
 
 #include "datafileparser.h"
-#include "datatypes.h"
+#include "dataparsersettings.h"
 #include "graphviewer.h"
 #include "dialog.h"
 
@@ -37,7 +37,7 @@ private:
     void updateGraph();
 
     Ui::MainWindow * _ui;
-    DataTypes::DataFileSettings _dataFileSettings;
+    DataParserSettings _dataFileSettings;
     GraphViewer * _graphViewer;
     DataFileParser _parser;
 

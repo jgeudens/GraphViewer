@@ -64,25 +64,25 @@ Dialog::~Dialog()
     delete _ui;
 }
 
-void Dialog::getDataSettings(DataTypes::DataFileSettings * pSettings)
+void Dialog::getDataSettings(DataParserSettings * pSettings)
 {
-    pSettings->path = _settings.path;
-    pSettings->column = _ui->spinColumn->value() - 1; // 1 based to 0 based
-    pSettings->dataRow = _ui->spinDataRow->value() - 1; // 1 based to 0 based
-    pSettings->labelRow = _ui->spinLabelRow->value() - 1; // 1 based to 0 based
+    pSettings->setPath(_settings.getPath());
+    pSettings->setColumn(_ui->spinColumn->value() - 1); // 1 based to 0 based
+    pSettings->setDataRow(_ui->spinDataRow->value() - 1); // 1 based to 0 based
+    pSettings->setLabelRow(_ui->spinLabelRow->value() - 1); // 1 based to 0 based
 
     if (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
     {
-        pSettings->fieldSeparator = _ui->lineCustomFieldSeparator->text();
+        pSettings->setFieldSeparator(_ui->lineCustomFieldSeparator->text());
     }
     else
     {
-        pSettings->fieldSeparator = _ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString();
+        pSettings->setFieldSeparator(_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString());
     }
 
-    pSettings->decimalSeparator = _ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString();
-    pSettings->groupSeparator = _ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString();
-    pSettings->bDynamicSession = (_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+    pSettings->setDecimalSeparator(_ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString());
+    pSettings->setGroupSeparator(_ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString());
+    pSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
 }
 
 void Dialog::selectDataFile()
@@ -96,8 +96,8 @@ void Dialog::selectDataFile()
 
     if (dialog.exec())
     {
-        _settings.path = dialog.selectedFiles().first();
-        _ui->lineDataFile->setText(QFileInfo(_settings.path).fileName());
+        _settings.setPath(dialog.selectedFiles().first());
+        _ui->lineDataFile->setText(QFileInfo(_settings.getPath()).fileName());
     }
 }
 
@@ -144,7 +144,7 @@ void Dialog::done(int r)
 
         if (bStop)
         {
-            if (!QFileInfo(_settings.path).exists())
+            if (!QFileInfo(_settings.getPath()).exists())
             {
                 bStop = false;
                 Util::showError(tr("Data file doesn't exist"));

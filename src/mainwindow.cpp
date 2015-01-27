@@ -1,5 +1,5 @@
 
-#include "datatypes.h"
+#include "dataparsersettings.h"
 #include "datafileparser.h"
 #include "axisscaledialog.h"
 #include "mainwindow.h"
@@ -72,7 +72,7 @@ void MainWindow::updateGraph()
         {
             _graphViewer->setupGraph(&data, &labels);
 
-            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
+            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.getPath()).fileName()));
 
             _ui->actionReloadDataFile->setEnabled(true);
             _ui->actionExportImage->setEnabled(true);
@@ -111,7 +111,7 @@ void MainWindow::updateGraph()
 
     if (bFailed)
     {
-        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.path).fileName()));
+        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.getPath()).fileName()));
         _graphViewer->clear();
 
         _ui->actionReloadDataFile->setEnabled(false);
@@ -142,10 +142,10 @@ void MainWindow::dataFileChange()
 
     if(mutex.tryLock())
     {
-        QFile file(_dataFileSettings.path);
+        QFile file(_dataFileSettings.getPath());
         if(file.size() > 0)
         {
-            if(_dataFileSettings.bDynamicSession)
+            if(_dataFileSettings.getDynamicSession())
             {
                 reloadDataFile();
             }
