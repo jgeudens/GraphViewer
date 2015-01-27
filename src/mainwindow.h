@@ -7,7 +7,7 @@
 #include "datafileparser.h"
 #include "dataparsersettings.h"
 #include "graphviewer.h"
-#include "dialog.h"
+#include "loadfiledialog.h"
 
 namespace Ui {
 class MainWindow;

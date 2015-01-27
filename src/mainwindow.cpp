@@ -46,13 +46,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::getDataFileSettings()
 {
-    Dialog dialog;
+    LoadFileDialog loadDataFileDialog;
 
-    if (dialog.exec())
+    if (loadDataFileDialog.exec())
     {
-        if (dialog.result() == QDialog::Accepted)
+        if (loadDataFileDialog.result() == QDialog::Accepted)
         {
-            dialog.getDataSettings(&_dataFileSettings);
+            loadDataFileDialog.getDataSettings(&_dataFileSettings);
             _parser.setDataFileSettings(_dataFileSettings);
 
             updateGraph();
@@ -167,23 +167,23 @@ void MainWindow::dataFileChange()
 void MainWindow::prepareImageExport()
 {
     QString filePath;
-    QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::AnyFile);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.setOption(QFileDialog::HideNameFilterDetails, false);
-    dialog.setDefaultSuffix("png");
-    dialog.setWindowTitle(tr("Select png file"));
-    dialog.setNameFilter(tr("PNG files (*.png)"));
+    QFileDialog fileDialog(this);
+    fileDialog.setFileMode(QFileDialog::AnyFile);
+    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
+    fileDialog.setOption(QFileDialog::HideNameFilterDetails, false);
+    fileDialog.setDefaultSuffix("png");
+    fileDialog.setWindowTitle(tr("Select png file"));
+    fileDialog.setNameFilter(tr("PNG files (*.png)"));
 
     QStringList docPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     if (docPath.size() > 0)
     {
-        dialog.setDirectory(docPath[0]);
+        fileDialog.setDirectory(docPath[0]);
     }
 
-    if (dialog.exec())
+    if (fileDialog.exec())
     {
-        filePath = dialog.selectedFiles().first();
+        filePath = fileDialog.selectedFiles().first();
         _graphViewer->exportGraphImage(filePath);
     }
 }

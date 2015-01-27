@@ -1,22 +1,22 @@
-#ifndef DIALOG_H
-#define DIALOG_H
+#ifndef LoadFileDialog_H
+#define LoadFileDialog_H
 
 #include <QDialog>
 
 #include "dataparsersettings.h"
 
 namespace Ui {
-class Dialog;
+class LoadFileDialog;
 }
 
-class Dialog : public QDialog
+class LoadFileDialog : public QDialog
 {
     Q_OBJECT
 
 public:
 
-    explicit Dialog(QWidget *parent = 0);
-    ~Dialog();
+    explicit LoadFileDialog(QWidget *parent = 0);
+    ~LoadFileDialog();
 
     void getDataSettings(DataParserSettings *pSettings);
 
@@ -28,10 +28,10 @@ private slots:
     void done(int r);
 
 private:
-    Ui::Dialog * _ui;
+    Ui::LoadFileDialog * _ui;
 
     DataParserSettings _settings;
 
 };
 
-#endif // DIALOG_H
+#endif // LoadFileDialog_H

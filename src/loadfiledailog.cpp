@@ -2,12 +2,12 @@
 #include <QFileDialog>
 
 #include "util.h"
-#include "dialog.h"
-#include "ui_dialog.h"
+#include "loadfiledialog.h"
+#include "ui_loadfiledialog.h"
 
-Dialog::Dialog(QWidget *parent) :
+LoadFileDialog::LoadFileDialog(QWidget *parent) :
     QDialog(parent),
-    _ui(new Ui::Dialog)
+    _ui(new Ui::LoadFileDialog)
 {
     _ui->setupUi(this);
 
@@ -59,12 +59,12 @@ Dialog::Dialog(QWidget *parent) :
     connect(_ui->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
 }
 
-Dialog::~Dialog()
+LoadFileDialog::~LoadFileDialog()
 {
     delete _ui;
 }
 
-void Dialog::getDataSettings(DataParserSettings * pSettings)
+void LoadFileDialog::getDataSettings(DataParserSettings * pSettings)
 {
     pSettings->setPath(_settings.getPath());
     pSettings->setColumn(_ui->spinColumn->value() - 1); // 1 based to 0 based
@@ -85,23 +85,23 @@ void Dialog::getDataSettings(DataParserSettings * pSettings)
     pSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
 }
 
-void Dialog::selectDataFile()
+void LoadFileDialog::selectDataFile()
 {
-    QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setAcceptMode(QFileDialog::AcceptOpen);
-    dialog.setOption(QFileDialog::HideNameFilterDetails, false);
-    dialog.setWindowTitle(tr("Select data file"));
-    dialog.setNameFilter(tr("*.* (*.*)"));
+    QFileDialog fileDialog(this);
+    fileDialog.setFileMode(QFileDialog::ExistingFile);
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.setOption(QFileDialog::HideNameFilterDetails, false);
+    fileDialog.setWindowTitle(tr("Select data file"));
+    fileDialog.setNameFilter(tr("*.* (*.*)"));
 
-    if (dialog.exec())
+    if (fileDialog.exec())
     {
-        _settings.setPath(dialog.selectedFiles().first());
+        _settings.setPath(fileDialog.selectedFiles().first());
         _ui->lineDataFile->setText(QFileInfo(_settings.getPath()).fileName());
     }
 }
 
-void Dialog::presetSelected(int index)
+void LoadFileDialog::presetSelected(int index)
 {
     switch (index) {
     case 0:
@@ -122,7 +122,7 @@ void Dialog::presetSelected(int index)
 }
 
 
-void Dialog::fieldSeparatorSelected(int index)
+void LoadFileDialog::fieldSeparatorSelected(int index)
 {
     if (_ui->comboFieldSeparator->itemData(index).toString().toLower() == "custom")
     {
@@ -134,7 +134,7 @@ void Dialog::fieldSeparatorSelected(int index)
     }
 }
 
-void Dialog::done(int r)
+void LoadFileDialog::done(int r)
 {
     bool bStop = true;
 

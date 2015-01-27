@@ -20,22 +20,22 @@ SOURCES +=  \
     ../src/main.cpp \
     ../libraries/qcustomplot/qcustomplot.cpp \
     ../src/datafileparser.cpp \
-    ../src/dialog.cpp \
     ../src/graphviewer.cpp \
     ../src/axisscaledialog.cpp \
-    ../src/dataparsersettings.cpp
+    ../src/dataparsersettings.cpp \
+    ../src/loadfiledailog.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
-    ../src/dialog.ui \
-    ../src/axisscaledialog.ui
+    ../src/axisscaledialog.ui \
+    ../src/loadfiledialog.ui
 
 HEADERS += \
     ../src/mainwindow.h \
     ../libraries/qcustomplot/qcustomplot.h \
     ../src/datafileparser.h \
-    ../src/dialog.h \
     ../src/graphviewer.h \
     ../src/util.h \
     ../src/axisscaledialog.h \
-    ../src/dataparsersettings.h
+    ../src/dataparsersettings.h \
+    ../src/loadfiledialog.h
