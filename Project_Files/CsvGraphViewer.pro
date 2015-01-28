@@ -23,7 +23,7 @@ SOURCES +=  \
     ../src/graphviewer.cpp \
     ../src/axisscaledialog.cpp \
     ../src/dataparsersettings.cpp \
-    ../src/loadfiledailog.cpp
+    ../src/loadfiledialog.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
