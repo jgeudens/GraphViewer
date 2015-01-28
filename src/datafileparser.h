@@ -14,7 +14,9 @@ class DataFileParser : public QObject
 
 public:
     DataFileParser();
-    void setDataFileSettings(DataParserSettings &settings);
+    ~DataFileParser();
+
+    DataParserSettings * getDataParseSettingsPointer();
     bool loadDataFile(void);
     bool parseData(QList<QList<double> > &dataRows, QStringList &labels);
 
@@ -30,8 +32,8 @@ private:
 
     QStringList _fileContents;
 
-   DataParserSettings _parseSettings;
-   QFileSystemWatcher *_fileWatcher;
+    DataParserSettings _parseSettings;
+    QFileSystemWatcher *_fileWatcher;
 
 };
 

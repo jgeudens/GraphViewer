@@ -12,9 +12,14 @@ DataFileParser::DataFileParser() :
     connect(_fileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
 }
 
-void DataFileParser::setDataFileSettings(DataParserSettings &settings)
+DataFileParser::~DataFileParser()
 {
-    settings.copyTo(&_parseSettings);
+    delete _fileWatcher;
+}
+
+DataParserSettings * DataFileParser::getDataParseSettingsPointer()
+{
+    return &_parseSettings;
 }
 
 // Return false on error

@@ -5,11 +5,13 @@
 #include "loadfiledialog.h"
 #include "ui_loadfiledialog.h"
 
-LoadFileDialog::LoadFileDialog(QWidget *parent) :
+LoadFileDialog::LoadFileDialog(DataParserSettings *pParseSettings, QWidget *parent) :
     QDialog(parent),
     _ui(new Ui::LoadFileDialog)
 {
     _ui->setupUi(this);
+
+    _pParseSettings = pParseSettings;
 
     _ui->comboFieldSeparator->addItem(" ; (semicolon)", ";");
     _ui->comboFieldSeparator->addItem(" , (comma)", ",");
@@ -64,27 +66,6 @@ LoadFileDialog::~LoadFileDialog()
     delete _ui;
 }
 
-void LoadFileDialog::getDataSettings(DataParserSettings * pSettings)
-{
-    pSettings->setPath(_settings.getPath());
-    pSettings->setColumn(_ui->spinColumn->value() - 1); // 1 based to 0 based
-    pSettings->setDataRow(_ui->spinDataRow->value() - 1); // 1 based to 0 based
-    pSettings->setLabelRow(_ui->spinLabelRow->value() - 1); // 1 based to 0 based
-
-    if (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-    {
-        pSettings->setFieldSeparator(_ui->lineCustomFieldSeparator->text());
-    }
-    else
-    {
-        pSettings->setFieldSeparator(_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString());
-    }
-
-    pSettings->setDecimalSeparator(_ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString());
-    pSettings->setGroupSeparator(_ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString());
-    pSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
-}
-
 void LoadFileDialog::selectDataFile()
 {
     QFileDialog fileDialog(this);
@@ -96,8 +77,8 @@ void LoadFileDialog::selectDataFile()
 
     if (fileDialog.exec())
     {
-        _settings.setPath(fileDialog.selectedFiles().first());
-        _ui->lineDataFile->setText(QFileInfo(_settings.getPath()).fileName());
+        _pParseSettings->setPath(fileDialog.selectedFiles().first());
+        _ui->lineDataFile->setText(QFileInfo(_pParseSettings->getPath()).fileName());
     }
 }
 
@@ -144,7 +125,7 @@ void LoadFileDialog::done(int r)
 
         if (bStop)
         {
-            if (!QFileInfo(_settings.getPath()).exists())
+            if (!QFileInfo(_pParseSettings->getPath()).exists())
             {
                 bStop = false;
                 Util::showError(tr("Data file doesn't exist"));
@@ -163,6 +144,26 @@ void LoadFileDialog::done(int r)
             }
         }
 
+        if (bStop)
+        {
+            // path is already set
+            _pParseSettings->setColumn(_ui->spinColumn->value() - 1); // 1 based to 0 based
+            _pParseSettings->setDataRow(_ui->spinDataRow->value() - 1); // 1 based to 0 based
+            _pParseSettings->setLabelRow(_ui->spinLabelRow->value() - 1); // 1 based to 0 based
+
+            if (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+            {
+                _pParseSettings->setFieldSeparator(_ui->lineCustomFieldSeparator->text());
+            }
+            else
+            {
+                _pParseSettings->setFieldSeparator(_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString());
+            }
+
+            _pParseSettings->setDecimalSeparator(_ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString());
+            _pParseSettings->setGroupSeparator(_ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString());
+            _pParseSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+        }
 
     }
     else

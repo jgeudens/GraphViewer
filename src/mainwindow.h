@@ -34,12 +34,12 @@ private slots:
 
 
 private:
-    void updateGraph();
+    bool updateGraph(DataFileParser *_pDataFileParser);
 
     Ui::MainWindow * _ui;
-    DataParserSettings _dataFileSettings;
     GraphViewer * _graphViewer;
-    DataFileParser _parser;
+
+    DataFileParser * _pParser;
 
     QMenu * _graphShowHide;
 

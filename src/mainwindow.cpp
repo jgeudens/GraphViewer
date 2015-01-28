@@ -10,7 +10,8 @@ const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     _ui(new Ui::MainWindow),
-    _graphViewer(NULL)
+    _graphViewer(NULL),
+    _pParser(NULL)
 {
     _ui->setupUi(this);
 
@@ -34,45 +35,69 @@ MainWindow::MainWindow(QWidget *parent) :
     _graphShowHide->setEnabled(false);
     _ui->menuGraph->addSeparator();
     _ui->menuGraph->addMenu(_graphShowHide);
-
-    connect(&_parser, SIGNAL(fileChanged()), this, SLOT(dataFileChange()));
-
 }
 
 MainWindow::~MainWindow()
 {
+    delete _graphViewer;
+    delete _graphShowHide;
+    delete _pParser;
     delete _ui;
 }
 
 void MainWindow::getDataFileSettings()
 {
-    LoadFileDialog loadDataFileDialog;
+    DataFileParser * pNewParser = new DataFileParser();
+    bool bSucceeded;
+    LoadFileDialog loadDataFileDialog(pNewParser->getDataParseSettingsPointer());
 
+    bSucceeded = false;
     if (loadDataFileDialog.exec())
     {
         if (loadDataFileDialog.result() == QDialog::Accepted)
         {
-            loadDataFileDialog.getDataSettings(&_dataFileSettings);
-            _parser.setDataFileSettings(_dataFileSettings);
-
-            updateGraph();
+            if (updateGraph(pNewParser))
+            {
+                bSucceeded = true;
+            }
         }
+    }
+
+    if (bSucceeded)
+    {
+        // Data file parse succeeded
+
+        // delete previous parser is necessairy
+        if (_pParser)
+        {
+            delete _pParser;
+        }
+
+        // Set pointer to new parser object
+        _pParser = pNewParser;
+
+        connect(_pParser, SIGNAL(fileChanged()), this, SLOT(dataFileChange()));
+    }
+    else // New file load failed
+    {
+        // Delete new parser, because invalid
+        delete pNewParser;
     }
 }
 
-void MainWindow::updateGraph()
+bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 {
-    bool bFailed = false;
-    if (_parser.loadDataFile())
+    bool bSucceeded = false;
+    if (_pDataFileParser->loadDataFile())
     {
         QList<QList<double> > data;
         QStringList labels;
 
-        if (_parser.parseData(data, labels))
+        if (_pDataFileParser->parseData(data, labels))
         {
             _graphViewer->setupGraph(&data, &labels);
 
-            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.getPath()).fileName()));
+            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettingsPointer()->getPath()).fileName()));
 
             _ui->actionReloadDataFile->setEnabled(true);
             _ui->actionExportImage->setEnabled(true);
@@ -98,32 +123,17 @@ void MainWindow::updateGraph()
             }
 
             _graphShowHide->setEnabled(true);
-        }
-        else
-        {
-            bFailed = true;
+
+            bSucceeded = true;
         }
     }
-    else
+
+    if (!bSucceeded)
     {
-        bFailed = true;
+        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettingsPointer()->getPath()).fileName()));
     }
 
-    if (bFailed)
-    {
-        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_dataFileSettings.getPath()).fileName()));
-        _graphViewer->clear();
-
-        _ui->actionReloadDataFile->setEnabled(false);
-        _ui->actionExportImage->setEnabled(false);
-
-        _ui->actionAutoScaleXAxis->setEnabled(false);
-        _ui->actionAutoScaleYAxis->setEnabled(false);
-        _ui->actionSetManualScaleXAxis->setEnabled(false);
-        _ui->actionSetManualScaleYAxis->setEnabled(false);
-
-        _graphShowHide->setEnabled(false);
-    }
+    return bSucceeded;
 }
 
 void MainWindow::exitApplication()
@@ -133,7 +143,8 @@ void MainWindow::exitApplication()
 
 void MainWindow::reloadDataFile()
 {
-    updateGraph();
+    // Reload data with current parser data
+    updateGraph(_pParser);
 }
 
 void MainWindow::dataFileChange()
@@ -142,10 +153,10 @@ void MainWindow::dataFileChange()
 
     if(mutex.tryLock())
     {
-        QFile file(_dataFileSettings.getPath());
+        QFile file(_pParser->getDataParseSettingsPointer()->getPath());
         if(file.size() > 0)
         {
-            if(_dataFileSettings.getDynamicSession())
+            if(_pParser->getDataParseSettingsPointer()->getDynamicSession())
             {
                 reloadDataFile();
             }
