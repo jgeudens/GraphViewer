@@ -7,14 +7,14 @@
 #include "datafileparser.h"
 
 DataFileParser::DataFileParser() :
-    _fileWatcher(new QFileSystemWatcher())
+    _pFileWatcher(new QFileSystemWatcher())
 {
-    connect(_fileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
+    connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
 }
 
 DataFileParser::~DataFileParser()
 {
-    delete _fileWatcher;
+    delete _pFileWatcher;
 }
 
 DataParserSettings * DataFileParser::getDataParseSettingsPointer()
@@ -54,16 +54,16 @@ bool DataFileParser::loadDataFile()
             bRet = false;
         }
 
-        if(_fileWatcher->files().length() > 0)
+        if(_pFileWatcher->files().length() > 0)
         {
-            _fileWatcher->removePaths(_fileWatcher->files());
+            _pFileWatcher->removePaths(_pFileWatcher->files());
         }
-        if(_fileWatcher->directories().length() > 0)
+        if(_pFileWatcher->directories().length() > 0)
         {
-            _fileWatcher->removePaths(_fileWatcher->directories());
+            _pFileWatcher->removePaths(_pFileWatcher->directories());
         }
 
-        _fileWatcher->addPath(_parseSettings.getPath());
+        _pFileWatcher->addPath(_parseSettings.getPath());
     }
     else
     {

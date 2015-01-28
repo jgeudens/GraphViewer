@@ -33,7 +33,7 @@ private:
     QStringList _fileContents;
 
     DataParserSettings _parseSettings;
-    QFileSystemWatcher *_fileWatcher;
+    QFileSystemWatcher *_pFileWatcher;
 
 };
 

@@ -10,14 +10,14 @@ const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     _ui(new Ui::MainWindow),
-    _graphViewer(NULL),
+    _pGraphViewer(NULL),
     _pParser(NULL)
 {
     _ui->setupUi(this);
 
     this->setWindowTitle(_cWindowTitle);
     
-    _graphViewer = new GraphViewer(_ui->customPlot, this);
+    _pGraphViewer = new GraphViewer(_ui->customPlot, this);
 
     connect(_ui->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
     connect(_ui->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
@@ -25,22 +25,22 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_ui->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
-    connect(_ui->actionAutoScaleXAxis, SIGNAL(triggered()), _graphViewer, SLOT(autoScaleXAxis()));
-    connect(_ui->actionAutoScaleYAxis, SIGNAL(triggered()), _graphViewer, SLOT(autoScaleYAxis()));
+    connect(_ui->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
+    connect(_ui->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
 
     connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 
-    _graphShowHide = new QMenu("Show/Hide");
-    _graphShowHide->setEnabled(false);
+    _pGraphShowHide = new QMenu("Show/Hide");
+    _pGraphShowHide->setEnabled(false);
     _ui->menuGraph->addSeparator();
-    _ui->menuGraph->addMenu(_graphShowHide);
+    _ui->menuGraph->addMenu(_pGraphShowHide);
 }
 
 MainWindow::~MainWindow()
 {
-    delete _graphViewer;
-    delete _graphShowHide;
+    delete _pGraphViewer;
+    delete _pGraphShowHide;
     delete _pParser;
     delete _ui;
 }
@@ -95,7 +95,7 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 
         if (_pDataFileParser->parseData(data, labels))
         {
-            _graphViewer->setupGraph(&data, &labels);
+            _pGraphViewer->setupGraph(&data, &labels);
 
             setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettingsPointer()->getPath()).fileName()));
 
@@ -108,12 +108,12 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
             _ui->actionSetManualScaleYAxis->setEnabled(true);
 
             // Clear actions
-            _graphShowHide->clear();
+            _pGraphShowHide->clear();
 
             // Add menu-items
             for (qint32 i = 1; i < labels.size(); i++)
             {
-                QAction *act = _graphShowHide->addAction(labels[i]);
+                QAction *act = _pGraphShowHide->addAction(labels[i]);
 
                 act->setData(i - 1);
                 act->setCheckable(true);
@@ -122,7 +122,7 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
                 QObject::connect(act, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
             }
 
-            _graphShowHide->setEnabled(true);
+            _pGraphShowHide->setEnabled(true);
 
             bSucceeded = true;
         }
@@ -195,7 +195,7 @@ void MainWindow::prepareImageExport()
     if (fileDialog.exec())
     {
         filePath = fileDialog.selectedFiles().first();
-        _graphViewer->exportGraphImage(filePath);
+        _pGraphViewer->exportGraphImage(filePath);
     }
 }
 
@@ -233,7 +233,7 @@ void MainWindow::showXAxisScaleDialog()
     {
         if (scaleDialog.result() == QDialog::Accepted)
         {
-            _graphViewer->manualScaleXAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+            _pGraphViewer->manualScaleXAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
         }
     }
 }
@@ -246,7 +246,7 @@ void MainWindow::showYAxisScaleDialog()
     {
         if (scaleDialog.result() == QDialog::Accepted)
         {
-            _graphViewer->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+            _pGraphViewer->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
         }
     }
 }
@@ -255,6 +255,6 @@ void MainWindow::showHideGraph(bool bState)
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
-    _graphViewer->showGraph(pAction->data().toInt(), bState);
+    _pGraphViewer->showGraph(pAction->data().toInt(), bState);
 }
 

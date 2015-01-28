@@ -37,11 +37,10 @@ private:
     bool updateGraph(DataFileParser *_pDataFileParser);
 
     Ui::MainWindow * _ui;
-    GraphViewer * _graphViewer;
 
+    GraphViewer * _pGraphViewer;
     DataFileParser * _pParser;
-
-    QMenu * _graphShowHide;
+    QMenu * _pGraphShowHide;
 
     static const QString _cWindowTitle;
 };
