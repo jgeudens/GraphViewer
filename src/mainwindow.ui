@@ -62,11 +62,21 @@
     <property name="title">
      <string>Graph</string>
     </property>
+    <widget class="QMenu" name="menuShowHide">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Show/Hide</string>
+     </property>
+    </widget>
     <addaction name="actionAutoScaleXAxis"/>
     <addaction name="actionAutoScaleYAxis"/>
     <addaction name="separator"/>
     <addaction name="actionSetManualScaleXAxis"/>
     <addaction name="actionSetManualScaleYAxis"/>
+    <addaction name="separator"/>
+    <addaction name="menuShowHide"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>

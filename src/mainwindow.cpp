@@ -31,10 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 
-    _pGraphShowHide = new QMenu("Show/Hide");
-    _pGraphShowHide->setEnabled(false);
-    _ui->menuGraph->addSeparator();
-    _ui->menuGraph->addMenu(_pGraphShowHide);
+    _pGraphShowHide = _ui->menuShowHide;
 }
 
 MainWindow::~MainWindow()
