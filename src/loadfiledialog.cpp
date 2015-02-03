@@ -163,6 +163,7 @@ void LoadFileDialog::done(int r)
             _pParseSettings->setDecimalSeparator(_ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString());
             _pParseSettings->setGroupSeparator(_ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString());
             _pParseSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+            _pParseSettings->setWatchFileData(true);
         }
 
     }
