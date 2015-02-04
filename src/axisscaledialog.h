@@ -26,7 +26,7 @@ public:
     qint64 getMaximum();
 
 private:
-    Ui::AxisScaleDialog * _ui;
+    Ui::AxisScaleDialog * _pUi;
 
     Axis _axisType;
 };

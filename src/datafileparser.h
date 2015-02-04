@@ -16,7 +16,7 @@ public:
     DataFileParser();
     ~DataFileParser();
 
-    DataParserSettings * getDataParseSettingsPointer();
+    DataParserSettings * getDataParseSettings();
     bool loadDataFile(void);
     bool parseData(QList<QList<double> > &dataRows, QStringList &labels);
 

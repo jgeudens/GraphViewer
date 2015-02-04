@@ -9,32 +9,32 @@ const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    _ui(new Ui::MainWindow),
+    _pUi(new Ui::MainWindow),
     _pGraphViewer(NULL),
     _pParser(NULL)
 {
-    _ui->setupUi(this);
+    _pUi->setupUi(this);
 
     this->setWindowTitle(_cWindowTitle);
     
-    _pGraphViewer = new GraphViewer(_ui->customPlot, this);
+    _pGraphViewer = new GraphViewer(_pUi->customPlot, this);
 
-    connect(_ui->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
-    connect(_ui->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
-    connect(_ui->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
-    connect(_ui->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
-    connect(_ui->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
+    connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
+    connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
+    connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
+    connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
+    connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
-    connect(_ui->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
-    connect(_ui->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
+    connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
+    connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
 
-    connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
-    connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
+    connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
+    connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 
-    connect(_ui->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
-    connect(_ui->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
+    connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
+    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
 
-    _pGraphShowHide = _ui->menuShowHide;
+    _pGraphShowHide = _pUi->menuShowHide;
 }
 
 MainWindow::~MainWindow()
@@ -42,14 +42,14 @@ MainWindow::~MainWindow()
     delete _pGraphViewer;
     delete _pGraphShowHide;
     delete _pParser;
-    delete _ui;
+    delete _pUi;
 }
 
 void MainWindow::getDataFileSettings()
 {
     DataFileParser * pNewParser = new DataFileParser();
     bool bSucceeded;
-    LoadFileDialog loadDataFileDialog(pNewParser->getDataParseSettingsPointer());
+    LoadFileDialog loadDataFileDialog(pNewParser->getDataParseSettings());
 
     bSucceeded = false;
     if (loadDataFileDialog.exec())
@@ -77,14 +77,14 @@ void MainWindow::getDataFileSettings()
         _pParser = pNewParser;
 
         connect(_pParser, SIGNAL(fileDataChanged()), this, SLOT(fileDataChange()));
-        connect(_pParser->getDataParseSettingsPointer(), SIGNAL(watchFileDataChanged(bool)), _ui->actionWatchFile, SLOT(setChecked(bool)));
-        connect(_pParser->getDataParseSettingsPointer(), SIGNAL(dynamicSessionChanged(bool)), _ui->actionDynamicSession, SLOT(setChecked(bool)));
+        connect(_pParser->getDataParseSettings(), SIGNAL(watchFileDataChanged(bool)), _pUi->actionWatchFile, SLOT(setChecked(bool)));
+        connect(_pParser->getDataParseSettings(), SIGNAL(dynamicSessionChanged(bool)), _pUi->actionDynamicSession, SLOT(setChecked(bool)));
         connect(_pParser, SIGNAL(addFileWatchFailed(QString)), this, SLOT(addFileWatchFail(QString)));
 
-        _ui->actionWatchFile->setEnabled(true);
-        _ui->actionWatchFile->setChecked(_pParser->getDataParseSettingsPointer()->getWatchFileData());
-        _ui->actionDynamicSession->setEnabled(true);
-        _ui->actionDynamicSession->setChecked(_pParser->getDataParseSettingsPointer()->getDynamicSession());
+        _pUi->actionWatchFile->setEnabled(true);
+        _pUi->actionWatchFile->setChecked(_pParser->getDataParseSettings()->getWatchFileData());
+        _pUi->actionDynamicSession->setEnabled(true);
+        _pUi->actionDynamicSession->setChecked(_pParser->getDataParseSettings()->getDynamicSession());
     }
     else // New file load failed
     {
@@ -105,15 +105,15 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
         {
             _pGraphViewer->setupGraph(&data, &labels);
 
-            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettingsPointer()->getPath()).fileName()));
+            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
 
-            _ui->actionReloadDataFile->setEnabled(true);
-            _ui->actionExportImage->setEnabled(true);
+            _pUi->actionReloadDataFile->setEnabled(true);
+            _pUi->actionExportImage->setEnabled(true);
 
-            _ui->actionAutoScaleXAxis->setEnabled(true);
-            _ui->actionAutoScaleYAxis->setEnabled(true);
-            _ui->actionSetManualScaleXAxis->setEnabled(true);
-            _ui->actionSetManualScaleYAxis->setEnabled(true);
+            _pUi->actionAutoScaleXAxis->setEnabled(true);
+            _pUi->actionAutoScaleYAxis->setEnabled(true);
+            _pUi->actionSetManualScaleXAxis->setEnabled(true);
+            _pUi->actionSetManualScaleYAxis->setEnabled(true);
 
             // Clear actions
             _pGraphShowHide->clear();
@@ -138,7 +138,7 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 
     if (!bSucceeded)
     {
-        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettingsPointer()->getPath()).fileName()));
+        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
     }
 
     return bSucceeded;
@@ -159,14 +159,14 @@ void MainWindow::fileDataChange()
 {
     static QMutex mutex;
 
-    if(_pParser->getDataParseSettingsPointer()->getWatchFileData())
+    if(_pParser->getDataParseSettings()->getWatchFileData())
     {
         if(mutex.tryLock())
         {
-            QFile file(_pParser->getDataParseSettingsPointer()->getPath());
+            QFile file(_pParser->getDataParseSettings()->getPath());
             if(file.size() > 0)
             {
-                if(_pParser->getDataParseSettingsPointer()->getDynamicSession())
+                if(_pParser->getDataParseSettings()->getDynamicSession())
                 {
                     reloadDataFile();
                 }
@@ -180,7 +180,7 @@ void MainWindow::fileDataChange()
                     }
                     else if(reply == QMessageBox::Cancel)
                     {
-                        _pParser->getDataParseSettingsPointer()->setWatchFileData(false);
+                        _pParser->getDataParseSettings()->setWatchFileData(false);
                     }
                 }
             }
@@ -280,12 +280,12 @@ void MainWindow::showHideGraph(bool bState)
 
 void MainWindow::enableWatchFileChanged(bool bState)
 {
-    _ui->actionWatchFile->setChecked(bState);
-    _ui->actionDynamicSession->setEnabled(bState);
+    _pUi->actionWatchFile->setChecked(bState);
+    _pUi->actionDynamicSession->setEnabled(bState);
 
     if(_pParser != NULL)
     {
-        _pParser->getDataParseSettingsPointer()->setWatchFileData(bState);
+        _pParser->getDataParseSettings()->setWatchFileData(bState);
     }
 }
 
@@ -293,7 +293,7 @@ void MainWindow::enableDynamicSessionChanged(bool bState)
 {
     if(_pParser != NULL)
     {
-        _pParser->getDataParseSettingsPointer()->setDynamicSession(bState);
+        _pParser->getDataParseSettings()->setDynamicSession(bState);
     }
 }
 

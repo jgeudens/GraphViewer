@@ -7,63 +7,63 @@
 
 LoadFileDialog::LoadFileDialog(DataParserSettings *pParseSettings, QWidget *parent) :
     QDialog(parent),
-    _ui(new Ui::LoadFileDialog)
+    _pUi(new Ui::LoadFileDialog)
 {
-    _ui->setupUi(this);
+    _pUi->setupUi(this);
 
     _pParseSettings = pParseSettings;
 
-    _ui->comboFieldSeparator->addItem(" ; (semicolon)", ";");
-    _ui->comboFieldSeparator->addItem(" , (comma)", ",");
-    _ui->comboFieldSeparator->addItem(" tab", "\t");
-    _ui->comboFieldSeparator->addItem(" custom", "custom");
+    _pUi->comboFieldSeparator->addItem(" ; (semicolon)", ";");
+    _pUi->comboFieldSeparator->addItem(" , (comma)", ",");
+    _pUi->comboFieldSeparator->addItem(" tab", "\t");
+    _pUi->comboFieldSeparator->addItem(" custom", "custom");
     if (QLocale::system().decimalPoint() == ',')
     {
-        _ui->comboFieldSeparator->setCurrentIndex(0);
+        _pUi->comboFieldSeparator->setCurrentIndex(0);
     }
     else
     {
-        _ui->comboFieldSeparator->setCurrentIndex(1);
+        _pUi->comboFieldSeparator->setCurrentIndex(1);
     }
 
-    _ui->comboPreset->addItem("Manual");
-    _ui->comboPreset->addItem("STMStudio");
+    _pUi->comboPreset->addItem("Manual");
+    _pUi->comboPreset->addItem("STMStudio");
 
-    _ui->comboDecimalSeparator->addItem(" , (comma)", ",");
-    _ui->comboDecimalSeparator->addItem(" . (point)", ".");
+    _pUi->comboDecimalSeparator->addItem(" , (comma)", ",");
+    _pUi->comboDecimalSeparator->addItem(" . (point)", ".");
     if (QLocale::system().decimalPoint() == '.')
     {
-        _ui->comboDecimalSeparator->setCurrentIndex(1);
+        _pUi->comboDecimalSeparator->setCurrentIndex(1);
     }
     else
     {
-        _ui->comboDecimalSeparator->setCurrentIndex(0);
+        _pUi->comboDecimalSeparator->setCurrentIndex(0);
     }
 
-    _ui->comboGroupSeparator->addItem(" , (comma)", ",");
-    _ui->comboGroupSeparator->addItem(" . (point)", ".");
-    _ui->comboGroupSeparator->addItem("   (space)", " ");
+    _pUi->comboGroupSeparator->addItem(" , (comma)", ",");
+    _pUi->comboGroupSeparator->addItem(" . (point)", ".");
+    _pUi->comboGroupSeparator->addItem("   (space)", " ");
     if (QLocale::system().groupSeparator() == ',')
     {
-        _ui->comboGroupSeparator->setCurrentIndex(0);
+        _pUi->comboGroupSeparator->setCurrentIndex(0);
     }
     else if (QLocale::system().groupSeparator() == '.')
     {
-        _ui->comboGroupSeparator->setCurrentIndex(1);
+        _pUi->comboGroupSeparator->setCurrentIndex(1);
     }
     else
     {
-        _ui->comboGroupSeparator->setCurrentIndex(2);
+        _pUi->comboGroupSeparator->setCurrentIndex(2);
     }
 
-    connect(_ui->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
-    connect(_ui->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
-    connect(_ui->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
+    connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
+    connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+    connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
 }
 
 LoadFileDialog::~LoadFileDialog()
 {
-    delete _ui;
+    delete _pUi;
 }
 
 void LoadFileDialog::selectDataFile()
@@ -78,7 +78,7 @@ void LoadFileDialog::selectDataFile()
     if (fileDialog.exec())
     {
         _pParseSettings->setPath(fileDialog.selectedFiles().first());
-        _ui->lineDataFile->setText(QFileInfo(_pParseSettings->getPath()).fileName());
+        _pUi->lineDataFile->setText(QFileInfo(_pParseSettings->getPath()).fileName());
     }
 }
 
@@ -90,12 +90,12 @@ void LoadFileDialog::presetSelected(int index)
         break;
     case 1:
         //Set STMStudio preset
-        _ui->spinColumn->setValue(2);
-        _ui->spinDataRow->setValue(9);
-        _ui->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
-        _ui->comboGroupSeparator->setCurrentIndex(0); // TODO: hardcoded
-        _ui->comboDecimalSeparator->setCurrentIndex(1); // TODO: hardcoded
-        _ui->spinLabelRow->setValue(7);
+        _pUi->spinColumn->setValue(2);
+        _pUi->spinDataRow->setValue(9);
+        _pUi->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
+        _pUi->comboGroupSeparator->setCurrentIndex(0); // TODO: hardcoded
+        _pUi->comboDecimalSeparator->setCurrentIndex(1); // TODO: hardcoded
+        _pUi->spinLabelRow->setValue(7);
         break;
     default:
         break;
@@ -105,13 +105,13 @@ void LoadFileDialog::presetSelected(int index)
 
 void LoadFileDialog::fieldSeparatorSelected(int index)
 {
-    if (_ui->comboFieldSeparator->itemData(index).toString().toLower() == "custom")
+    if (_pUi->comboFieldSeparator->itemData(index).toString().toLower() == "custom")
     {
-        _ui->lineCustomFieldSeparator->setEnabled(true);
+        _pUi->lineCustomFieldSeparator->setEnabled(true);
     }
     else
     {
-        _ui->lineCustomFieldSeparator->setEnabled(false);
+        _pUi->lineCustomFieldSeparator->setEnabled(false);
     }
 }
 
@@ -135,8 +135,8 @@ void LoadFileDialog::done(int r)
         if (bStop)
         {
             if (
-                    (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-                    && (_ui->lineCustomFieldSeparator->text().isEmpty())
+                    (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+                    && (_pUi->lineCustomFieldSeparator->text().isEmpty())
                 )
             {
                 bStop = false;
@@ -147,22 +147,22 @@ void LoadFileDialog::done(int r)
         if (bStop)
         {
             // path is already set
-            _pParseSettings->setColumn(_ui->spinColumn->value() - 1); // 1 based to 0 based
-            _pParseSettings->setDataRow(_ui->spinDataRow->value() - 1); // 1 based to 0 based
-            _pParseSettings->setLabelRow(_ui->spinLabelRow->value() - 1); // 1 based to 0 based
+            _pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
+            _pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
+            _pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
 
-            if (_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+            if (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
             {
-                _pParseSettings->setFieldSeparator(_ui->lineCustomFieldSeparator->text());
+                _pParseSettings->setFieldSeparator(_pUi->lineCustomFieldSeparator->text());
             }
             else
             {
-                _pParseSettings->setFieldSeparator(_ui->comboFieldSeparator->itemData(_ui->comboFieldSeparator->currentIndex()).toString());
+                _pParseSettings->setFieldSeparator(_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString());
             }
 
-            _pParseSettings->setDecimalSeparator(_ui->comboDecimalSeparator->itemData(_ui->comboDecimalSeparator->currentIndex()).toString());
-            _pParseSettings->setGroupSeparator(_ui->comboGroupSeparator->itemData(_ui->comboGroupSeparator->currentIndex()).toString());
-            _pParseSettings->setDynamicSession(_ui->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+            _pParseSettings->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(_pUi->comboDecimalSeparator->currentIndex()).toString());
+            _pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
+            _pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
             _pParseSettings->setWatchFileData(true);
         }
 

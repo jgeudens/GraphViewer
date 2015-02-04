@@ -26,7 +26,7 @@ private slots:
     void done(int r);
 
 private:
-    Ui::LoadFileDialog * _ui;
+    Ui::LoadFileDialog * _pUi;
 
     DataParserSettings * _pParseSettings;
 

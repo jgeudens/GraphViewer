@@ -38,7 +38,7 @@ private slots:
 private:
     bool updateGraph(DataFileParser *_pDataFileParser);
 
-    Ui::MainWindow * _ui;
+    Ui::MainWindow * _pUi;
 
     GraphViewer * _pGraphViewer;
     DataFileParser * _pParser;

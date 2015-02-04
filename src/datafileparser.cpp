@@ -17,7 +17,7 @@ DataFileParser::~DataFileParser()
     delete _pFileWatcher;
 }
 
-DataParserSettings * DataFileParser::getDataParseSettingsPointer()
+DataParserSettings * DataFileParser::getDataParseSettings()
 {
     return &_parseSettings;
 }
