@@ -58,6 +58,10 @@ bool DataParserSettings::getDynamicSession()
     return _bDynamicSession;
 }
 
+bool DataParserSettings::getWatchFileData()
+{
+    return _bWatchFileData;
+}
 
 
 
@@ -96,10 +100,18 @@ void DataParserSettings::setLabelRow(quint32 labelRow)
     _labelRow = labelRow;
 }
 
-void DataParserSettings::setDynamicSession(quint32 bDynamicSession)
+void DataParserSettings::setDynamicSession(bool bDynamicSession)
 {
     _bDynamicSession = bDynamicSession;
 
     emit dynamicSessionChanged(_bDynamicSession);
 }
 
+void DataParserSettings::setWatchFileData(bool bWatchFileData)
+{
+    if(_bWatchFileData != bWatchFileData)
+    {
+        _bWatchFileData = bWatchFileData;
+        emit watchFileDataChanged(_bWatchFileData);
+    }
+}

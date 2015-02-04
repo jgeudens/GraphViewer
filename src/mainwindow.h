@@ -25,13 +25,15 @@ private slots:
     void getDataFileSettings();
     void exitApplication();
     void reloadDataFile();
-    void dataFileChange();
+    void fileDataChange();
+    void addFileWatchFail(QString path);
     void prepareImageExport();
     void showAbout();
     void showXAxisScaleDialog();
     void showYAxisScaleDialog();
     void showHideGraph(bool bState);
-
+    void enableWatchFileChanged(bool bState);
+    void enableDynamicSessionChanged(bool bState);
 
 private:
     bool updateGraph(DataFileParser *_pDataFileParser);

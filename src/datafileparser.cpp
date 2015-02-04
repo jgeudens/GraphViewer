@@ -9,7 +9,7 @@
 DataFileParser::DataFileParser() :
     _pFileWatcher(new QFileSystemWatcher())
 {
-    connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileChange(QString)));
+    connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileDataChange(QString)));
 }
 
 DataFileParser::~DataFileParser()
@@ -63,7 +63,10 @@ bool DataFileParser::loadDataFile()
             _pFileWatcher->removePaths(_pFileWatcher->directories());
         }
 
-        _pFileWatcher->addPath(_parseSettings.getPath());
+        if(!_pFileWatcher->addPath(_parseSettings.getPath()))
+        {
+            emit addFileWatchFailed(_parseSettings.getPath());
+        }
     }
     else
     {
@@ -74,11 +77,11 @@ bool DataFileParser::loadDataFile()
     return bRet;
 }
 
-void DataFileParser::fileChange(QString path)
+void DataFileParser::fileDataChange(QString path)
 {
-    if(path == _parseSettings.getPath())
+    if(_parseSettings.getWatchFileData() && path == _parseSettings.getPath())
     {
-        emit fileChanged();
+        emit fileDataChanged();
     }
 }
 

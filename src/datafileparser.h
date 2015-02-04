@@ -21,10 +21,11 @@ public:
     bool parseData(QList<QList<double> > &dataRows, QStringList &labels);
 
 signals:
-    void fileChanged();
+    void fileDataChanged();
+    void addFileWatchFailed(QString);
 
 private slots:
-    void fileChange(QString);
+    void fileDataChange(QString);
 
 private:
 

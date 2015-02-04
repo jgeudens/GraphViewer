@@ -31,10 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_ui->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_ui->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 
-    _pGraphShowHide = new QMenu("Show/Hide");
-    _pGraphShowHide->setEnabled(false);
-    _ui->menuGraph->addSeparator();
-    _ui->menuGraph->addMenu(_pGraphShowHide);
+    connect(_ui->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
+    connect(_ui->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
+
+    _pGraphShowHide = _ui->menuShowHide;
 }
 
 MainWindow::~MainWindow()
@@ -76,7 +76,15 @@ void MainWindow::getDataFileSettings()
         // Set pointer to new parser object
         _pParser = pNewParser;
 
-        connect(_pParser, SIGNAL(fileChanged()), this, SLOT(dataFileChange()));
+        connect(_pParser, SIGNAL(fileDataChanged()), this, SLOT(fileDataChange()));
+        connect(_pParser->getDataParseSettingsPointer(), SIGNAL(watchFileDataChanged(bool)), _ui->actionWatchFile, SLOT(setChecked(bool)));
+        connect(_pParser->getDataParseSettingsPointer(), SIGNAL(dynamicSessionChanged(bool)), _ui->actionDynamicSession, SLOT(setChecked(bool)));
+        connect(_pParser, SIGNAL(addFileWatchFailed(QString)), this, SLOT(addFileWatchFail(QString)));
+
+        _ui->actionWatchFile->setEnabled(true);
+        _ui->actionWatchFile->setChecked(_pParser->getDataParseSettingsPointer()->getWatchFileData());
+        _ui->actionDynamicSession->setEnabled(true);
+        _ui->actionDynamicSession->setChecked(_pParser->getDataParseSettingsPointer()->getDynamicSession());
     }
     else // New file load failed
     {
@@ -147,32 +155,44 @@ void MainWindow::reloadDataFile()
     updateGraph(_pParser);
 }
 
-void MainWindow::dataFileChange()
+void MainWindow::fileDataChange()
 {
     static QMutex mutex;
 
-    if(mutex.tryLock())
+    if(_pParser->getDataParseSettingsPointer()->getWatchFileData())
     {
-        QFile file(_pParser->getDataParseSettingsPointer()->getPath());
-        if(file.size() > 0)
+        if(mutex.tryLock())
         {
-            if(_pParser->getDataParseSettingsPointer()->getDynamicSession())
+            QFile file(_pParser->getDataParseSettingsPointer()->getPath());
+            if(file.size() > 0)
             {
-                reloadDataFile();
-            }
-            else
-            {
-                QMessageBox::StandardButton reply;
-                reply = QMessageBox::question(this, "Data file changed", "Reload data file?", QMessageBox::Yes|QMessageBox::No);
-                if(reply == QMessageBox::Yes)
+                if(_pParser->getDataParseSettingsPointer()->getDynamicSession())
                 {
                     reloadDataFile();
                 }
+                else
+                {
+                    QMessageBox::StandardButton reply;
+                    reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
+                    if(reply == QMessageBox::Yes)
+                    {
+                        reloadDataFile();
+                    }
+                    else if(reply == QMessageBox::Cancel)
+                    {
+                        _pParser->getDataParseSettingsPointer()->setWatchFileData(false);
+                    }
+                }
             }
-        }
 
-        mutex.unlock();
+            mutex.unlock();
+        }
     }
+}
+
+void MainWindow::addFileWatchFail(QString path)
+{
+    QMessageBox::warning(this, "Add file watch failed", "Failed to watch \"" + path + "\". Please check your system configuration!");
 }
 
 void MainWindow::prepareImageExport()
@@ -256,5 +276,24 @@ void MainWindow::showHideGraph(bool bState)
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
     _pGraphViewer->showGraph(pAction->data().toInt(), bState);
+}
+
+void MainWindow::enableWatchFileChanged(bool bState)
+{
+    _ui->actionWatchFile->setChecked(bState);
+    _ui->actionDynamicSession->setEnabled(bState);
+
+    if(_pParser != NULL)
+    {
+        _pParser->getDataParseSettingsPointer()->setWatchFileData(bState);
+    }
+}
+
+void MainWindow::enableDynamicSessionChanged(bool bState)
+{
+    if(_pParser != NULL)
+    {
+        _pParser->getDataParseSettingsPointer()->setDynamicSession(bState);
+    }
 }
 

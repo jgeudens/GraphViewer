@@ -62,11 +62,24 @@
     <property name="title">
      <string>Graph</string>
     </property>
+    <widget class="QMenu" name="menuShowHide">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Show/Hide</string>
+     </property>
+    </widget>
     <addaction name="actionAutoScaleXAxis"/>
     <addaction name="actionAutoScaleYAxis"/>
     <addaction name="separator"/>
     <addaction name="actionSetManualScaleXAxis"/>
     <addaction name="actionSetManualScaleYAxis"/>
+    <addaction name="separator"/>
+    <addaction name="menuShowHide"/>
+    <addaction name="separator"/>
+    <addaction name="actionWatchFile"/>
+    <addaction name="actionDynamicSession"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>
@@ -133,6 +146,28 @@
    </property>
    <property name="text">
     <string>Set Manual scale y-axis...</string>
+   </property>
+  </action>
+  <action name="actionWatchFile">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Watch File</string>
+   </property>
+  </action>
+  <action name="actionDynamicSession">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Dynamic Session</string>
    </property>
   </action>
  </widget>
