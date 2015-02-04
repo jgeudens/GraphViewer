@@ -5,6 +5,22 @@
 #include "loadfiledialog.h"
 #include "ui_loadfiledialog.h"
 
+
+const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_fieldSeparatorList
+                                    = QList<ComboListItem>() << ComboListItem(" ; (semicolon)", ";")
+                                                             << ComboListItem(" , (comma)", ",")
+                                                             << ComboListItem(" tab", "\t")
+                                                             << ComboListItem(" custom", "custom");
+
+const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_decimalSeparatorList
+                                    = QList<ComboListItem>() << ComboListItem(" , (comma)", ",")
+                                                            << ComboListItem(" . (point)", ".");
+
+const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
+                                    = QList<ComboListItem>() << ComboListItem(" , (comma)", ",")
+                                                            << ComboListItem(" . (point)", ".")
+                                                            << ComboListItem("   (space)", " ");
+
 LoadFileDialog::LoadFileDialog(DataParserSettings *pParseSettings, QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
@@ -13,48 +29,53 @@ LoadFileDialog::LoadFileDialog(DataParserSettings *pParseSettings, QWidget *pare
 
     _pParseSettings = pParseSettings;
 
-    _pUi->comboFieldSeparator->addItem(" ; (semicolon)", ";");
-    _pUi->comboFieldSeparator->addItem(" , (comma)", ",");
-    _pUi->comboFieldSeparator->addItem(" tab", "\t");
-    _pUi->comboFieldSeparator->addItem(" custom", "custom");
-    if (QLocale::system().decimalPoint() == ',')
-    {
-        _pUi->comboFieldSeparator->setCurrentIndex(0);
-    }
-    else
-    {
-        _pUi->comboFieldSeparator->setCurrentIndex(1);
-    }
 
     _pUi->comboPreset->addItem("Manual");
     _pUi->comboPreset->addItem("STMStudio");
 
-    _pUi->comboDecimalSeparator->addItem(" , (comma)", ",");
-    _pUi->comboDecimalSeparator->addItem(" . (point)", ".");
-    if (QLocale::system().decimalPoint() == '.')
+
+    /*-- Fill combo boxes --*/
+    foreach(ComboListItem listItem, _decimalSeparatorList)
     {
-        _pUi->comboDecimalSeparator->setCurrentIndex(1);
-    }
-    else
-    {
-        _pUi->comboDecimalSeparator->setCurrentIndex(0);
+        _pUi->comboDecimalSeparator->addItem(listItem.name, listItem.userData);
     }
 
-    _pUi->comboGroupSeparator->addItem(" , (comma)", ",");
-    _pUi->comboGroupSeparator->addItem(" . (point)", ".");
-    _pUi->comboGroupSeparator->addItem("   (space)", " ");
-    if (QLocale::system().groupSeparator() == ',')
+    foreach(ComboListItem listItem, _fieldSeparatorList)
     {
-        _pUi->comboGroupSeparator->setCurrentIndex(0);
+        _pUi->comboFieldSeparator->addItem(listItem.name, listItem.userData);
     }
-    else if (QLocale::system().groupSeparator() == '.')
+
+    foreach(ComboListItem listItem, _groupSeparatorList)
     {
-        _pUi->comboGroupSeparator->setCurrentIndex(1);
+        _pUi->comboGroupSeparator->addItem(listItem.name, listItem.userData);
+    }
+
+
+    /*-- Set default item --*/
+    const QChar decimalPoint = QLocale::system().decimalPoint();
+
+    // DecimalSeparator
+    if (decimalPoint == '.')
+    {
+        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, "."));
     }
     else
     {
-        _pUi->comboGroupSeparator->setCurrentIndex(2);
+        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, ","));
     }
+
+    // FieldSeparator
+    if (decimalPoint == ',')
+    {
+        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, ";"));
+    }
+    else
+    {
+        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, ","));
+    }
+
+    // group separator
+    _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, QLocale::system().groupSeparator()));
 
     connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
@@ -92,9 +113,9 @@ void LoadFileDialog::presetSelected(int index)
         //Set STMStudio preset
         _pUi->spinColumn->setValue(2);
         _pUi->spinDataRow->setValue(9);
-        _pUi->comboFieldSeparator->setCurrentIndex(2); // TODO: hardcoded
-        _pUi->comboGroupSeparator->setCurrentIndex(0); // TODO: hardcoded
-        _pUi->comboDecimalSeparator->setCurrentIndex(1); // TODO: hardcoded
+        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, "\t"));
+        _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, ","));
+        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, "."));
         _pUi->spinLabelRow->setValue(7);
         break;
     default:
@@ -178,4 +199,20 @@ void LoadFileDialog::done(int r)
         QDialog::done(r);
     }
 
+}
+
+qint32 LoadFileDialog::findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey)
+{
+    qint32 index = -1;
+
+    for (qint32 i = 0; i < comboItemList.size(); i++)
+    {
+        if (comboItemList[i].userData.toLower() == userDataKey.toLower())
+        {
+            index = i;
+            break;
+        }
+    }
+
+    return index;
 }
