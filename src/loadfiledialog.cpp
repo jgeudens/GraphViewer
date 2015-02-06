@@ -21,18 +21,14 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
                                                             << ComboListItem(" . (point)", ".")
                                                             << ComboListItem("   (space)", " ");
 
-LoadFileDialog::LoadFileDialog(DataParserSettings *pParseSettings, QWidget *parent) :
+LoadFileDialog::LoadFileDialog(QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
 {
     _pUi->setupUi(this);
 
-    _pParseSettings = pParseSettings;
-
-
     _pUi->comboPreset->addItem("Manual");
     _pUi->comboPreset->addItem("STMStudio");
-
 
     /*-- Fill combo boxes --*/
     foreach(ComboListItem listItem, _decimalSeparatorList)
@@ -87,6 +83,12 @@ LoadFileDialog::~LoadFileDialog()
     delete _pUi;
 }
 
+int LoadFileDialog::exec(DataParserSettings *pParseSettings)
+{
+    _pParseSettings = pParseSettings;
+    return QDialog::exec();
+}
+
 void LoadFileDialog::selectDataFile()
 {
     QFileDialog fileDialog(this);
@@ -96,10 +98,9 @@ void LoadFileDialog::selectDataFile()
     fileDialog.setWindowTitle(tr("Select data file"));
     fileDialog.setNameFilter(tr("*.* (*.*)"));
 
-    if (fileDialog.exec())
+    if (fileDialog.exec() == QDialog::Accepted)
     {
-        _pParseSettings->setPath(fileDialog.selectedFiles().first());
-        _pUi->lineDataFile->setText(QFileInfo(_pParseSettings->getPath()).fileName());
+        _pUi->lineDataFile->setText(fileDialog.selectedFiles().first());
     }
 }
 
@@ -146,7 +147,7 @@ void LoadFileDialog::done(int r)
 
         if (bStop)
         {
-            if (!QFileInfo(_pParseSettings->getPath()).exists())
+            if (!QFileInfo(_pUi->lineDataFile->text()).exists())
             {
                 bStop = false;
                 Util::showError(tr("Data file doesn't exist"));
@@ -167,7 +168,7 @@ void LoadFileDialog::done(int r)
 
         if (bStop)
         {
-            // path is already set
+            _pParseSettings->setPath(_pUi->lineDataFile->text());
             _pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
             _pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
             _pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based

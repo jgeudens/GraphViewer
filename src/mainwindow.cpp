@@ -48,18 +48,13 @@ MainWindow::~MainWindow()
 void MainWindow::getDataFileSettings()
 {
     DataFileParser * pNewParser = new DataFileParser();
-    bool bSucceeded;
-    LoadFileDialog loadDataFileDialog(pNewParser->getDataParseSettings());
+    bool bSucceeded = false;
 
-    bSucceeded = false;
-    if (loadDataFileDialog.exec())
+    if (_loadDataFileDialog.exec(pNewParser->getDataParseSettings()) == QDialog::Accepted)
     {
-        if (loadDataFileDialog.result() == QDialog::Accepted)
+        if (updateGraph(pNewParser))
         {
-            if (updateGraph(pNewParser))
-            {
-                bSucceeded = true;
-            }
+            bSucceeded = true;
         }
     }
 

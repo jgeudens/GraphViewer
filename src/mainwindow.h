@@ -44,6 +44,8 @@ private:
     DataFileParser * _pParser;
     QMenu * _pGraphShowHide;
 
+    LoadFileDialog _loadDataFileDialog;
+
     static const QString _cWindowTitle;
 };
 

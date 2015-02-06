@@ -15,8 +15,10 @@ class LoadFileDialog : public QDialog
 
 public:
 
-    explicit LoadFileDialog(DataParserSettings *pParseSettings, QWidget *parent = 0);
+    explicit LoadFileDialog(QWidget *parent = 0);
     ~LoadFileDialog();
+
+    int exec(DataParserSettings *pParseSettings);
 
 private slots:
     void selectDataFile();
