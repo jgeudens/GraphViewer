@@ -1,7 +1,9 @@
 
 #include <QFileDialog>
+#include <QStandardPaths>
 
 #include "util.h"
+
 #include "loadfiledialog.h"
 #include "ui_loadfiledialog.h"
 
@@ -21,14 +23,13 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
                                                             << ComboListItem(" . (point)", ".")
                                                             << ComboListItem("   (space)", " ");
 
+const QString LoadFileDialog::_presetFilename = QString("presets.xml");
+
 LoadFileDialog::LoadFileDialog(QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
 {
     _pUi->setupUi(this);
-
-    _pUi->comboPreset->addItem("Manual");
-    _pUi->comboPreset->addItem("STMStudio");
 
     /*-- Fill combo boxes --*/
     foreach(ComboListItem listItem, _decimalSeparatorList)
@@ -86,6 +87,9 @@ LoadFileDialog::~LoadFileDialog()
 int LoadFileDialog::exec(DataParserSettings *pParseSettings)
 {
     _pParseSettings = pParseSettings;
+
+    loadPreset();
+
     return QDialog::exec();
 }
 
@@ -106,22 +110,61 @@ void LoadFileDialog::selectDataFile()
 
 void LoadFileDialog::presetSelected(int index)
 {
-    switch (index) {
-    case 0:
-        // Manual
-        break;
-    case 1:
-        //Set STMStudio preset
-        _pUi->spinColumn->setValue(2);
-        _pUi->spinDataRow->setValue(9);
-        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, "\t"));
-        _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, ","));
-        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, "."));
-        _pUi->spinLabelRow->setValue(7);
-        break;
-    default:
-        break;
+    if ((index >= 0) && (index < _presetList.size()))
+    {
+
+        if (_presetList[index].bColumn)
+        {
+            _pUi->spinColumn->setValue(_presetList[index].column);
+        }
+
+        if (_presetList[index].bDataRow)
+        {
+            _pUi->spinDataRow->setValue(_presetList[index].dataRow);
+        }
+
+        if (_presetList[index].bLabelRow)
+        {
+            _pUi->spinLabelRow->setValue(_presetList[index].labelRow);
+        }
+
+        if (_presetList[index].bDecimalSeparator)
+        {
+            _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, _presetList[index].decimalSeparator));
+        }
+
+        if (_presetList[index].bFieldSeparator)
+        {
+            // DIRTY DIRTY workaround for tab input problem
+            if (
+                (_presetList[index].fieldSeparator.at(0) == '\\')
+                && (_presetList[index].fieldSeparator.at(1) == 't')
+                )
+            {
+                _presetList[index].fieldSeparator = QString("\t");
+            }
+
+            qint32 comboIndex = findIndexInCombo(_fieldSeparatorList, _presetList[index].fieldSeparator);
+
+            if (comboIndex == -1)
+            {
+                _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, "custom"));
+                _pUi->lineCustomFieldSeparator->setText(_presetList[index].fieldSeparator);
+            }
+            else
+            {
+                _pUi->comboFieldSeparator->setCurrentIndex(comboIndex);
+            }
+        }
+
+        if (_presetList[index].bThousandSeparator)
+        {
+            _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, _presetList[index].thousandSeparator));
+        }
+
+        _pUi->checkDynamicSession->setChecked(_presetList[index].bDynamicSession);
     }
+
 }
 
 
@@ -208,7 +251,7 @@ qint32 LoadFileDialog::findIndexInCombo(QList<ComboListItem> comboItemList, QStr
 
     for (qint32 i = 0; i < comboItemList.size(); i++)
     {
-        if (comboItemList[i].userData.toLower() == userDataKey.toLower())
+        if (comboItemList[i].userData.compare(userDataKey, Qt::CaseInsensitive) == 0)
         {
             index = i;
             break;
@@ -216,4 +259,74 @@ qint32 LoadFileDialog::findIndexInCombo(QList<ComboListItem> comboItemList, QStr
     }
 
     return index;
+}
+
+void LoadFileDialog::loadPreset(void)
+{
+    QString presetFile;
+    /* Check if preset file exists (2 locations)
+    *   <document_folder>\CsvGraphViewer\
+    *   directory of executable
+    */
+    QString documentsfolder = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).first();
+
+    presetFile = documentsfolder + "/CsvGraphViewer/" + _presetFilename;
+    if (!QFileInfo(presetFile).exists())
+    {
+        // xml in documents folder doesn't exist, check directory of executable
+        presetFile = _presetFilename;
+        if (!QFileInfo(presetFile).exists())
+        {
+            presetFile = "";
+            _lastModified = QDateTime();
+        }
+    }
+
+    if (presetFile != "")
+    {
+        if (_lastModified != QFileInfo(presetFile).lastModified())
+        {
+            _lastModified = QFileInfo(presetFile).lastModified();
+
+            _pUi->comboPreset->clear();
+
+            QFile file(presetFile);
+
+            /* If we can't open it, let's show an error message. */
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                PresetParser presetParser;
+                _presetList.clear();
+                if (presetParser.parseFile(&file, &_presetList))
+                {
+                    foreach(PresetParser::Preset preset, _presetList)
+                    {
+                        if (preset.bName)
+                        {
+                            _pUi->comboPreset->addItem(preset.name);
+                        }
+                        else
+                        {
+                            _pUi->comboPreset->addItem("Unknown"); // TODO: replace with first keyword
+                        }
+                    }
+                }
+
+                file.close();
+            }
+            else
+            {
+                QMessageBox::critical(this,
+                                      "CsvGraphViewer",
+                                      tr("Couldn't open preset file: %1").arg(presetFile),
+                                      QMessageBox::Ok);
+            }
+        }
+    }
+    else
+    {
+        _presetList.clear();
+        _pUi->comboPreset->clear();
+    }
+
 }

@@ -2,7 +2,9 @@
 #define LoadFileDialog_H
 
 #include <QDialog>
+#include <QDateTime>
 
+#include "presetparser.h"
 #include "dataparsersettings.h"
 
 namespace Ui {
@@ -46,12 +48,18 @@ private:
     static const QList<ComboListItem> _fieldSeparatorList;
     static const QList<ComboListItem> _decimalSeparatorList;
     static const QList<ComboListItem> _groupSeparatorList;
+    static const QString _presetFilename;
+
 
     Ui::LoadFileDialog * _pUi;
 
     DataParserSettings * _pParseSettings;
 
+    QDateTime _lastModified;
+    QList<PresetParser::Preset> _presetList;
+
     qint32 findIndexInCombo( QList<ComboListItem> comboItemList, QString userDataKey);
+    void loadPreset(void);
 
 };
 

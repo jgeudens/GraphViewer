@@ -23,7 +23,8 @@ SOURCES +=  \
     ../src/graphviewer.cpp \
     ../src/axisscaledialog.cpp \
     ../src/dataparsersettings.cpp \
-    ../src/loadfiledialog.cpp
+    ../src/loadfiledialog.cpp \
+    ../src/presetparser.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
@@ -38,4 +39,5 @@ HEADERS += \
     ../src/util.h \
     ../src/axisscaledialog.h \
     ../src/dataparsersettings.h \
-    ../src/loadfiledialog.h
+    ../src/loadfiledialog.h \
+    ../src/presetparser.h

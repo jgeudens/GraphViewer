@@ -1,0 +1,38 @@
+<csvgraphviewer>
+	<parsepreset>
+		<name>Manual</name>
+	</parsepreset>
+	<parsepreset>
+		<name>Default (be)</name>
+		<fieldseparator><![CDATA[;]]></fieldseparator>
+		<decimalseparator><![CDATA[,]]></decimalseparator>
+		<thousandseparator><![CDATA[.]]></thousandseparator>
+		<column>1</column>
+		<labelrow>1</labelrow>
+		<datarow>2</datarow>
+		<dynamicsession>false</dynamicsession>
+	</parsepreset>
+	
+	<parsepreset>
+		<name>Default (us)</name>
+		<fieldseparator><![CDATA[,]]></fieldseparator>
+		<decimalseparator><![CDATA[.]]></decimalseparator>
+		<thousandseparator><![CDATA[ ]]></thousandseparator>
+		<column>1</column>
+		<labelrow>1</labelrow>
+		<datarow>2</datarow>
+		<dynamicsession>false</dynamicsession>
+	</parsepreset>
+	
+	<parsepreset>
+		<name>STMStudio</name>
+		<fieldseparator><![CDATA[\t]]></fieldseparator>
+		<decimalseparator><![CDATA[.]]></decimalseparator>
+		<thousandseparator><![CDATA[]]></thousandseparator>
+		<column>2</column>
+		<labelrow>7</labelrow>
+		<datarow>9</datarow>
+		<dynamicsession>false</dynamicsession>
+	</parsepreset>
+
+</csvgraphviewer>
