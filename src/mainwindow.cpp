@@ -35,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
 
     _pGraphShowHide = _pUi->menuShowHide;
+
+    setAcceptDrops(true);
 }
 
 MainWindow::~MainWindow()
@@ -47,18 +49,20 @@ MainWindow::~MainWindow()
 
 void MainWindow::getDataFileSettings()
 {
-    DataFileParser * pNewParser = new DataFileParser();
-    bool bSucceeded = false;
-
-    if (_loadDataFileDialog.exec(pNewParser->getDataParseSettings()) == QDialog::Accepted)
+    if (_loadDataFileDialog.exec() == QDialog::Accepted)
     {
-        if (updateGraph(pNewParser))
-        {
-            bSucceeded = true;
-        }
+        parseData();
     }
+}
 
-    if (bSucceeded)
+void MainWindow::parseData()
+{
+    DataFileParser * pNewParser = new DataFileParser();
+
+    //Get settings from dialog
+    _loadDataFileDialog.getParserSettings(pNewParser->getDataParseSettings());
+
+    if (updateGraph(pNewParser))
     {
         // Data file parse succeeded
 
@@ -289,6 +293,26 @@ void MainWindow::enableDynamicSessionChanged(bool bState)
     if(_pParser != NULL)
     {
         _pParser->getDataParseSettings()->setDynamicSession(bState);
+    }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+    if (e->mimeData()->hasUrls())
+    {
+        e->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+    foreach (const QUrl &url, e->mimeData()->urls())
+    {
+        const QString &fileName = url.toLocalFile();
+        if (_loadDataFileDialog.exec(fileName) == QDialog::Accepted)
+        {
+            parseData();
+        }
     }
 }
 

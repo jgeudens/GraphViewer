@@ -23,6 +23,7 @@ public:
 
 private slots:
     void getDataFileSettings();
+    void parseData();
     void exitApplication();
     void reloadDataFile();
     void fileDataChange();
@@ -34,6 +35,8 @@ private slots:
     void showHideGraph(bool bState);
     void enableWatchFileChanged(bool bState);
     void enableDynamicSessionChanged(bool bState);
+    void dragEnterEvent(QDragEnterEvent *e);
+    void dropEvent(QDropEvent *e);
 
 private:
     bool updateGraph(DataFileParser *_pDataFileParser);

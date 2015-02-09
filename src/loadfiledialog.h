@@ -20,7 +20,9 @@ public:
     explicit LoadFileDialog(QWidget *parent = 0);
     ~LoadFileDialog();
 
-    int exec(DataParserSettings *pParseSettings);
+    int exec();
+    int exec(QString file);
+    void getParserSettings(DataParserSettings *pParseSettings);
 
 private slots:
     void selectDataFile();
@@ -52,8 +54,6 @@ private:
 
 
     Ui::LoadFileDialog * _pUi;
-
-    DataParserSettings * _pParseSettings;
 
     QDateTime _lastModified;
     QList<PresetParser::Preset> _presetList;

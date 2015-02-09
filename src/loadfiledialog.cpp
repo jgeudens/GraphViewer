@@ -84,13 +84,43 @@ LoadFileDialog::~LoadFileDialog()
     delete _pUi;
 }
 
-int LoadFileDialog::exec(DataParserSettings *pParseSettings)
+int LoadFileDialog::exec()
 {
-    _pParseSettings = pParseSettings;
-
     loadPreset();
 
     return QDialog::exec();
+}
+
+int LoadFileDialog::exec(QString file)
+{
+    loadPreset();
+
+    _pUi->lineDataFile->setText(file);
+    setPreset(file);
+
+    return QDialog::exec();
+}
+
+void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
+{
+    pParseSettings->setPath(_pUi->lineDataFile->text());
+    pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
+    pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
+    pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
+
+    if (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+    {
+        pParseSettings->setFieldSeparator(_pUi->lineCustomFieldSeparator->text());
+    }
+    else
+    {
+        pParseSettings->setFieldSeparator(_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString());
+    }
+
+    pParseSettings->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(_pUi->comboDecimalSeparator->currentIndex()).toString());
+    pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
+    pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+    pParseSettings->setWatchFileData(true);
 }
 
 void LoadFileDialog::selectDataFile()
@@ -210,29 +240,6 @@ void LoadFileDialog::done(int r)
                 Util::showError(tr("Custom field separator isn't defined correctly"));
             }
         }
-
-        if (bStop)
-        {
-            _pParseSettings->setPath(_pUi->lineDataFile->text());
-            _pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
-            _pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
-            _pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
-
-            if (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-            {
-                _pParseSettings->setFieldSeparator(_pUi->lineCustomFieldSeparator->text());
-            }
-            else
-            {
-                _pParseSettings->setFieldSeparator(_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString());
-            }
-
-            _pParseSettings->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(_pUi->comboDecimalSeparator->currentIndex()).toString());
-            _pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
-            _pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
-            _pParseSettings->setWatchFileData(true);
-        }
-
     }
     else
     {
