@@ -105,6 +105,8 @@ void LoadFileDialog::selectDataFile()
     if (fileDialog.exec() == QDialog::Accepted)
     {
         _pUi->lineDataFile->setText(fileDialog.selectedFiles().first());
+
+        setPreset(_pUi->lineDataFile->text());
     }
 }
 
@@ -307,7 +309,7 @@ void LoadFileDialog::loadPreset(void)
                         }
                         else
                         {
-                            _pUi->comboPreset->addItem("Unknown"); // TODO: replace with first keyword
+                            _pUi->comboPreset->addItem(QString("(%1)").arg(preset.keyword));
                         }
                     }
                 }
@@ -329,4 +331,20 @@ void LoadFileDialog::loadPreset(void)
         _pUi->comboPreset->clear();
     }
 
+}
+
+void LoadFileDialog::setPreset(QString filename)
+{
+    // Loop through presets and set preset if keyword is in filename
+    for (qint32 index = 0; index < _presetList.size(); index ++)
+    {
+        if (_presetList[index].bKeyword)
+        {
+            if (QFileInfo(filename).fileName().contains(_presetList[index].keyword, Qt::CaseInsensitive))
+            {
+                _pUi->comboPreset->setCurrentIndex(index);
+                break;
+            }
+        }
+    }
 }

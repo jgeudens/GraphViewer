@@ -137,6 +137,11 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
                 pPreset->bDynamicSession = false;
             }
         }
+        else if (child.tagName() == "keyword")
+        {
+            pPreset->bKeyword = true;
+            pPreset->keyword = child.text();
+        }
         else
         {
             // unkown tag: ignore

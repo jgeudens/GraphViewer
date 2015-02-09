@@ -58,8 +58,9 @@ private:
     QDateTime _lastModified;
     QList<PresetParser::Preset> _presetList;
 
-    qint32 findIndexInCombo( QList<ComboListItem> comboItemList, QString userDataKey);
+    qint32 findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey);
     void loadPreset(void);
+    void setPreset(QString filename);
 
 };
 

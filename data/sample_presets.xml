@@ -4,6 +4,7 @@
 	</parsepreset>
 	<parsepreset>
 		<name>Default (be)</name>
+		<keyword>-be</keyword>
 		<fieldseparator><![CDATA[;]]></fieldseparator>
 		<decimalseparator><![CDATA[,]]></decimalseparator>
 		<thousandseparator><![CDATA[.]]></thousandseparator>
@@ -15,6 +16,7 @@
 	
 	<parsepreset>
 		<name>Default (us)</name>
+		<keyword>-us</keyword>
 		<fieldseparator><![CDATA[,]]></fieldseparator>
 		<decimalseparator><![CDATA[.]]></decimalseparator>
 		<thousandseparator><![CDATA[ ]]></thousandseparator>
@@ -26,6 +28,7 @@
 	
 	<parsepreset>
 		<name>STMStudio</name>
+		<keyword>-stmstudio</keyword>
 		<fieldseparator><![CDATA[\t]]></fieldseparator>
 		<decimalseparator><![CDATA[.]]></decimalseparator>
 		<thousandseparator><![CDATA[]]></thousandseparator>

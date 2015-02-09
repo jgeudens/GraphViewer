@@ -12,7 +12,9 @@ public:
 		
     typedef struct _Preset
     {
-        _Preset() : bName(false), bFieldSeparator(false), bDecimalSeparator(false), bThousandSeparator(false), bColumn(false), bLabelRow(false), bDataRow(false), bDynamicSession(false) {}
+        _Preset() : bName(false), bFieldSeparator(false), bDecimalSeparator(false),
+                    bThousandSeparator(false), bColumn(false), bLabelRow(false),
+                    bDataRow(false), bDynamicSession(false), bKeyword(false) {}
 
         bool bName;
         QString name;
@@ -36,6 +38,9 @@ public:
         quint32 dataRow;
         
         bool bDynamicSession;
+
+        bool bKeyword;
+        QString keyword;
         
     } Preset;
 
