@@ -36,7 +36,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _pGraphShowHide = _pUi->menuShowHide;
 
-    setAcceptDrops(true);
+    this->setAcceptDrops(true);
+
+    _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
 MainWindow::~MainWindow()
@@ -130,6 +133,7 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
             }
 
             _pGraphShowHide->setEnabled(true);
+            _pUi->menuScale->setEnabled(true);
 
             bSucceeded = true;
         }
@@ -316,3 +320,7 @@ void MainWindow::dropEvent(QDropEvent *e)
     }
 }
 
+void MainWindow::showContextMenu(const QPoint& pos)
+{
+    _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+}

@@ -37,6 +37,7 @@ private slots:
     void enableDynamicSessionChanged(bool bState);
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
+    void showContextMenu(const QPoint& pos);
 
 private:
     bool updateGraph(DataFileParser *_pDataFileParser);

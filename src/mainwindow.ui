@@ -31,7 +31,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -60,8 +59,28 @@
    </widget>
    <widget class="QMenu" name="menuGraph">
     <property name="title">
-     <string>Graph</string>
+     <string>Edit</string>
     </property>
+    <addaction name="actionWatchFile"/>
+    <addaction name="actionDynamicSession"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuScale">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Scale</string>
+     </property>
+     <addaction name="actionAutoScaleXAxis"/>
+     <addaction name="actionAutoScaleYAxis"/>
+     <addaction name="separator"/>
+     <addaction name="actionSetManualScaleXAxis"/>
+     <addaction name="actionSetManualScaleYAxis"/>
+    </widget>
     <widget class="QMenu" name="menuShowHide">
      <property name="enabled">
       <bool>false</bool>
@@ -70,19 +89,12 @@
       <string>Show/Hide</string>
      </property>
     </widget>
-    <addaction name="actionAutoScaleXAxis"/>
-    <addaction name="actionAutoScaleYAxis"/>
-    <addaction name="separator"/>
-    <addaction name="actionSetManualScaleXAxis"/>
-    <addaction name="actionSetManualScaleYAxis"/>
-    <addaction name="separator"/>
+    <addaction name="menuScale"/>
     <addaction name="menuShowHide"/>
-    <addaction name="separator"/>
-    <addaction name="actionWatchFile"/>
-    <addaction name="actionDynamicSession"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>
+   <addaction name="menuView"/>
    <addaction name="menu"/>
   </widget>
   <action name="actionLoadDataFile">
