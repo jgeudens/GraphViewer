@@ -104,7 +104,7 @@ void GraphViewer::exportGraphImage(QString imageFile)
     if (!_pPlot->savePng(imageFile))
     {
         QMessageBox msgBox;
-        msgBox.setWindowTitle(tr("CsvGraphViewer"));
+        msgBox.setWindowTitle(tr("GraphViewer"));
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setText(tr("Save to png file (%1) failed").arg(imageFile));
         msgBox.exec();

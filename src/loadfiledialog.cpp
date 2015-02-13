@@ -274,12 +274,12 @@ void LoadFileDialog::loadPreset(void)
 {
     QString presetFile;
     /* Check if preset file exists (2 locations)
-    *   <document_folder>\CsvGraphViewer\
+    *   <document_folder>\GraphViewer\
     *   directory of executable
     */
     QString documentsfolder = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).first();
 
-    presetFile = documentsfolder + "/CsvGraphViewer/" + _presetFilename;
+    presetFile = documentsfolder + "/GraphViewer/" + _presetFilename;
     if (!QFileInfo(presetFile).exists())
     {
         // xml in documents folder doesn't exist, check directory of executable
@@ -326,7 +326,7 @@ void LoadFileDialog::loadPreset(void)
             else
             {
                 QMessageBox::critical(this,
-                                      "CsvGraphViewer",
+                                      "GraphViewer",
                                       tr("Couldn't open preset file: %1").arg(presetFile),
                                       QMessageBox::Ok);
             }

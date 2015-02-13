@@ -5,7 +5,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-const QString MainWindow::_cWindowTitle = QString("CsvGraphViewer");
+const QString MainWindow::_cWindowTitle = QString("GraphViewer");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -226,18 +226,18 @@ void MainWindow::showAbout()
 {
     QString lnkAuthor("<a href='mailto:jensgeudens@hotmail.com'>jgeudens</a>");
     QString lnkGpl("<a href='http://www.gnu.org/licenses/gpl.html#content'>GPL</a>");
-    QString lnkGitHub("<a href='https://github.com/jgeudens/CsvGraphViewer'>GitHub</a>");
+    QString lnkGitHub("<a href='https://github.com/jgeudens/GraphViewer'>GitHub</a>");
 
     QString lnkQt("<a href='http://qt-project.org/'>Qt</a>");
     QString lnkQCustomPlot("<a href='http://www.qcustomplot.com/'>QCustomPlot</a>");
 
-    QString version = QString(tr("<b>CsvGraphViewer v%1</b><br><br>")).arg(APP_VERSION);
+    QString version = QString(tr("<b>GraphViewer v%1</b><br><br>")).arg(APP_VERSION);
 
     QString aboutTxt = tr(
                         "%1"
-                        "CsvGraphViewer is created and maintained by %2. This software is released under the %3 license. "
+                        "GraphViewer is created and maintained by %2. This software is released under the %3 license. "
                         "The source is freely available at %4.<br><br>"
-                        "CsvGraphViewer uses following libraries:<br>"
+                        "GraphViewer uses following libraries:<br>"
                         "%5<br>"
                         "%6<br>").arg(version, lnkAuthor, lnkGpl, lnkGitHub, lnkQt, lnkQCustomPlot);
 

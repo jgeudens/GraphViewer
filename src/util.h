@@ -13,7 +13,7 @@ public:
     static void showError(QString text)
     {
         QMessageBox msgBox;
-        msgBox.setWindowTitle(tr("CsvGraphViewer"));
+        msgBox.setWindowTitle(tr("GraphViewer"));
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setText(text);
         msgBox.setStandardButtons(QMessageBox::Ok);

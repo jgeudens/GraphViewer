@@ -1,3 +1,3 @@
-# CsvGraphViewer
+# GraphViewer
 TODO
 

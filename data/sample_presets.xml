@@ -1,4 +1,4 @@
-<csvgraphviewer>
+<graphviewer>
 	<parsepreset>
 		<name>Manual</name>
 	</parsepreset>
@@ -38,4 +38,4 @@
 		<dynamicsession>false</dynamicsession>
 	</parsepreset>
 
-</csvgraphviewer>
+</graphviewer>

@@ -5,7 +5,7 @@
 
 PresetParser::PresetParser()
 {
-    _msgBox.setWindowTitle(tr("CsvGraphViewer preset file load error"));
+    _msgBox.setWindowTitle(tr("GraphViewer preset file load error"));
     _msgBox.setIcon(QMessageBox::Warning);
 }
 
@@ -30,9 +30,9 @@ bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
     else
     {
         QDomElement root = _domDocument.documentElement();
-        if (root.tagName() != "csvgraphviewer")
+        if (root.tagName() != "graphviewer")
         {
-            _msgBox.setText(tr("The file is not a valid csvgraphviewer preset file."));
+            _msgBox.setText(tr("The file is not a valid graphviewer preset file."));
             _msgBox.exec();
             bRet = false;
         }
