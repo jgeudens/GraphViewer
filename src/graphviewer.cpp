@@ -53,6 +53,9 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    legendFont.setPointSize(10);
    _pPlot->legend->setFont(legendFont);
 
+   // Add layer to move graph on front
+   _pPlot->addLayer("topMain", _pPlot->layer("main"), QCustomPlot::limAbove);
+
    // connect slot that ties some axis selections together (especially opposite axes):
    connect(_pPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
 
@@ -131,6 +134,21 @@ void GraphViewer::showGraph(quint32 index, bool bShow)
     itemFont.setStrikeOut(!bShow);
 
     _pPlot->legend->item(index)->setFont(itemFont);
+
+    _pPlot->replot();
+}
+
+void GraphViewer::bringToFront(quint32 index, bool bFront)
+{
+
+    if (bFront)
+    {
+        _pPlot->graph(index)->setLayer("topMain");
+    }
+    else
+    {
+        _pPlot->graph(index)->setLayer("grid");
+    }
 
     _pPlot->replot();
 }

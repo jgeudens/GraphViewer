@@ -33,6 +33,7 @@ private slots:
     void showXAxisScaleDialog();
     void showYAxisScaleDialog();
     void showHideGraph(bool bState);
+    void bringToFrontGraph(bool bState);
     void enableWatchFileChanged(bool bState);
     void enableDynamicSessionChanged(bool bState);
     void dragEnterEvent(QDragEnterEvent *e);
@@ -47,6 +48,8 @@ private:
     GraphViewer * _pGraphViewer;
     DataFileParser * _pParser;
     QMenu * _pGraphShowHide;
+    QMenu * _pGraphBringToFront;
+    QActionGroup* _pBringToFrontGroup;
 
     LoadFileDialog _loadDataFileDialog;
 

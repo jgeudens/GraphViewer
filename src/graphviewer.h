@@ -19,6 +19,7 @@ public:
     void manualScaleXAxis(qint64 min, qint64 max);
     void manualScaleYAxis(qint64 min, qint64 max);
     void showGraph(quint32 index, bool bShow);
+    void bringToFront(quint32 index, bool bFront);
 
 public slots:
     void autoScaleXAxis();

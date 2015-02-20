@@ -35,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
 
     _pGraphShowHide = _pUi->menuShowHide;
+    _pGraphBringToFront = _pUi->menuBringToFront;
+    _pBringToFrontGroup = new QActionGroup(this);
 
     this->setAcceptDrops(true);
 
@@ -46,6 +48,7 @@ MainWindow::~MainWindow()
 {
     delete _pGraphViewer;
     delete _pGraphShowHide;
+    delete _pGraphBringToFront;
     delete _pParser;
     delete _pUi;
 }
@@ -119,20 +122,29 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 
             // Clear actions
             _pGraphShowHide->clear();
+            _pBringToFrontGroup->actions().clear();
+            _pGraphBringToFront->clear();
 
             // Add menu-items
             for (qint32 i = 1; i < labels.size(); i++)
             {
-                QAction *act = _pGraphShowHide->addAction(labels[i]);
+                QAction * pShowHideAction = _pGraphShowHide->addAction(labels[i]);
+                QAction * pBringToFront = _pGraphBringToFront->addAction(labels[i]);
 
-                act->setData(i - 1);
-                act->setCheckable(true);
-                act->setChecked(true);
+                pShowHideAction->setData(i - 1);
+                pShowHideAction->setCheckable(true);
+                pShowHideAction->setChecked(true);
 
-                QObject::connect(act, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
+                pBringToFront->setData(i - 1);
+                pBringToFront->setCheckable(true);
+                pBringToFront->setActionGroup(_pBringToFrontGroup);
+
+                QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
+                QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(bringToFrontGraph(bool)));
             }
 
             _pGraphShowHide->setEnabled(true);
+            _pGraphBringToFront->setEnabled(true);
             _pUi->menuScale->setEnabled(true);
 
             bSucceeded = true;
@@ -279,6 +291,13 @@ void MainWindow::showHideGraph(bool bState)
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
     _pGraphViewer->showGraph(pAction->data().toInt(), bState);
+}
+
+void MainWindow::bringToFrontGraph(bool bState)
+{
+    QAction * pAction = qobject_cast<QAction *>(QObject::sender());
+
+    _pGraphViewer->bringToFront(pAction->data().toInt(), bState);
 }
 
 void MainWindow::enableWatchFileChanged(bool bState)

@@ -89,8 +89,17 @@
       <string>Show/Hide</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuBringToFront">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Bring to front</string>
+     </property>
+    </widget>
     <addaction name="menuScale"/>
     <addaction name="menuShowHide"/>
+    <addaction name="menuBringToFront"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>
