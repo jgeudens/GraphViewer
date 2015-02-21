@@ -168,32 +168,49 @@ void GraphViewer::autoScaleYAxis()
 void GraphViewer::generateTickLabels()
 {
     QVector<double> ticks = _pPlot->xAxis->tickVector();
-    quint32 scaleFactor;
 
     /* Clear ticks vector */
     tickLabels.clear();
 
-    /* Check if we need seconds, minute or hours on x-axis */
-    if (ticks[ticks.size()-1] > _cHourTripPoint)
-    {
-        _pPlot->xAxis->setLabel("Time (hour)");
-        scaleFactor = 60*60*1000;
-    }
-    else if (ticks[ticks.size()-1] > _cMinuteTripPoint)
-    {
-        _pPlot->xAxis->setLabel("Time (min)");
-        scaleFactor = 60*1000;
-    }
-    else
-    {
-        _pPlot->xAxis->setLabel("Time (s)");
-        scaleFactor = 1000;
-    }
-
     /* Generate correct labels */
     for (qint32 index = 0; index < ticks.size(); index++)
     {
-        tickLabels.append(QString::number(ticks[index] / scaleFactor));
+        bool bNegative;
+        quint32 tmp;
+
+        if (ticks[index] < 0)
+        {
+            bNegative = true;
+            tmp = -1 * ticks[index];
+        }
+        else
+        {
+            bNegative = false;
+            tmp = ticks[index];
+        }
+
+        quint32 hours = tmp / (60 * 60 * 1000);
+        tmp = tmp % (60 * 60 * 1000);
+
+        quint32 minutes = tmp / (60 * 1000);
+        tmp = tmp % (60 * 1000);
+
+        quint32 seconds = tmp / 1000;
+        quint32 milliseconds = tmp % 1000;
+
+        QString tickLabel = QString("%1:%2:%3%4%5").arg(hours, 2, 10, QChar('0'))
+                                                    .arg(minutes, 2, 10, QChar('0'))
+                                                    .arg(seconds, 2, 10, QChar('0'))
+                                                    .arg(QLocale::system().decimalPoint())
+                                                   .arg(milliseconds, 2, 10, QChar('0'));
+
+        // Make sure minus sign is shown when tick number is negative
+        if (bNegative)
+        {
+            tickLabel = "-" + tickLabel;
+        }
+
+        tickLabels.append(tickLabel);
     }
 
     /* Set labels */
