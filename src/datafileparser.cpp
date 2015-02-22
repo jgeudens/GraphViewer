@@ -114,6 +114,15 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
 
     if (bRet)
     {
+        // Trim white spaces of labels
+        for (qint32 i = 0; i < tmpLabels.size(); i++)
+        {
+            tmpLabels[i] = tmpLabels[i].trimmed();
+        }
+    }
+
+    if (bRet)
+    {
         // Init data row QLists to empty list
         QList<double> t;
         for (qint32 i = 0; i < expectedFields; i++)
