@@ -5,6 +5,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 TARGET = GraphViewer
 TEMPLATE = app
 
+win32: RC_ICONS = ../icon/application.ico
 
 VERSION = 0.2.0
 
