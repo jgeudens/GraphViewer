@@ -27,12 +27,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
+    connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGraphViewer, SLOT(enableValueTooltip(bool)));
 
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
 
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
-    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));
+    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));    
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
@@ -119,6 +120,7 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
             _pUi->actionAutoScaleYAxis->setEnabled(true);
             _pUi->actionSetManualScaleXAxis->setEnabled(true);
             _pUi->actionSetManualScaleYAxis->setEnabled(true);
+            _pUi->actionShowValueTooltip->setEnabled(true);
 
             // Clear actions
             _pGraphShowHide->clear();

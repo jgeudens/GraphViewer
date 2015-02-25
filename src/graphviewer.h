@@ -23,7 +23,8 @@ public:
 
 public slots:
     void autoScaleXAxis();
-    void autoScaleYAxis(); 
+    void autoScaleYAxis();
+    void enableValueTooltip(bool bState);
 
 private slots:
     void generateTickLabels();
@@ -31,17 +32,21 @@ private slots:
     void mousePress();
     void mouseWheel();
     void axisDoubleClicked(QCPAxis * axis);
+    void showValueToolTip(QMouseEvent *event);
 
 private:
 
+    QString createTickLabelString(qint32 tickKey);
+
     QCustomPlot * _pPlot;
+
+    bool _bEnableTooltip;
 
     static const QList<QColor> _colorlist;
 
     QVector<QString> tickLabels;
 
-    static const quint32 _cMinuteTripPoint = 5*60*1000; /* in ms */
-    static const quint32 _cHourTripPoint = 10*60*60*1000; /* in ms */
+    static const qint32 _cPixelNearThreshold = 20; /* in pixels */
 
 };
 

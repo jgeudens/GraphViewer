@@ -98,8 +98,11 @@
      </property>
     </widget>
     <addaction name="menuScale"/>
+    <addaction name="separator"/>
     <addaction name="menuShowHide"/>
     <addaction name="menuBringToFront"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowValueTooltip"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>
@@ -189,6 +192,20 @@
    </property>
    <property name="text">
     <string>Dynamic Session</string>
+   </property>
+  </action>
+  <action name="actionShowValueTooltip">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Show Value Tooltip</string>
    </property>
   </action>
  </widget>

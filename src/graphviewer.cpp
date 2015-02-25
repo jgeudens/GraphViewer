@@ -53,6 +53,9 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    legendFont.setPointSize(10);
    _pPlot->legend->setFont(legendFont);
 
+   // Tooltip is enabled
+   _bEnableTooltip = true;
+
    // Add layer to move graph on front
    _pPlot->addLayer("topMain", _pPlot->layer("main"), QCustomPlot::limAbove);
 
@@ -63,11 +66,141 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
+   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showValueToolTip(QMouseEvent*)));
 }
 
 void GraphViewer::clear()
 {
     _pPlot->clearGraphs();
+}
+
+void GraphViewer::showValueToolTip(QMouseEvent *event)
+{
+    if  (_bEnableTooltip)
+    {
+        const double xPos = _pPlot->xAxis->pixelToCoord(event->pos().x());
+
+        if (_pPlot->graphCount() > 0)
+        {
+            QString toolText;
+            const QList<double> keyList = _pPlot->graph(0)->data()->keys();
+
+            // Find if cursor is in range to show tooltip
+            qint32 i = 0;
+            bool bInRange = false;
+            for (i = 1; i < keyList.size(); i++)
+            {
+                // find the two nearest points
+                if (
+                    (xPos > keyList[i - 1])
+                    && (xPos <= keyList[i])
+                    )
+                {
+                    const double leftPointPxl = _pPlot->xAxis->coordToPixel(keyList[i - 1]);
+                    const double rightPointPxl = _pPlot->xAxis->coordToPixel(keyList[i]);
+                    const double xCoordPxl = event->pos().x();
+                    double keyIndex = -1;
+
+                    if (
+                        (xCoordPxl >= leftPointPxl)
+                        && (xCoordPxl <= (leftPointPxl + _cPixelNearThreshold))
+                        )
+                    {
+                        keyIndex = i - 1;
+                    }
+                    else if (
+                         (xCoordPxl >= (rightPointPxl - _cPixelNearThreshold))
+                         && (xCoordPxl <= rightPointPxl)
+                        )
+                    {
+                        keyIndex = i;
+                    }
+                    else
+                    {
+                        // no point near enough
+                        keyIndex = -1;
+                    }
+
+                    if (keyIndex != -1)
+                    {
+                        bInRange = true;
+
+                        // Add tick key string
+                        toolText = createTickLabelString(keyList[keyIndex]);
+
+                        // Check all graphs
+                        for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+                        {
+                            if (_pPlot->graph(graphIndex)->visible())
+                            {
+                                const double value = _pPlot->graph(graphIndex)->data()->values()[keyIndex].value;
+                                toolText += QString("\n%1: %2").arg(_pPlot->graph(graphIndex)->name()).arg(value);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (!bInRange)
+            {
+                // Hide tooltip
+                QToolTip::hideText();
+            }
+            else
+            {
+                QToolTip::showText(_pPlot->mapToGlobal(event->pos()), toolText, _pPlot);
+            }
+        }
+    }
+    else
+    {
+        if (QToolTip::isVisible())
+        {
+            QToolTip::hideText();
+        }
+    }
+}
+
+QString GraphViewer::createTickLabelString(qint32 tickKey)
+{
+    QString tickLabel;
+    bool bNegative;
+    quint32 tmp;
+
+    if (tickKey < 0)
+    {
+        bNegative = true;
+        tmp = -1 * tickKey;
+    }
+    else
+    {
+        bNegative = false;
+        tmp = tickKey;
+    }
+
+    quint32 hours = tmp / (60 * 60 * 1000);
+    tmp = tmp % (60 * 60 * 1000);
+
+    quint32 minutes = tmp / (60 * 1000);
+    tmp = tmp % (60 * 1000);
+
+    quint32 seconds = tmp / 1000;
+    quint32 milliseconds = tmp % 1000;
+
+    tickLabel = QString("%1:%2:%3%4%5").arg(hours)
+                                                .arg(minutes, 2, 10, QChar('0'))
+                                                .arg(seconds, 2, 10, QChar('0'))
+                                                .arg(QLocale::system().decimalPoint())
+                                               .arg(milliseconds, 2, 10, QChar('0'));
+
+    // Make sure minus sign is shown when tick number is negative
+    if (bNegative)
+    {
+        tickLabel = "-" + tickLabel;
+    }
+
+    return tickLabel;
 }
 
 void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * pLabels)
@@ -165,6 +298,11 @@ void GraphViewer::autoScaleYAxis()
     _pPlot->replot();
 }
 
+void GraphViewer::enableValueTooltip(bool bState)
+{
+    _bEnableTooltip = bState;
+}
+
 void GraphViewer::generateTickLabels()
 {
     QVector<double> ticks = _pPlot->xAxis->tickVector();
@@ -174,43 +312,8 @@ void GraphViewer::generateTickLabels()
 
     /* Generate correct labels */
     for (qint32 index = 0; index < ticks.size(); index++)
-    {
-        bool bNegative;
-        quint32 tmp;
-
-        if (ticks[index] < 0)
-        {
-            bNegative = true;
-            tmp = -1 * ticks[index];
-        }
-        else
-        {
-            bNegative = false;
-            tmp = ticks[index];
-        }
-
-        quint32 hours = tmp / (60 * 60 * 1000);
-        tmp = tmp % (60 * 60 * 1000);
-
-        quint32 minutes = tmp / (60 * 1000);
-        tmp = tmp % (60 * 1000);
-
-        quint32 seconds = tmp / 1000;
-        quint32 milliseconds = tmp % 1000;
-
-        QString tickLabel = QString("%1:%2:%3%4%5").arg(hours, 2, 10, QChar('0'))
-                                                    .arg(minutes, 2, 10, QChar('0'))
-                                                    .arg(seconds, 2, 10, QChar('0'))
-                                                    .arg(QLocale::system().decimalPoint())
-                                                   .arg(milliseconds, 2, 10, QChar('0'));
-
-        // Make sure minus sign is shown when tick number is negative
-        if (bNegative)
-        {
-            tickLabel = "-" + tickLabel;
-        }
-
-        tickLabels.append(tickLabel);
+    {       
+        tickLabels.append(createTickLabelString(ticks[index]));
     }
 
     /* Set labels */
