@@ -293,6 +293,22 @@ void MainWindow::showHideGraph(bool bState)
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
     _pGraphViewer->showGraph(pAction->data().toInt(), bState);
+
+    // Show/Hide corresponding "BringToFront" action
+    _pGraphBringToFront->actions().at(pAction->data().toInt())->setVisible(bState);
+
+    // Enable/Disable BringToFront menu
+    bool bVisible = false;
+    foreach(QAction * pAction, _pGraphBringToFront->actions())
+    {
+        if (pAction->isVisible())
+        {
+            bVisible = true;
+            break;
+        }
+    }
+
+    _pGraphBringToFront->setEnabled(bVisible);
 }
 
 void MainWindow::bringToFrontGraph(bool bState)
