@@ -286,6 +286,11 @@ void GraphViewer::bringToFront(quint32 index, bool bFront)
     _pPlot->replot();
 }
 
+QColor GraphViewer::getGraphColor(quint32 index)
+{
+    return _pPlot->graph(index)->pen().color();
+}
+
 void GraphViewer::autoScaleXAxis()
 {
     _pPlot->xAxis->rescale();

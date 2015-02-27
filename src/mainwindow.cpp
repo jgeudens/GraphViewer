@@ -133,11 +133,18 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
                 QAction * pShowHideAction = _pGraphShowHide->addAction(labels[i]);
                 QAction * pBringToFront = _pGraphBringToFront->addAction(labels[i]);
 
+                QPixmap pixmap(20,5);
+                pixmap.fill(_pGraphViewer->getGraphColor(i - 1));
+                QIcon * pBringToFrontIcon = new QIcon(pixmap);
+                QIcon * pShowHideIcon = new QIcon(pixmap);
+
                 pShowHideAction->setData(i - 1);
+                pShowHideAction->setIcon(*pBringToFrontIcon);
                 pShowHideAction->setCheckable(true);
                 pShowHideAction->setChecked(true);
 
                 pBringToFront->setData(i - 1);
+                pBringToFront->setIcon(*pShowHideIcon);
                 pBringToFront->setCheckable(true);
                 pBringToFront->setActionGroup(_pBringToFrontGroup);
 
