@@ -7,7 +7,7 @@ TEMPLATE = app
 
 win32: RC_ICONS = ../icon/application.ico
 
-VERSION = 0.3.0
+VERSION = 0.3.1
 
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 DEFINES += QT_DEBUG_OUTPUT
