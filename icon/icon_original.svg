@@ -9,12 +9,15 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="64px"
-   height="64px"
+   width="64"
+   height="64"
    id="svg2987"
    version="1.1"
    inkscape:version="0.48.5 r10040"
-   sodipodi:docname="icon.svg">
+   sodipodi:docname="icon_original.svg"
+   inkscape:export-filename="/home/jens/GraphViewer/GraphViewer-master/icon/icon-16x16.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs2989" />
   <sodipodi:namedview
@@ -24,9 +27,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="87.670628"
-     inkscape:cy="-10.458614"
+     inkscape:zoom="8"
+     inkscape:cx="25.97407"
+     inkscape:cy="16.89573"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
@@ -38,7 +41,11 @@
      inkscape:window-maximized="1"
      inkscape:snap-grids="true"
      showguides="true"
-     inkscape:guide-bbox="true" />
+     inkscape:guide-bbox="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <metadata
      id="metadata2992">
     <rdf:RDF>
@@ -47,7 +54,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -64,7 +71,7 @@
        sodipodi:rx="32.18182"
        sodipodi:ry="32.090908"
        d="m 64.36364,31.90909 a 32.18182,32.090908 0 1 1 -64.36364,0 32.18182,32.090908 0 1 1 64.36364,0 z"
-       transform="matrix(0.99873834,0,0,0.99756144,0,0.15606964)" />
+       transform="matrix(0.99435023,0,0,0.99716717,0,0.18130285)" />
     <path
        style="fill:none;stroke:#000000;stroke-width:3.12884855;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 11.579325,14.367542 c 0,33.174267 0,33.507677 0,33.507677"
