@@ -104,11 +104,22 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     QStringList tmpLabels;
     if (bRet)
     {
-        tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
-        if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
+        if (_parseSettings.getLabelRow() != -1)
         {
-            Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
-            bRet = false;
+            tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
+            if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
+            {
+                Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
+                bRet = false;
+            }
+        }
+        else
+        {
+            for (qint32 i = 0; i < ((qint32)_parseSettings.getColumn() + expectedFields); i++)
+            {
+                tmpLabels.append(QString(""));
+            }
+            tmpLabels[_parseSettings.getColumn()] = tr("Time");
         }
     }
 

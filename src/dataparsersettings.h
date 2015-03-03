@@ -19,7 +19,7 @@ public:
     QString getDecimalSeparator();
     quint32 getDataRow();
     quint32 getColumn();
-    quint32 getLabelRow();
+    qint32 getLabelRow();
     bool getDynamicSession();
     bool getWatchFileData();
 
@@ -29,7 +29,7 @@ public:
     void setDecimalSeparator(QString decimalSeparator);
     void setDataRow(quint32 dataRow);
     void setColumn(quint32 column);
-    void setLabelRow(quint32 labelRow);
+    void setLabelRow(qint32 labelRow);
     void setDynamicSession(bool bDynamicSession);
     void setWatchFileData(bool bWatchFileData);
 
@@ -45,7 +45,7 @@ private:
     QString _decimalSeparator;
     quint32 _dataRow;
     quint32 _column;
-    quint32 _labelRow;
+    qint32 _labelRow;
     bool _bDynamicSession;
     bool _bWatchFileData;
 

@@ -13,7 +13,7 @@ public:
     typedef struct _Preset
     {
         _Preset() : bName(false), bFieldSeparator(false), bDecimalSeparator(false),
-                    bThousandSeparator(false), bColumn(false), bLabelRow(false),
+                    bThousandSeparator(false), bColumn(false), labelRow(-1),
                     bDataRow(false), bDynamicSession(false), bKeyword(false) {}
 
         bool bName;
@@ -31,8 +31,7 @@ public:
         bool bColumn;
         quint32 column;
         
-        bool bLabelRow;
-        quint32 labelRow;
+        qint32 labelRow;
         
         bool bDataRow;
         quint32 dataRow;

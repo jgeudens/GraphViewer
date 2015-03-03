@@ -48,7 +48,7 @@ quint32 DataParserSettings::getColumn()
     return _column;
 }
 
-quint32 DataParserSettings::getLabelRow()
+qint32 DataParserSettings::getLabelRow()
 {
     return _labelRow;
 }
@@ -95,9 +95,16 @@ void DataParserSettings::setColumn(quint32 column)
     _column = column;
 }
 
-void DataParserSettings::setLabelRow(quint32 labelRow)
+void DataParserSettings::setLabelRow(qint32 labelRow)
 {
-    _labelRow = labelRow;
+    if (_labelRow >= 0)
+    {
+        _labelRow = labelRow;
+    }
+    else
+    {
+        _labelRow = -1;
+    }
 }
 
 void DataParserSettings::setDynamicSession(bool bDynamicSession)

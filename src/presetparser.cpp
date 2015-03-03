@@ -106,11 +106,13 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
         }
         else if (child.tagName() == "labelrow")
         {
-            pPreset->bLabelRow = true;
-            pPreset->labelRow = child.text().toUInt(&bRet);
-            if (!bRet)
+            pPreset->labelRow = child.text().toInt(&bRet);
+            if (
+                (!bRet)
+                || (pPreset->labelRow < -1)
+               )
             {
-                _msgBox.setText(tr("Label row ( %1 ) is not a valid number.").arg(child.text()));
+                _msgBox.setText(tr("Label row ( %1 ) is not a valid number. Specify -1 to indicate the absence of label row").arg(child.text()));
                 _msgBox.exec();
                 break;
             }

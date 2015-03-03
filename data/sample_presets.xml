@@ -38,4 +38,15 @@
 		<dynamicsession>false</dynamicsession>
 	</parsepreset>
 
+	<parsepreset>
+		<name>no-label</name>
+		<keyword>-no-label</keyword>
+		<fieldseparator><![CDATA[;]]></fieldseparator>
+		<decimalseparator><![CDATA[,]]></decimalseparator>
+		<thousandseparator><![CDATA[.]]></thousandseparator>
+		<column>1</column>
+		<labelrow>-1</labelrow>
+		<datarow>1</datarow>
+		<dynamicsession>false</dynamicsession>
+	</parsepreset>
 </graphviewer>

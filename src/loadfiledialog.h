@@ -28,6 +28,7 @@ private slots:
     void selectDataFile();
     void presetSelected(int index);
     void fieldSeparatorSelected(int index);
+    void toggledLabelRow(bool bState);
 
     void done(int r);
 

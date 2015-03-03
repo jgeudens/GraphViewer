@@ -77,6 +77,8 @@ LoadFileDialog::LoadFileDialog(QWidget *parent) :
     connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
     connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
+    connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
+
 }
 
 LoadFileDialog::~LoadFileDialog()
@@ -106,7 +108,16 @@ void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
     pParseSettings->setPath(_pUi->lineDataFile->text());
     pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
     pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
-    pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
+
+    if (_pUi->checkLabelRow->checkState() == Qt::Checked)
+    {
+        pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
+    }
+    else
+    {
+        // No label row
+        pParseSettings->setLabelRow(-1);
+    }
 
     if (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
     {
@@ -155,9 +166,15 @@ void LoadFileDialog::presetSelected(int index)
             _pUi->spinDataRow->setValue(_presetList[index].dataRow);
         }
 
-        if (_presetList[index].bLabelRow)
+        if (_presetList[index].labelRow == -1)
+        {
+            _pUi->spinLabelRow->setValue(0);
+            _pUi->checkLabelRow->setChecked(false);
+        }
+        else
         {
             _pUi->spinLabelRow->setValue(_presetList[index].labelRow);
+            _pUi->checkLabelRow->setChecked(true);
         }
 
         if (_presetList[index].bDecimalSeparator)
@@ -210,6 +227,12 @@ void LoadFileDialog::fieldSeparatorSelected(int index)
     {
         _pUi->lineCustomFieldSeparator->setEnabled(false);
     }
+}
+
+
+void LoadFileDialog::toggledLabelRow(bool bState)
+{
+    _pUi->spinLabelRow->setEnabled(bState);
 }
 
 void LoadFileDialog::done(int r)
