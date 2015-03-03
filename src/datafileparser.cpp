@@ -118,6 +118,11 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
         for (qint32 i = 0; i < tmpLabels.size(); i++)
         {
             tmpLabels[i] = tmpLabels[i].trimmed();
+
+            if (tmpLabels[i].isEmpty())
+            {
+                tmpLabels[i] = QString(tr("Unknown column %1")).arg(i);
+            }
         }
     }
 
@@ -170,7 +175,17 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
                         tmpData = tmpData.replace(_parseSettings.getDecimalSeparator(), QLocale::system().decimalPoint());
                     }
 
-                    const double number = QLocale::system().toDouble(tmpData, &bError);
+                    double number = QLocale::system().toDouble(tmpData, &bError);
+                    if (tmpData.simplified().isEmpty())
+                    {
+                        number = 0;
+                        bError = true;
+                    }
+                    else
+                    {
+                        number = QLocale::system().toDouble(tmpData, &bError);
+                    }
+
                     if (bError == false)
                     {
                         QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
