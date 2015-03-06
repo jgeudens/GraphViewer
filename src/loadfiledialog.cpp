@@ -78,7 +78,6 @@ LoadFileDialog::LoadFileDialog(QWidget *parent) :
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
     connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
     connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
-
 }
 
 LoadFileDialog::~LoadFileDialog()
@@ -93,14 +92,24 @@ int LoadFileDialog::exec()
     return QDialog::exec();
 }
 
-int LoadFileDialog::exec(QString file)
+int LoadFileDialog::exec(QString file, bool bSkipDialog)
 {
+    int result = QDialog::Rejected;
     loadPreset();
 
     _pUi->lineDataFile->setText(file);
     setPreset(file);
 
-    return QDialog::exec();
+    if (bSkipDialog && validateData())
+    {
+        result = QDialog::Accepted;
+    }
+    else
+    {
+        result = QDialog::exec();
+    }
+
+    return result;
 }
 
 void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
@@ -237,44 +246,51 @@ void LoadFileDialog::toggledLabelRow(bool bState)
 
 void LoadFileDialog::done(int r)
 {
-    bool bStop = true;
+    bool bValid = true;
 
     if(QDialog::Accepted == r)  // ok was pressed
     {
         // Validate the data
-
-        if (bStop)
-        {
-            if (!QFileInfo(_pUi->lineDataFile->text()).exists())
-            {
-                bStop = false;
-                Util::showError(tr("Data file doesn't exist"));
-            }
-        }
-
-        if (bStop)
-        {
-            if (
-                    (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-                    && (_pUi->lineCustomFieldSeparator->text().isEmpty())
-                )
-            {
-                bStop = false;
-                Util::showError(tr("Custom field separator isn't defined correctly"));
-            }
-        }
+        bValid = validateData();
     }
     else
     {
         // cancel, close or exc was pressed
-        bStop = true;
+        bValid = true;
     }
 
-    if (bStop)
+    if (bValid)
     {
         QDialog::done(r);
     }
+}
 
+bool LoadFileDialog::validateData()
+{
+    bool bOk = true;
+
+    if (bOk)
+    {
+        if (!QFileInfo(_pUi->lineDataFile->text()).exists())
+        {
+            bOk = false;
+            Util::showError(tr("Data file doesn't exist"));
+        }
+    }
+
+    if (bOk)
+    {
+        if (
+                (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
+                && (_pUi->lineCustomFieldSeparator->text().isEmpty())
+            )
+        {
+            bOk = false;
+            Util::showError(tr("Custom field separator isn't defined correctly"));
+        }
+    }
+
+    return bOk;
 }
 
 qint32 LoadFileDialog::findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey)

@@ -7,7 +7,7 @@
 
 const QString MainWindow::_cWindowTitle = QString("GraphViewer");
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow),
     _pGraphViewer(NULL),
@@ -43,6 +43,29 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    if (cmdArguments.size() > 1)
+    {
+        QString filename = cmdArguments[1];
+        bool bSkipDialog = false;
+
+        if (cmdArguments.size() > 2)
+        {
+            if (cmdArguments[2].simplified() == "1")
+            {
+                bSkipDialog = true;
+            }
+            else
+            {
+                bSkipDialog = false;
+            }
+        }
+
+        if (_loadDataFileDialog.exec(filename, bSkipDialog) == QDialog::Accepted)
+        {
+            parseData();
+        }
+    }
 }
 
 MainWindow::~MainWindow()
@@ -357,7 +380,7 @@ void MainWindow::dropEvent(QDropEvent *e)
     foreach (const QUrl &url, e->mimeData()->urls())
     {
         const QString &fileName = url.toLocalFile();
-        if (_loadDataFileDialog.exec(fileName) == QDialog::Accepted)
+        if (_loadDataFileDialog.exec(fileName, false) == QDialog::Accepted)
         {
             parseData();
         }

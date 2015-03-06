@@ -21,7 +21,7 @@ public:
     ~LoadFileDialog();
 
     int exec();
-    int exec(QString file);
+    int exec(QString file, bool bSkipDialog);
     void getParserSettings(DataParserSettings *pParseSettings);
 
 private slots:
@@ -34,6 +34,8 @@ private slots:
 
 private:
 
+    bool validateData();
+
     typedef struct _ComboListItem
     {
         _ComboListItem(QString _name, QString _userData)
@@ -41,7 +43,6 @@ private:
             name = _name;
             userData = _userData;
         }
-
 
         QString name;
         QString userData;
