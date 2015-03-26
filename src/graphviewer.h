@@ -26,6 +26,7 @@ public slots:
     void autoScaleXAxis();
     void autoScaleYAxis();
     void enableValueTooltip(bool bState);
+    void enableSamplePoints(bool bState);
 
 private slots:
     void generateTickLabels();

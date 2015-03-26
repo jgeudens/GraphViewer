@@ -28,6 +28,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGraphViewer, SLOT(enableValueTooltip(bool)));
+    connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGraphViewer, SLOT(enableSamplePoints(bool)));
 
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
@@ -144,6 +145,9 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
             _pUi->actionSetManualScaleXAxis->setEnabled(true);
             _pUi->actionSetManualScaleYAxis->setEnabled(true);
             _pUi->actionShowValueTooltip->setEnabled(true);
+            _pUi->actionHighlightSamplePoints->setEnabled(true);
+
+            _pGraphViewer->enableSamplePoints(_pUi->actionHighlightSamplePoints->isChecked());
 
             // Clear actions
             _pGraphShowHide->clear();

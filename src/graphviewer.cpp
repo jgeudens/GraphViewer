@@ -319,6 +319,22 @@ void GraphViewer::enableValueTooltip(bool bState)
     _bEnableTooltip = bState;
 }
 
+void GraphViewer::enableSamplePoints(bool bState)
+{
+    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+    {
+        if (bState)
+        {
+            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
+        }
+        else
+        {
+            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+        }
+    }
+    _pPlot->replot();
+}
+
 void GraphViewer::generateTickLabels()
 {
     QVector<double> ticks = _pPlot->xAxis->tickVector();
