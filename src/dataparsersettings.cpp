@@ -12,6 +12,7 @@ void DataParserSettings::copyTo(DataParserSettings * pDest)
     pDest->setFieldSeparator(_fieldSeparator);
     pDest->setGroupSeparator(_groupSeparator);
     pDest->setDecimalSeparator(_decimalSeparator);
+    pDest->setCommentSequence(_commentSequence);
     pDest->setDataRow(_dataRow);
     pDest->setColumn(_column);
     pDest->setLabelRow(_labelRow);
@@ -36,6 +37,11 @@ QString DataParserSettings::getGroupSeparator()
 QString DataParserSettings::getDecimalSeparator()
 {
     return _decimalSeparator;
+}
+
+QString DataParserSettings::getCommentSequence()
+{
+    return _commentSequence;
 }
 
 quint32 DataParserSettings::getDataRow()
@@ -83,6 +89,11 @@ void DataParserSettings::setGroupSeparator(QString groupSeparator)
 void DataParserSettings::setDecimalSeparator(QString decimalSeparator)
 {
     _decimalSeparator = decimalSeparator;
+}
+
+void DataParserSettings::setCommentSequence(QString commentSequence)
+{
+    _commentSequence = commentSequence.trimmed();
 }
 
 void DataParserSettings::setDataRow(quint32 dataRow)

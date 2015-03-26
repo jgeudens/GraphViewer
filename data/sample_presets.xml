@@ -8,6 +8,7 @@
 		<fieldseparator><![CDATA[;]]></fieldseparator>
 		<decimalseparator><![CDATA[,]]></decimalseparator>
 		<thousandseparator><![CDATA[.]]></thousandseparator>
+		<commentSequence><![CDATA[//]]></commentSequence>
 		<column>1</column>
 		<labelrow>1</labelrow>
 		<datarow>2</datarow>

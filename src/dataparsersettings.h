@@ -17,6 +17,7 @@ public:
     QString getFieldSeparator();
     QString getGroupSeparator();
     QString getDecimalSeparator();
+    QString getCommentSequence();
     quint32 getDataRow();
     quint32 getColumn();
     qint32 getLabelRow();
@@ -27,6 +28,7 @@ public:
     void setFieldSeparator(QString fieldSeparator);
     void setGroupSeparator(QString groupSeparator);
     void setDecimalSeparator(QString decimalSeparator);
+    void setCommentSequence(QString commentSequence);
     void setDataRow(quint32 dataRow);
     void setColumn(quint32 column);
     void setLabelRow(qint32 labelRow);
@@ -43,6 +45,7 @@ private:
     QString _fieldSeparator;
     QString _groupSeparator;
     QString _decimalSeparator;
+    QString _commentSequence;
     quint32 _dataRow;
     quint32 _column;
     qint32 _labelRow;

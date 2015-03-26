@@ -74,6 +74,8 @@ LoadFileDialog::LoadFileDialog(QWidget *parent) :
     // group separator
     _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, QLocale::system().groupSeparator()));
 
+    _pUi->lineComment->setText(QString());
+
     connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
     connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
@@ -139,6 +141,7 @@ void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
 
     pParseSettings->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(_pUi->comboDecimalSeparator->currentIndex()).toString());
     pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
+    pParseSettings->setCommentSequence(_pUi->lineComment->text());
     pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
     pParseSettings->setWatchFileData(true);
 }
@@ -219,6 +222,8 @@ void LoadFileDialog::presetSelected(int index)
         {
             _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, _presetList[index].thousandSeparator));
         }
+
+        _pUi->lineComment->setText(_presetList[index].commentSequence);
 
         _pUi->checkDynamicSession->setChecked(_presetList[index].bDynamicSession);
     }

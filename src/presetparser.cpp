@@ -93,6 +93,10 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
             pPreset->bThousandSeparator = true;
             pPreset->thousandSeparator = child.text();
         }
+        else if (child.tagName() == "commentSequence")
+        {
+            pPreset->commentSequence = child.text();
+        }
         else if (child.tagName() == "column")
         {
             pPreset->bColumn = true;

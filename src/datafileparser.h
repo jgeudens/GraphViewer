@@ -30,6 +30,7 @@ private slots:
 private:
 
     bool readLineFromFile(QFile *file, QString *pLine);
+    bool IsCommentLine(QString line);
 
     QStringList _fileContents;
 

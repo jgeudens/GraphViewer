@@ -13,7 +13,7 @@ public:
     typedef struct _Preset
     {
         _Preset() : bName(false), bFieldSeparator(false), bDecimalSeparator(false),
-                    bThousandSeparator(false), bColumn(false), labelRow(-1),
+                    bThousandSeparator(false), commentSequence(QString()), bColumn(false), labelRow(-1),
                     bDataRow(false), bDynamicSession(false), bKeyword(false) {}
 
         bool bName;
@@ -27,6 +27,8 @@ public:
 
         bool bThousandSeparator;
         QString thousandSeparator;
+
+        QString commentSequence;
 
         bool bColumn;
         quint32 column;

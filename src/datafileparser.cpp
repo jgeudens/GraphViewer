@@ -161,8 +161,11 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
     {
         for (qint32 index = _parseSettings.getDataRow(); index < _fileContents.size(); index++)
         {
-            // ignore empty lines
-            if(_fileContents[index].simplified() != "")
+            // ignore empty lines and comment lines
+            if(
+                (!_fileContents[index].simplified().isEmpty())
+                && (!IsCommentLine(_fileContents[index]))
+              )
             {
                 QStringList paramList = _fileContents[index].split(_parseSettings.getFieldSeparator());
                 if ((paramList.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
@@ -237,6 +240,22 @@ bool DataFileParser::readLineFromFile(QFile * file, QString *pLine)
     {
         bRet = true;
         *pLine = QString(buf);
+    }
+
+    return bRet;
+}
+
+bool DataFileParser::IsCommentLine(QString line)
+{
+    bool bRet = false;
+
+    const QString commentSequence = _parseSettings.getCommentSequence();
+    if (!commentSequence.isEmpty())
+    {
+        if (line.trimmed().left(commentSequence.length()) == commentSequence)
+        {
+            bRet = true;
+        }
     }
 
     return bRet;

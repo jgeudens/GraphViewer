@@ -38,14 +38,14 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="0">
+       <item row="10" column="0">
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string>Column</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="1">
+       <item row="10" column="1">
         <widget class="QSpinBox" name="spinColumn">
          <property name="minimum">
           <number>1</number>
@@ -58,14 +58,14 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
           <string>Data Row</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="1">
+       <item row="13" column="1">
         <widget class="QSpinBox" name="spinDataRow">
          <property name="minimum">
           <number>1</number>
@@ -150,7 +150,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="1">
+       <item row="14" column="1">
         <widget class="QCheckBox" name="checkDynamicSession">
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
@@ -160,7 +160,7 @@
          </property>
         </widget>
        </item>
-       <item row="13" column="0">
+       <item row="14" column="0">
         <widget class="QLabel" name="label_10">
          <property name="toolTip">
           <string>Enables auto reload</string>
@@ -170,7 +170,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="1">
+       <item row="11" column="1">
         <widget class="QCheckBox" name="checkLabelRow">
          <property name="text">
           <string>Label Row Present?</string>
@@ -180,14 +180,14 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0">
+       <item row="11" column="0">
         <widget class="QLabel" name="label_4">
          <property name="text">
           <string>Label Row</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="1">
+       <item row="12" column="1">
         <widget class="QSpinBox" name="spinLabelRow">
          <property name="minimum">
           <number>1</number>
@@ -199,6 +199,16 @@
           <number>1</number>
          </property>
         </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Comment string</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QLineEdit" name="lineComment"/>
        </item>
       </layout>
      </item>
@@ -214,6 +224,7 @@
   <tabstop>lineCustomFieldSeparator</tabstop>
   <tabstop>comboDecimalSeparator</tabstop>
   <tabstop>comboGroupSeparator</tabstop>
+  <tabstop>lineComment</tabstop>
   <tabstop>spinColumn</tabstop>
   <tabstop>checkLabelRow</tabstop>
   <tabstop>spinLabelRow</tabstop>
