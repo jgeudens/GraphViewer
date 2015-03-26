@@ -73,7 +73,7 @@ bool DataParserSettings::getWatchFileData()
 
 void DataParserSettings::setPath(QString path)
 {
-    _path = path;
+    _path = path.trimmed();
 }
 
 void DataParserSettings::setFieldSeparator(QString fieldSeparator)
@@ -88,7 +88,7 @@ void DataParserSettings::setGroupSeparator(QString groupSeparator)
 
 void DataParserSettings::setDecimalSeparator(QString decimalSeparator)
 {
-    _decimalSeparator = decimalSeparator;
+    _decimalSeparator = decimalSeparator.trimmed();
 }
 
 void DataParserSettings::setCommentSequence(QString commentSequence)
