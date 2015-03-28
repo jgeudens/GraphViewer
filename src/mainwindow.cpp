@@ -287,7 +287,13 @@ void MainWindow::showAbout()
     QString lnkQt("<a href='http://qt-project.org/'>Qt</a>");
     QString lnkQCustomPlot("<a href='http://www.qcustomplot.com/'>QCustomPlot</a>");
 
-    QString version = QString(tr("<b>GraphViewer v%1</b><br><br>")).arg(APP_VERSION);
+    QString appVersion = QString(tr("v%1")).arg(APP_VERSION);
+
+#ifdef DEBUG
+    appVersion.append(QString(tr(" (git: %1:%2)")).arg(GIT_BRANCH).arg(GIT_HASH));
+#endif
+
+    QString version = QString(tr("<b>GraphViewer %1</b><br><br>")).arg(appVersion);
 
     QString aboutTxt = tr(
                         "%1"
