@@ -34,7 +34,7 @@ private slots:
 
 private:
 
-    bool validateData();
+    bool validateSettingsData();
 
     typedef struct _ComboListItem
     {

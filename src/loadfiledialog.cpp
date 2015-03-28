@@ -102,7 +102,7 @@ int LoadFileDialog::exec(QString file, bool bSkipDialog)
     _pUi->lineDataFile->setText(file);
     setPreset(file);
 
-    if (bSkipDialog && validateData())
+    if (bSkipDialog && validateSettingsData())
     {
         result = QDialog::Accepted;
     }
@@ -256,7 +256,7 @@ void LoadFileDialog::done(int r)
     if(QDialog::Accepted == r)  // ok was pressed
     {
         // Validate the data
-        bValid = validateData();
+        bValid = validateSettingsData();
     }
     else
     {
@@ -270,7 +270,7 @@ void LoadFileDialog::done(int r)
     }
 }
 
-bool LoadFileDialog::validateData()
+bool LoadFileDialog::validateSettingsData()
 {
     bool bOk = true;
 

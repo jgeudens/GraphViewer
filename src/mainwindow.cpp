@@ -45,22 +45,30 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
-    if (cmdArguments.size() > 1)
-    {
-        QString filename = cmdArguments[1];
-        bool bSkipDialog = false;
 
-        if (cmdArguments.size() > 2)
-        {
-            if (cmdArguments[2].simplified() == "1")
-            {
-                bSkipDialog = true;
-            }
-            else
-            {
-                bSkipDialog = false;
-            }
-        }
+    QCommandLineParser argumentParser;
+
+    argumentParser.setApplicationDescription("GraphViewer");
+    argumentParser.addHelpOption();
+
+    // datafile option
+    QCommandLineOption dataFileOption(QStringList() << "d" << "datafile",
+            QCoreApplication::translate("main", "Specify datafile to parse (optionally)"),
+            QCoreApplication::translate("main", "datafile"));
+    argumentParser.addOption(dataFileOption);
+
+    // skipDialog option
+    QCommandLineOption skipOption(QStringList() << "s" << "skip-dialog", QCoreApplication::translate("main", "Skip parse settings dialog if possible (option is ignored when datafile is not specified)"));
+    argumentParser.addOption(skipOption);
+
+    // Process arguments
+    argumentParser.process(cmdArguments);
+
+    if (argumentParser.isSet(dataFileOption))
+    {
+        QString filename = argumentParser.value(dataFileOption);
+
+        bool bSkipDialog = argumentParser.isSet(skipOption);
 
         if (_loadDataFileDialog.exec(filename, bSkipDialog) == QDialog::Accepted)
         {
