@@ -241,7 +241,7 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * p
    }
 
    _pPlot->legend->setVisible(true);
-   _pPlot->rescaleAxes();
+   _pPlot->rescaleAxes(true);
    _pPlot->replot();
 
 }
@@ -304,13 +304,13 @@ QColor GraphViewer::getGraphColor(quint32 index)
 
 void GraphViewer::autoScaleXAxis()
 {
-    _pPlot->xAxis->rescale();
+    _pPlot->xAxis->rescale(true);
     _pPlot->replot();
 }
 
 void GraphViewer::autoScaleYAxis()
 {
-    _pPlot->yAxis->rescale();
+    _pPlot->yAxis->rescale(true);
     _pPlot->replot();
 }
 
@@ -413,6 +413,6 @@ void GraphViewer::mouseWheel()
 
 void GraphViewer::axisDoubleClicked(QCPAxis * axis)
 {
-    axis->rescale();
+    axis->rescale(true);
     _pPlot->replot();
 }
