@@ -101,7 +101,7 @@ void MainWindow::parseData()
     //Get settings from dialog
     _loadDataFileDialog.getParserSettings(pNewParser->getDataParseSettings());
 
-    if (updateGraph(pNewParser))
+    if (resetGraph(pNewParser))
     {
         // Data file parse succeeded
 
@@ -131,12 +131,12 @@ void MainWindow::parseData()
     }
 }
 
-bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
+bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
 {
     bool bSucceeded = false;
     if (_pDataFileParser->forceProcessDataFile())
     {
-        _pGraphViewer->setupGraph(&_pDataFileParser->getDataRows(), &_pDataFileParser->getDataLabels());
+        _pGraphViewer->setupData(&_pDataFileParser->getDataRows(), &_pDataFileParser->getDataLabels());
 
         setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
 
@@ -193,10 +193,22 @@ bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 
     if (!bSucceeded)
     {
-        setWindowTitle(QString(tr("%1 - %2 ) - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+        setWindowTitle(QString(tr("%1 - %2 - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
     }
 
     return bSucceeded;
+}
+
+void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
+{
+    if (_pDataFileParser->processDataFile())
+    {
+        _pGraphViewer->updateData(&_pDataFileParser->getDataRows());
+    }
+    else
+    {
+        setWindowTitle(QString(tr("%1 - %2 - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+    }
 }
 
 void MainWindow::exitApplication()
@@ -207,7 +219,7 @@ void MainWindow::exitApplication()
 void MainWindow::reloadDataFile()
 {
     // Reload data with current parser data
-    updateGraph(_pParser);
+    resetGraph(_pParser);
 }
 
 void MainWindow::fileDataChange()
@@ -223,7 +235,7 @@ void MainWindow::fileDataChange()
             {
                 if(_pParser->getDataParseSettings()->getDynamicSession())
                 {
-                    reloadDataFile();
+                    updateGraph(_pParser);
                 }
                 else
                 {
@@ -231,7 +243,7 @@ void MainWindow::fileDataChange()
                     reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
                     if(reply == QMessageBox::Yes)
                     {
-                        reloadDataFile();
+                        updateGraph(_pParser);
                     }
                     else if(reply == QMessageBox::Cancel)
                     {

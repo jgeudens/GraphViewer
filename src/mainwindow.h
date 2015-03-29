@@ -41,7 +41,8 @@ private slots:
     void showContextMenu(const QPoint& pos);
 
 private:
-    bool updateGraph(DataFileParser *_pDataFileParser);
+    bool resetGraph(DataFileParser *_pDataFileParser);
+    void updateGraph(DataFileParser *_pDataFileParser);
 
     Ui::MainWindow * _pUi;
 

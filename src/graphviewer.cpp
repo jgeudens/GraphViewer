@@ -214,10 +214,8 @@ QString GraphViewer::createTickLabelString(qint32 tickKey)
     return tickLabel;
 }
 
-void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * pLabels)
+void GraphViewer::setupData(QList<QList<double> > * pDataLists, QStringList * pLabels)
 {
-   const QVector<double> timeData = pDataLists->at(0).toVector();
-
    _pPlot->clearGraphs();
 
    for (qint32 i = 1; i < pDataLists->size(); i++)
@@ -225,10 +223,6 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * p
         const quint32 colorIndex = _pPlot->graphCount() % _colorlist.size();
 
         QCPGraph * pGraph = _pPlot->addGraph();
-
-        //Add data to graphs
-        QVector<double> graphData = pDataLists->at(i).toVector();
-        _pPlot->graph(i - 1)->addData(timeData, graphData);
 
         pGraph->setName(pLabels->at(i));
 
@@ -241,6 +235,22 @@ void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * p
    }
 
    _pPlot->legend->setVisible(true);
+
+   updateData(pDataLists);
+
+}
+
+void GraphViewer::updateData(QList<QList<double> > * pDataLists)
+{
+   const QVector<double> timeData = pDataLists->at(0).toVector();
+
+   for (qint32 i = 1; i < pDataLists->size(); i++)
+   {
+        //Add data to graphs
+        QVector<double> graphData = pDataLists->at(i).toVector();
+        _pPlot->graph(i - 1)->setData(timeData, graphData);
+   }
+
    _pPlot->rescaleAxes(true);
    _pPlot->replot();
 

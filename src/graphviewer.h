@@ -14,7 +14,8 @@ public:
     explicit GraphViewer(QCustomPlot * pPlot, QObject *parent);
 
     void clear();
-    void setupGraph(QList<QList<double> > *pDataLists, QStringList *pLabels);
+    void setupData(QList<QList<double> > * pDataLists, QStringList * pLabels);
+    void updateData(QList<QList<double> > * pDataLists);
     void exportGraphImage(QString imageFile);
     void manualScaleXAxis(qint64 min, qint64 max);
     void manualScaleYAxis(qint64 min, qint64 max);
