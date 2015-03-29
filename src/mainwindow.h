@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QMenu>
+#include <QTimer>
 
 #include "datafileparser.h"
 #include "dataparsersettings.h"
@@ -27,6 +28,7 @@ private slots:
     void exitApplication();
     void reloadDataFile();
     void fileDataChange();
+    void dynamicUpdate();
     void addFileWatchFail(QString path);
     void prepareImageExport();
     void showAbout();
@@ -52,9 +54,13 @@ private:
     QMenu * _pGraphBringToFront;
     QActionGroup* _pBringToFrontGroup;
 
+    QTimer _dynamicUpdateTimer;
+    bool _bDynamicUpdatePending;
+
     LoadFileDialog _loadDataFileDialog;
 
     static const QString _cWindowTitle;
+    static const int cDynamicMaxUpdateInterval;
 };
 
 #endif // MAINWINDOW_H

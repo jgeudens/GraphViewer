@@ -6,12 +6,14 @@
 #include "ui_mainwindow.h"
 
 const QString MainWindow::_cWindowTitle = QString("GraphViewer");
+const int MainWindow::cDynamicMaxUpdateInterval = 100;
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow),
     _pGraphViewer(NULL),
-    _pParser(NULL)
+    _pParser(NULL),
+    _bDynamicUpdatePending(false)
 {
     _pUi->setupUi(this);
 
@@ -45,6 +47,8 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
+    connect(&_dynamicUpdateTimer, SIGNAL(timeout()), this, SLOT(dynamicUpdate()));
+    _dynamicUpdateTimer.start(cDynamicMaxUpdateInterval);
 
     QCommandLineParser argumentParser;
 
@@ -79,6 +83,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    _dynamicUpdateTimer.stop();
     delete _pGraphViewer;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
@@ -224,35 +229,45 @@ void MainWindow::reloadDataFile()
 
 void MainWindow::fileDataChange()
 {
-    static QMutex mutex;
+    _bDynamicUpdatePending = true;
+}
 
-    if(_pParser->getDataParseSettings()->getWatchFileData())
+void MainWindow::dynamicUpdate()
+{
+    if (_bDynamicUpdatePending)
     {
-        if(mutex.tryLock())
+        _bDynamicUpdatePending = false;
+
+        if(_pParser->getDataParseSettings()->getWatchFileData())
         {
-            QFile file(_pParser->getDataParseSettings()->getPath());
-            if(file.size() > 0)
+            static QMutex mutex;
+
+            if(mutex.tryLock())
             {
-                if(_pParser->getDataParseSettings()->getDynamicSession())
+                QFile file(_pParser->getDataParseSettings()->getPath());
+                if(file.size() > 0)
                 {
-                    updateGraph(_pParser);
-                }
-                else
-                {
-                    QMessageBox::StandardButton reply;
-                    reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
-                    if(reply == QMessageBox::Yes)
+                    if(_pParser->getDataParseSettings()->getDynamicSession())
                     {
                         updateGraph(_pParser);
                     }
-                    else if(reply == QMessageBox::Cancel)
+                    else
                     {
-                        _pParser->getDataParseSettings()->setWatchFileData(false);
+                        QMessageBox::StandardButton reply;
+                        reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
+                        if(reply == QMessageBox::Yes)
+                        {
+                            updateGraph(_pParser);
+                        }
+                        else if(reply == QMessageBox::Cancel)
+                        {
+                            _pParser->getDataParseSettings()->setWatchFileData(false);
+                        }
                     }
                 }
-            }
 
-            mutex.unlock();
+                mutex.unlock();
+            }
         }
     }
 }
