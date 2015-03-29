@@ -134,65 +134,61 @@ void MainWindow::parseData()
 bool MainWindow::updateGraph(DataFileParser * _pDataFileParser)
 {
     bool bSucceeded = false;
-    if (_pDataFileParser->loadDataFile())
+    if (_pDataFileParser->forceProcessDataFile())
     {
-        QList<QList<double> > data;
-        QStringList labels;
+        _pGraphViewer->setupGraph(&_pDataFileParser->getDataRows(), &_pDataFileParser->getDataLabels());
 
-        if (_pDataFileParser->parseData(data, labels))
+        setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+
+        _pUi->actionReloadDataFile->setEnabled(true);
+        _pUi->actionExportImage->setEnabled(true);
+
+        _pUi->actionAutoScaleXAxis->setEnabled(true);
+        _pUi->actionAutoScaleYAxis->setEnabled(true);
+        _pUi->actionSetManualScaleXAxis->setEnabled(true);
+        _pUi->actionSetManualScaleYAxis->setEnabled(true);
+        _pUi->actionShowValueTooltip->setEnabled(true);
+        _pUi->actionHighlightSamplePoints->setEnabled(true);
+
+        _pGraphViewer->enableSamplePoints(_pUi->actionHighlightSamplePoints->isChecked());
+
+        // Clear actions
+        _pGraphShowHide->clear();
+        _pBringToFrontGroup->actions().clear();
+        _pGraphBringToFront->clear();
+
+        // Add menu-items
+        for (qint32 i = 1; i < _pDataFileParser->getDataLabels().size(); i++)
         {
-            _pGraphViewer->setupGraph(&data, &labels);
+            QString label = _pDataFileParser->getDataLabels()[i];
+            QAction * pShowHideAction = _pGraphShowHide->addAction(label);
+            QAction * pBringToFront = _pGraphBringToFront->addAction(label);
 
-            setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+            QPixmap pixmap(20,5);
+            pixmap.fill(_pGraphViewer->getGraphColor(i - 1));
+            QIcon * pBringToFrontIcon = new QIcon(pixmap);
+            QIcon * pShowHideIcon = new QIcon(pixmap);
 
-            _pUi->actionReloadDataFile->setEnabled(true);
-            _pUi->actionExportImage->setEnabled(true);
+            pShowHideAction->setData(i - 1);
+            pShowHideAction->setIcon(*pBringToFrontIcon);
+            pShowHideAction->setCheckable(true);
+            pShowHideAction->setChecked(true);
 
-            _pUi->actionAutoScaleXAxis->setEnabled(true);
-            _pUi->actionAutoScaleYAxis->setEnabled(true);
-            _pUi->actionSetManualScaleXAxis->setEnabled(true);
-            _pUi->actionSetManualScaleYAxis->setEnabled(true);
-            _pUi->actionShowValueTooltip->setEnabled(true);
-            _pUi->actionHighlightSamplePoints->setEnabled(true);
+            pBringToFront->setData(i - 1);
+            pBringToFront->setIcon(*pShowHideIcon);
+            pBringToFront->setCheckable(true);
+            pBringToFront->setActionGroup(_pBringToFrontGroup);
 
-            _pGraphViewer->enableSamplePoints(_pUi->actionHighlightSamplePoints->isChecked());
-
-            // Clear actions
-            _pGraphShowHide->clear();
-            _pBringToFrontGroup->actions().clear();
-            _pGraphBringToFront->clear();
-
-            // Add menu-items
-            for (qint32 i = 1; i < labels.size(); i++)
-            {
-                QAction * pShowHideAction = _pGraphShowHide->addAction(labels[i]);
-                QAction * pBringToFront = _pGraphBringToFront->addAction(labels[i]);
-
-                QPixmap pixmap(20,5);
-                pixmap.fill(_pGraphViewer->getGraphColor(i - 1));
-                QIcon * pBringToFrontIcon = new QIcon(pixmap);
-                QIcon * pShowHideIcon = new QIcon(pixmap);
-
-                pShowHideAction->setData(i - 1);
-                pShowHideAction->setIcon(*pBringToFrontIcon);
-                pShowHideAction->setCheckable(true);
-                pShowHideAction->setChecked(true);
-
-                pBringToFront->setData(i - 1);
-                pBringToFront->setIcon(*pShowHideIcon);
-                pBringToFront->setCheckable(true);
-                pBringToFront->setActionGroup(_pBringToFrontGroup);
-
-                QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
-                QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(bringToFrontGraph(bool)));
-            }
-
-            _pGraphShowHide->setEnabled(true);
-            _pGraphBringToFront->setEnabled(true);
-            _pUi->menuScale->setEnabled(true);
-
-            bSucceeded = true;
+            QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
+            QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(bringToFrontGraph(bool)));
         }
+
+        _pGraphShowHide->setEnabled(true);
+        _pGraphBringToFront->setEnabled(true);
+        _pUi->menuScale->setEnabled(true);
+
+        bSucceeded = true;
+
     }
 
     if (!bSucceeded)
