@@ -50,4 +50,17 @@
 		<datarow>1</datarow>
 		<dynamicsession>false</dynamicsession>
 	</parsepreset>
+
+	<parsepreset>
+		<name>ModbusScope</name>
+		<keyword>-scope</keyword>
+		<fieldseparator><![CDATA[;]]></fieldseparator>
+		<decimalseparator><![CDATA[,]]></decimalseparator>
+		<thousandseparator><![CDATA[.]]></thousandseparator>
+		<column>1</column>
+		<labelrow>11</labelrow>
+		<datarow>12</datarow>
+		<dynamicsession>false</dynamicsession>
+	</parsepreset>
+
 </graphviewer>
