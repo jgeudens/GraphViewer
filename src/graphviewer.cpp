@@ -1,7 +1,10 @@
 
 #include <QMessageBox>
 #include <QVector>
+#include <QtGlobal>
 #include <QLocale>
+
+#include <algorithm> // std::upperbound, std::lowerbound
 
 #include "graphviewer.h"
 
@@ -67,6 +70,9 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    // Tooltip is enabled
    _bEnableTooltip = true;
 
+   // Samples are enabled
+   _bEnableSampleHighlight = true;
+
    // Add layer to move graph on front
    _pPlot->addLayer("topMain", _pPlot->layer("main"), QCustomPlot::limAbove);
 
@@ -78,6 +84,7 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
    connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showValueToolTip(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
 void GraphViewer::clear()
@@ -173,6 +180,38 @@ void GraphViewer::showValueToolTip(QMouseEvent *event)
     }
 }
 
+
+void GraphViewer::handleSamplePoints()
+{
+    bool bHighlight = false;
+
+    if (_bEnableSampleHighlight)
+    {
+        if (_pPlot->graphCount() > 0)
+        {
+            const double sizePx = _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().upper) - _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().lower);
+
+            const quint32 lowerBoundKey = _pPlot->graph(0)->data()->lowerBound(_pPlot->xAxis->range().lower).key();
+            const quint32 upperBoundKey = _pPlot->graph(0)->data()->upperBound(_pPlot->xAxis->range().upper).key();
+
+            const quint32 lowerBoundIndex = _pPlot->graph(0)->data()->keys().indexOf(lowerBoundKey);
+            const quint32 upperBoundIndex = _pPlot->graph(0)->data()->keys().lastIndexOf(upperBoundKey);
+
+            //qDebug() << "size: " << sizePx << ", Low :" << lowerBoundIndex << ", upper: " << upperBoundIndex;
+
+            const double nrOfPixelsPerPoint = sizePx / qAbs(upperBoundIndex - lowerBoundIndex);
+
+            if (nrOfPixelsPerPoint > _cPixelPerPointThreshold)
+            {
+                bHighlight = true;
+            }
+        }
+    }
+
+    highlightSamples(bHighlight);
+
+}
+
 QString GraphViewer::createTickLabelString(qint32 tickKey)
 {
     QString tickLabel;
@@ -212,6 +251,21 @@ QString GraphViewer::createTickLabelString(qint32 tickKey)
     }
 
     return tickLabel;
+}
+
+void GraphViewer::highlightSamples(bool bState)
+{
+    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+    {
+        if (bState)
+        {
+            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
+        }
+        else
+        {
+            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+        }
+    }
 }
 
 void GraphViewer::setupGraph(QList<QList<double> > * pDataLists, QStringList * pLabels)
@@ -321,17 +375,7 @@ void GraphViewer::enableValueTooltip(bool bState)
 
 void GraphViewer::enableSamplePoints(bool bState)
 {
-    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
-    {
-        if (bState)
-        {
-            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 4));
-        }
-        else
-        {
-            _pPlot->graph(graphIndex)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
-        }
-    }
+    _bEnableSampleHighlight = bState;
     _pPlot->replot();
 }
 

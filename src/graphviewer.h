@@ -35,20 +35,24 @@ private slots:
     void mouseWheel();
     void axisDoubleClicked(QCPAxis * axis);
     void showValueToolTip(QMouseEvent *event);
+    void handleSamplePoints();
 
 private:
 
     QString createTickLabelString(qint32 tickKey);
+    void highlightSamples(bool bState);
 
     QCustomPlot * _pPlot;
 
     bool _bEnableTooltip;
+    bool _bEnableSampleHighlight;
 
     static const QList<QColor> _colorlist;
 
     QVector<QString> tickLabels;
 
     static const qint32 _cPixelNearThreshold = 20; /* in pixels */
+    static const qint32 _cPixelPerPointThreshold = 5; /* in pixels */
 
 };
 
