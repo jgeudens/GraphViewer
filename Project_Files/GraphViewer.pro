@@ -7,7 +7,7 @@ TEMPLATE = app
 
 win32: RC_ICONS = ../icon/application.ico
 
-VERSION = 0.3.1
+VERSION = 0.3.2
 
 DEFINES += NDEBUG
 
