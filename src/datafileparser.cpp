@@ -9,6 +9,8 @@
 DataFileParser::DataFileParser() :
     _pFileWatcher(new QFileSystemWatcher())
 {
+    _fileContentsEnd = 0;
+    _fileEndPos = 0;
     connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileDataChange(QString)));
 }
 
@@ -22,7 +24,187 @@ DataParserSettings * DataFileParser::getDataParseSettings()
     return &_parseSettings;
 }
 
-// Return false on error
+void DataFileParser::fileDataChange(QString path)
+{
+    if(_parseSettings.getWatchFileData() && path == _parseSettings.getPath())
+    {
+        emit fileDataChanged();
+    }
+}
+
+bool DataFileParser::forceProcessDataFile()
+{
+    _dataLabels.clear();
+    _dataRows.clear();
+
+    _fileEndPos = 0;
+    _fileContentsEnd = 0;
+    _fileContents.clear();
+
+    return processDataFile();
+}
+
+bool DataFileParser::processDataFile()
+{
+    bool bRet = true;
+
+    // Load data file
+    bRet = loadDataFile();
+
+    // read data structure, labels when on first load
+    if (_dataRows.isEmpty())
+    {
+
+        // Setup file watchers
+        if (bRet)
+        {
+            setupFileWatchers();
+        }
+
+        if (bRet)
+        {
+            // Get number of rows (from dataRow)
+            _expectedFields = _fileContents[_parseSettings.getDataRow()].split(_parseSettings.getFieldSeparator()).size() - _parseSettings.getColumn();
+
+            // Check number of expected fields
+            if (_expectedFields < 2)
+            {
+                Util::showError(tr("Can't parse data. Are you sure field separator and column are correct?"));
+                bRet = false;
+            }
+        }
+
+        if (bRet)
+        {
+            bRet = readLabels();
+        }
+
+        if (bRet)
+        {
+            // Init data row QLists to empty list
+            QList<double> t;
+            for (qint32 i = 0; i < _expectedFields; i++)
+            {
+                _dataRows.append(t);
+            }
+        }
+
+        if (bRet)
+        {
+            _fileContentsEnd = _parseSettings.getDataRow();
+        }
+    }
+
+    if (bRet)
+    {
+        bRet = readData();
+    }
+
+    return bRet;
+}
+
+QList<QList<double> > & DataFileParser::getDataRows()
+{
+    return _dataRows;
+}
+
+QStringList & DataFileParser::getDataLabels()
+{
+    return _dataLabels;
+}
+
+bool DataFileParser::readData()
+{
+    bool bRet = true;
+
+    for (qint32 index = _fileContentsEnd; index < _fileContents.size(); index++)
+    {
+        // ignore empty lines and comment lines
+        if(
+            (!_fileContents[index].simplified().isEmpty())
+            && (!IsCommentLine(_fileContents[index]))
+          )
+        {
+            QStringList paramList = _fileContents[index].split(_parseSettings.getFieldSeparator());
+            if ((paramList.size() - (qint32)_parseSettings.getColumn()) != _expectedFields)
+            {
+                QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
+                Util::showError(txt);
+                bRet = false;
+                break;
+            }
+
+            for (qint32 i = _parseSettings.getColumn(); i < paramList.size(); i++)
+            {
+                bool bError = false;
+
+                // Remove group separator
+                QString tmpData = paramList[i].simplified().replace(_parseSettings.getGroupSeparator(), "");
+
+                // Replace decimal point if needed
+                if (QLocale::system().decimalPoint() != _parseSettings.getDecimalSeparator())
+                {
+                    tmpData = tmpData.replace(_parseSettings.getDecimalSeparator(), QLocale::system().decimalPoint());
+                }
+
+                double number = QLocale::system().toDouble(tmpData, &bError);
+                if (tmpData.simplified().isEmpty())
+                {
+                    number = 0;
+                    bError = true;
+                }
+                else
+                {
+                    number = QLocale::system().toDouble(tmpData, &bError);
+                }
+
+                if (bError == false)
+                {
+                    QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
+                    Util::showError(error);
+                    bRet = false;
+                    break;
+                }
+                else
+                {
+                    _dataRows[i - _parseSettings.getColumn()].append(number);
+                }
+            }
+        }
+
+        // Make sure we break the loop on an error
+        if (bRet == false)
+        {
+            break;
+        }
+
+    }
+
+    _fileContentsEnd = _dataRows[0].size();
+
+    return bRet;
+}
+
+void DataFileParser::setupFileWatchers()
+{
+    // Remove existing watchers
+    if(_pFileWatcher->files().length() > 0)
+    {
+        _pFileWatcher->removePaths(_pFileWatcher->files());
+    }
+    if(_pFileWatcher->directories().length() > 0)
+    {
+        _pFileWatcher->removePaths(_pFileWatcher->directories());
+    }
+
+    // add new watcher
+    if(!_pFileWatcher->addPath(_parseSettings.getPath()))
+    {
+        emit addFileWatchFailed(_parseSettings.getPath());
+    }
+}
+
+
 bool DataFileParser::loadDataFile()
 {
     bool bRet = true;
@@ -32,8 +214,8 @@ bool DataFileParser::loadDataFile()
     /* If we can't open it, let's show an error message. */
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-
-        _fileContents.clear();
+        // Go to last read position in datafile
+        file.seek(_fileEndPos);
 
         do
         {
@@ -48,24 +230,14 @@ bool DataFileParser::loadDataFile()
             }
         } while(!file.atEnd());
 
-        if (!file.atEnd())
+        if (file.atEnd())
+        {
+            _fileEndPos = file.pos();
+        }
+        else
         {
             Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.getPath()));
             bRet = false;
-        }
-
-        if(_pFileWatcher->files().length() > 0)
-        {
-            _pFileWatcher->removePaths(_pFileWatcher->files());
-        }
-        if(_pFileWatcher->directories().length() > 0)
-        {
-            _pFileWatcher->removePaths(_pFileWatcher->directories());
-        }
-
-        if(!_pFileWatcher->addPath(_parseSettings.getPath()))
-        {
-            emit addFileWatchFailed(_parseSettings.getPath());
         }
     }
     else
@@ -77,51 +249,31 @@ bool DataFileParser::loadDataFile()
     return bRet;
 }
 
-void DataFileParser::fileDataChange(QString path)
+bool DataFileParser::readLabels()
 {
-    if(_parseSettings.getWatchFileData() && path == _parseSettings.getPath())
-    {
-        emit fileDataChanged();
-    }
-}
-
-
-bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &labels)
-{
-    bool bRet = true;
-
-    // Get number of rows (from dataRow)
-    const qint32 expectedFields = _fileContents[_parseSettings.getDataRow()].split(_parseSettings.getFieldSeparator()).size() - _parseSettings.getColumn();
-
-    // Check number of expected fields
-    if (expectedFields < 2)
-    {
-        Util::showError(tr("Can't parse data. Are you sure field separator and column are correct?"));
-        bRet = false;
-    }
+   bool bRet = true;
 
     //Read labels
     QStringList tmpLabels;
-    if (bRet)
+
+    if (_parseSettings.getLabelRow() != -1)
     {
-        if (_parseSettings.getLabelRow() != -1)
+        tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
+        if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != _expectedFields)
         {
-            tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
-            if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
-            {
-                Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
-                bRet = false;
-            }
-        }
-        else
-        {
-            for (qint32 i = 0; i < ((qint32)_parseSettings.getColumn() + expectedFields); i++)
-            {
-                tmpLabels.append(QString(""));
-            }
-            tmpLabels[_parseSettings.getColumn()] = tr("Time");
+            Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
+            bRet = false;
         }
     }
+    else
+    {
+        for (qint32 i = 0; i < ((qint32)_parseSettings.getColumn() + _expectedFields); i++)
+        {
+            tmpLabels.append(QString(""));
+        }
+        tmpLabels[_parseSettings.getColumn()] = tr("Time");
+    }
+
 
     if (bRet)
     {
@@ -137,89 +289,12 @@ bool DataFileParser::parseData(QList<QList<double> > &dataRows, QStringList &lab
         }
     }
 
-    if (bRet)
-    {
-        // Init data row QLists to empty list
-        QList<double> t;
-        for (qint32 i = 0; i < expectedFields; i++)
-        {
-            dataRows.append(t);
-        }
-    }
-
     // Process labels
     if (bRet)
     {
         for (qint32 i = _parseSettings.getColumn(); i < tmpLabels.size(); i++)
         {
-            labels.append(tmpLabels[i]);
-        }
-    }
-
-
-    if (bRet)
-    {
-        for (qint32 index = _parseSettings.getDataRow(); index < _fileContents.size(); index++)
-        {
-            // ignore empty lines and comment lines
-            if(
-                (!_fileContents[index].simplified().isEmpty())
-                && (!IsCommentLine(_fileContents[index]))
-              )
-            {
-                QStringList paramList = _fileContents[index].split(_parseSettings.getFieldSeparator());
-                if ((paramList.size() - (qint32)_parseSettings.getColumn()) != expectedFields)
-                {
-                    QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
-                    Util::showError(txt);
-                    bRet = false;
-                    break;
-                }
-
-                for (qint32 i = _parseSettings.getColumn(); i < paramList.size(); i++)
-                {
-                    bool bError = false;
-
-                    // Remove group separator
-                    QString tmpData = paramList[i].simplified().replace(_parseSettings.getGroupSeparator(), "");
-
-                    // Replace decimal point if needed
-                    if (QLocale::system().decimalPoint() != _parseSettings.getDecimalSeparator())
-                    {
-                        tmpData = tmpData.replace(_parseSettings.getDecimalSeparator(), QLocale::system().decimalPoint());
-                    }
-
-                    double number = QLocale::system().toDouble(tmpData, &bError);
-                    if (tmpData.simplified().isEmpty())
-                    {
-                        number = 0;
-                        bError = true;
-                    }
-                    else
-                    {
-                        number = QLocale::system().toDouble(tmpData, &bError);
-                    }
-
-                    if (bError == false)
-                    {
-                        QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
-                        Util::showError(error);
-                        bRet = false;
-                        break;
-                    }
-                    else
-                    {
-                        dataRows[i - _parseSettings.getColumn()].append(number);
-                    }
-                }
-            }
-
-            // Make sure we break the loop on an error
-            if (bRet == false)
-            {
-                break;
-            }
-
+            _dataLabels.append(tmpLabels[i]);
         }
     }
 
