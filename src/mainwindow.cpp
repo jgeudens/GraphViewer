@@ -52,10 +52,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     argumentParser.addHelpOption();
 
     // datafile option
-    QCommandLineOption dataFileOption(QStringList() << "d" << "datafile",
-            QCoreApplication::translate("main", "Specify datafile to parse (optionally)"),
-            QCoreApplication::translate("main", "datafile"));
-    argumentParser.addOption(dataFileOption);
+    argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
 
     // skipDialog option
     QCommandLineOption skipOption(QStringList() << "s" << "skip-dialog", QCoreApplication::translate("main", "Skip parse settings dialog if possible (option is ignored when datafile is not specified)"));
@@ -64,9 +61,9 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     // Process arguments
     argumentParser.process(cmdArguments);
 
-    if (argumentParser.isSet(dataFileOption))
+    if (!argumentParser.positionalArguments().isEmpty())
     {
-        QString filename = argumentParser.value(dataFileOption);
+        QString filename = argumentParser.positionalArguments().first();
 
         bool bSkipDialog = argumentParser.isSet(skipOption);
 
