@@ -12,8 +12,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow),
     _pGraphViewer(NULL),
-    _pParser(NULL),
-    _bDynamicUpdatePending(false)
+    _pParser(NULL)
 {
     _pUi->setupUi(this);
 
@@ -46,9 +45,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
-
-    connect(&_dynamicUpdateTimer, SIGNAL(timeout()), this, SLOT(dynamicUpdate()));
-    _dynamicUpdateTimer.start(cDynamicMaxUpdateInterval);
 
     QCommandLineParser argumentParser;
 
@@ -229,47 +225,46 @@ void MainWindow::reloadDataFile()
 
 void MainWindow::fileDataChange()
 {
-    _bDynamicUpdatePending = true;
+    if (!_dynamicUpdateTimer.isActive())
+	{
+        _dynamicUpdateTimer.singleShot(cDynamicMaxUpdateInterval, this, SLOT(dynamicUpdate()));
+	}
 }
 
 void MainWindow::dynamicUpdate()
 {
-    if (_bDynamicUpdatePending)
-    {
-        _bDynamicUpdatePending = false;
 
-        if(_pParser->getDataParseSettings()->getWatchFileData())
-        {
-            static QMutex mutex;
+	if(_pParser->getDataParseSettings()->getWatchFileData())
+	{
+		static QMutex mutex;
 
-            if(mutex.tryLock())
-            {
-                QFile file(_pParser->getDataParseSettings()->getPath());
-                if(file.size() > 0)
-                {
-                    if(_pParser->getDataParseSettings()->getDynamicSession())
-                    {
-                        updateGraph(_pParser);
-                    }
-                    else
-                    {
-                        QMessageBox::StandardButton reply;
-                        reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
-                        if(reply == QMessageBox::Yes)
-                        {
-                            updateGraph(_pParser);
-                        }
-                        else if(reply == QMessageBox::Cancel)
-                        {
-                            _pParser->getDataParseSettings()->setWatchFileData(false);
-                        }
-                    }
-                }
+		if(mutex.tryLock())
+		{
+			QFile file(_pParser->getDataParseSettings()->getPath());
+			if(file.size() > 0)
+			{
+				if(_pParser->getDataParseSettings()->getDynamicSession())
+				{
+					updateGraph(_pParser);
+				}
+				else
+				{
+					QMessageBox::StandardButton reply;
+					reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
+					if(reply == QMessageBox::Yes)
+					{
+						updateGraph(_pParser);
+					}
+					else if(reply == QMessageBox::Cancel)
+					{
+						_pParser->getDataParseSettings()->setWatchFileData(false);
+					}
+				}
+			}
 
-                mutex.unlock();
-            }
-        }
-    }
+			mutex.unlock();
+		}
+	}
 }
 
 void MainWindow::addFileWatchFail(QString path)

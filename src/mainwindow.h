@@ -55,7 +55,6 @@ private:
     QActionGroup* _pBringToFrontGroup;
 
     QTimer _dynamicUpdateTimer;
-    bool _bDynamicUpdatePending;
 
     LoadFileDialog _loadDataFileDialog;
 
