@@ -11,8 +11,8 @@ VERSION = 0.3.1
 
 DEFINES += NDEBUG
 
-DEFINES += GIT_HASH=\\\"$$system(git --git-dir $$PWD/../.git rev-parse --short HEAD)\\\"
-DEFINES += GIT_BRANCH=\\\"$$system(git --git-dir $$PWD/../.git rev-parse --abbrev-ref HEAD)\\\"
+DEFINES += GIT_HASH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --short HEAD)\\\""
+DEFINES += GIT_BRANCH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --abbrev-ref HEAD)\\\""
 
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
