@@ -187,7 +187,7 @@ void GraphViewer::handleSamplePoints()
 
     if (_bEnableSampleHighlight)
     {
-        if (_pPlot->graphCount() > 0)
+        if (_pPlot->graphCount() > 0 && _pPlot->graph(0)->data()->size() > 0)
         {
             const double sizePx = _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().upper) - _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().lower);
 
