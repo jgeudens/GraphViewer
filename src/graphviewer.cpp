@@ -191,14 +191,33 @@ void GraphViewer::handleSamplePoints()
         {
             const double sizePx = _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().upper) - _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().lower);
 
-            const quint32 lowerBoundKey = _pPlot->graph(0)->data()->lowerBound(_pPlot->xAxis->range().lower).key();
-            const quint32 upperBoundKey = _pPlot->graph(0)->data()->upperBound(_pPlot->xAxis->range().upper).key();
+            /* Get key from visible lower bound */
+            double lowerBoundKey;
+            if (_pPlot->xAxis->range().lower <= _pPlot->graph(0)->data()->keys().first())
+            {
+                lowerBoundKey = _pPlot->graph(0)->data()->keys().first();
+            }
+            else
+            {
+                lowerBoundKey = _pPlot->graph(0)->data()->lowerBound(_pPlot->xAxis->range().lower).key();
+            }
 
+            /* Get key from visible upper bound */
+            double upperBoundKey;
+            if (_pPlot->xAxis->range().upper >= _pPlot->graph(0)->data()->keys().last())
+            {
+                upperBoundKey = _pPlot->graph(0)->data()->keys().last();
+            }
+            else
+            {
+                upperBoundKey = _pPlot->graph(0)->data()->upperBound(_pPlot->xAxis->range().upper).key();
+            }
+
+            /* get indexes of keys */
             const quint32 lowerBoundIndex = _pPlot->graph(0)->data()->keys().indexOf(lowerBoundKey);
             const quint32 upperBoundIndex = _pPlot->graph(0)->data()->keys().lastIndexOf(upperBoundKey);
 
-            //qDebug() << "size: " << sizePx << ", Low :" << lowerBoundIndex << ", upper: " << upperBoundIndex;
-
+            /* Calculate number of pixels per point */
             const double nrOfPixelsPerPoint = sizePx / qAbs(upperBoundIndex - lowerBoundIndex);
 
             if (nrOfPixelsPerPoint > _cPixelPerPointThreshold)
