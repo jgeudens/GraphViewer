@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QTimer>
 
+#include "settingsmodel.h"
 #include "datafileparser.h"
 #include "dataparsersettings.h"
 #include "graphviewer.h"
@@ -23,10 +24,10 @@ public:
     ~MainWindow();
 
 private slots:
-    void getDataFileSettings();
+    void loadDataFile();
     void parseData();
     void exitApplication();
-    void reloadDataFile();
+    void actionReloadDataFile();
     void fileDataChange();
     void dynamicUpdate();
     void addFileWatchFail(QString path);
@@ -34,19 +35,26 @@ private slots:
     void showAbout();
     void showXAxisScaleDialog();
     void showYAxisScaleDialog();
-    void showHideGraph(bool bState);
-    void bringToFrontGraph(bool bState);
+    void showHideGraph(const quint32 index);
+    void updateBringToFrontGrapMenu();
+    void updateHighlightSampleMenu();
+    void updateValueTooltipMenu();
     void enableWatchFileChanged(bool bState);
     void enableDynamicSessionChanged(bool bState);
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
     void showContextMenu(const QPoint& pos);
 
+    void actionBringToFrontGraph();
+    void actionShowHideGraph(bool bState);
+
 private:
     bool resetGraph(DataFileParser *_pDataFileParser);
     void updateGraph(DataFileParser *_pDataFileParser);
 
     Ui::MainWindow * _pUi;
+
+    SettingsModel * _pModel;
 
     GraphViewer * _pGraphViewer;
     DataFileParser * _pParser;

@@ -28,9 +28,11 @@ const QList<QColor> GraphViewer::_colorlist = QList<QColor>() << QColor(0, 0, 0)
                                                            << QColor(189, 183, 107)
                                                            ;
 
-GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
+GraphViewer::GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QObject *parent) :
    QObject(parent)
 {
+
+    _pSettingsModel = pSettingsModel;
 
    _pPlot = pPlot;
 
@@ -83,7 +85,7 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
-   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showValueToolTip(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(paintValueToolTip(QMouseEvent*)));
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
@@ -92,7 +94,7 @@ void GraphViewer::clear()
     _pPlot->clearGraphs();
 }
 
-void GraphViewer::showValueToolTip(QMouseEvent *event)
+void GraphViewer::paintValueToolTip(QMouseEvent *event)
 {
     if  (_bEnableTooltip)
     {
@@ -291,6 +293,8 @@ void GraphViewer::setupData(QList<QList<double> > * pDataLists, QStringList * pL
 {
    _pPlot->clearGraphs();
 
+   //TODO: use model to shox/hide samples and show/hide tooltip
+
    for (qint32 i = 1; i < pDataLists->size(); i++)
    {
         const quint32 colorIndex = _pPlot->graphCount() % _colorlist.size();
@@ -353,8 +357,9 @@ void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
     _pPlot->replot();
 }
 
-void GraphViewer::showGraph(quint32 index, bool bShow)
+void GraphViewer::showGraph(quint32 index)
 {
+    const bool bShow = _pSettingsModel->GraphVisibility(index);
     _pPlot->graph(index)->setVisible(bShow);
 
     QFont itemFont = _pPlot->legend->item(index)->font();
@@ -365,18 +370,9 @@ void GraphViewer::showGraph(quint32 index, bool bShow)
     _pPlot->replot();
 }
 
-void GraphViewer::bringToFront(quint32 index, bool bFront)
+void GraphViewer::bringToFront()
 {
-
-    if (bFront)
-    {
-        _pPlot->graph(index)->setLayer("topMain");
-    }
-    else
-    {
-        _pPlot->graph(index)->setLayer("grid");
-    }
-
+    _pPlot->graph(_pSettingsModel->frontGraph())->setLayer("topMain");
     _pPlot->replot();
 }
 
@@ -397,14 +393,14 @@ void GraphViewer::autoScaleYAxis()
     _pPlot->replot();
 }
 
-void GraphViewer::enableValueTooltip(bool bState)
+void GraphViewer::enableValueTooltip()
 {
-    _bEnableTooltip = bState;
+    _bEnableTooltip = _pSettingsModel->ValueTooltip();
 }
 
-void GraphViewer::enableSamplePoints(bool bState)
+void GraphViewer::enableSamplePoints()
 {
-    _bEnableSampleHighlight = bState;
+    _bEnableSampleHighlight = _pSettingsModel->HighlightSamples();
     _pPlot->replot();
 }
 

@@ -18,18 +18,18 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     this->setWindowTitle(_cWindowTitle);
     
-    _pGraphViewer = new GraphViewer(_pUi->customPlot, this);
+    _pGraphViewer = new GraphViewer(_pModel, _pUi->customPlot, this);
 
-    connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(getDataFileSettings()));
-    connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
+    connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
+    connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(actionReloadDataFile()));
     connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
     connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
-    connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGraphViewer, SLOT(enableValueTooltip(bool)));
-    connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGraphViewer, SLOT(enableSamplePoints(bool)));
+    connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pModel, SLOT(setValueTooltip(bool)));
+    connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pModel, SLOT(setHighlightSamples(bool)));
 
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
@@ -46,6 +46,30 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
+    /*-- connect model to view --*/
+    connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
+    connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphViewer, SLOT(showGraph(const quint32)));
+    connect(_pModel, SIGNAL(frontGraphChanged), this, SLOT(updateBringToFrontGrapMenu));
+    connect(_pModel, SIGNAL(frontGraphChanged), _pGraphViewer, SLOT(bringToFrontGraph));
+    connect(_pModel, SIGNAL(highlightSamplesChanged), this, SLOT(updateHighlightSampleMenu));
+    connect(_pModel, SIGNAL(highlightSamplesChanged), _pGraphViewer, SLOT(enableSamplePoints));
+    connect(_pModel, SIGNAL(valueTooltipChanged), this, SLOT(updateValueTooltipMenu));
+    connect(_pModel, SIGNAL(valueTooltipChanged), this, SLOT(enableValueTooltip));
+
+    /* TODO */
+    connect(_pModel, SIGNAL(settingsChanged), this, SLOT());
+    connect(_pModel, SIGNAL(loadedFileChanged), this, SLOT());
+
+
+
+
+
+
+    /* Update interface via model */
+    _pModel->triggerUpdate();
+
+
+    /*-- proces command line arguments --*/
     QCommandLineParser argumentParser;
 
     argumentParser.setApplicationDescription("GraphViewer");
@@ -84,7 +108,7 @@ MainWindow::~MainWindow()
     delete _pUi;
 }
 
-void MainWindow::getDataFileSettings()
+void MainWindow::loadDataFile()
 {
     if (_loadDataFileDialog.exec() == QDialog::Accepted)
     {
@@ -148,8 +172,6 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pUi->actionShowValueTooltip->setEnabled(true);
         _pUi->actionHighlightSamplePoints->setEnabled(true);
 
-        _pGraphViewer->enableSamplePoints(_pUi->actionHighlightSamplePoints->isChecked());
-
         // Clear actions
         _pGraphShowHide->clear();
         _pBringToFrontGroup->actions().clear();
@@ -177,15 +199,18 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
             pBringToFront->setCheckable(true);
             pBringToFront->setActionGroup(_pBringToFrontGroup);
 
-            QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(showHideGraph(bool)));
-            QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(bringToFrontGraph(bool)));
+            QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(actionShowHideGraph(bool)));
+            QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph()));
+
+            _pModel->setGraphVisibility(i - 1, true);
         }
 
-        _pGraphShowHide->setEnabled(true);
-        _pGraphBringToFront->setEnabled(true);
         _pUi->menuScale->setEnabled(true);
 
         bSucceeded = true;
+
+        /* TODO:: DIRTY*/
+         _pModel->triggerUpdate();
 
     }
 
@@ -214,7 +239,7 @@ void MainWindow::exitApplication()
     QApplication::quit();
 }
 
-void MainWindow::reloadDataFile()
+void MainWindow::actionReloadDataFile()
 {
     // Reload data with current parser data
     resetGraph(_pParser);
@@ -351,16 +376,23 @@ void MainWindow::showYAxisScaleDialog()
     }
 }
 
-void MainWindow::showHideGraph(bool bState)
+
+void MainWindow::actionShowHideGraph(bool bState)
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
-    _pGraphViewer->showGraph(pAction->data().toInt(), bState);
+    _pModel->setGraphVisibility(pAction->data().toInt(), bState);
+
+}
+
+void MainWindow::showHideGraph(const quint32 index)
+{
+    _pGraphShowHide->actions().at(index)->setChecked(_pModel->GraphVisibility(index));
 
     // Show/Hide corresponding "BringToFront" action
-    _pGraphBringToFront->actions().at(pAction->data().toInt())->setVisible(bState);
+    _pGraphBringToFront->actions().at(index)->setVisible(_pModel->GraphVisibility((index)));
 
-    // Enable/Disable BringToFront menu
+    // Enable/Disable global BringToFront menu
     bool bVisible = false;
     foreach(QAction * pAction, _pGraphBringToFront->actions())
     {
@@ -370,15 +402,30 @@ void MainWindow::showHideGraph(bool bState)
             break;
         }
     }
-
     _pGraphBringToFront->setEnabled(bVisible);
 }
 
-void MainWindow::bringToFrontGraph(bool bState)
+void MainWindow::updateValueTooltipMenu()
+{
+    /* set menu to checked */
+    _pUi->actionShowValueTooltip->setChecked(_pModel->ValueTooltip());
+}
+
+void MainWindow::updateHighlightSampleMenu()
+{
+    /* set menu to checked */
+    _pUi->actionHighlightSamplePoints->setChecked(_pModel->HighlightSamples());
+}
+
+void MainWindow::updateBringToFrontGrapMenu()
+{
+    _pBringToFrontGroup->actions().at(_pModel->frontGraph())->setChecked(true);
+}
+
+void MainWindow::actionBringToFrontGraph()
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
-
-    _pGraphViewer->bringToFront(pAction->data().toInt(), bState);
+    _pModel->setFrontGraph(pAction->data().toInt());
 }
 
 void MainWindow::enableWatchFileChanged(bool bState)

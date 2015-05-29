@@ -9,7 +9,7 @@ win32: RC_ICONS = ../icon/application.ico
 
 VERSION = 0.3.2
 
-DEFINES += NDEBUG
+DEFINES += DEBUG
 
 DEFINES += GIT_HASH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --short HEAD)\\\""
 DEFINES += GIT_BRANCH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --abbrev-ref HEAD)\\\""
@@ -31,7 +31,8 @@ SOURCES +=  \
     ../src/axisscaledialog.cpp \
     ../src/dataparsersettings.cpp \
     ../src/loadfiledialog.cpp \
-    ../src/presetparser.cpp
+    ../src/presetparser.cpp \
+    ../src/settingsmodel.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
@@ -47,4 +48,5 @@ HEADERS += \
     ../src/axisscaledialog.h \
     ../src/dataparsersettings.h \
     ../src/loadfiledialog.h \
-    ../src/presetparser.h
+    ../src/presetparser.h \
+    ../src/settingsmodel.h
