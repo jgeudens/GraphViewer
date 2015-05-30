@@ -5,7 +5,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-const QString MainWindow::_cWindowTitle = QString("GraphViewer");
 const int MainWindow::cDynamicMaxUpdateInterval = 100;
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
@@ -15,8 +14,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pParser(NULL)
 {
     _pUi->setupUi(this);
-
-    this->setWindowTitle(_cWindowTitle);
     
     _pModel = new SettingsModel();
     _pGraphViewer = new GraphViewer(_pModel, _pUi->customPlot, this);
@@ -38,15 +35,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));    
 
-    _pGraphShowHide = _pUi->menuShowHide;
-    _pGraphBringToFront = _pUi->menuBringToFront;
-    _pBringToFrontGroup = new QActionGroup(this);
-
-    this->setAcceptDrops(true);
-
-    _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
-
     /*-- connect model to view --*/
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphViewer, SLOT(showGraph(const quint32)));
@@ -64,9 +52,23 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphViewer, SLOT(addGraphs(QList<QList<double> >)));
     connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
 
+    connect(_pModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
+
     /* TODO */
     connect(_pModel, SIGNAL(settingsChanged()), this, SLOT());
     connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT());
+
+
+    _pGraphShowHide = _pUi->menuShowHide;
+    _pGraphBringToFront = _pUi->menuBringToFront;
+    _pBringToFrontGroup = new QActionGroup(this);
+
+    this->setAcceptDrops(true);
+
+    _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    _pModel->setWindowTitleDetail("");
 
     /* Update interface via model */
     _pModel->triggerUpdate();
@@ -162,8 +164,7 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
     {
         _pModel->clearGraph();
         _pModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
-
-        setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+        _pModel->setWindowTitleDetail(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
 
         _pUi->actionReloadDataFile->setEnabled(true);
         _pUi->actionExportImage->setEnabled(true);
@@ -183,11 +184,6 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
 
     }
 
-    if (!bSucceeded)
-    {
-        setWindowTitle(QString(tr("%1 - %2 - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
-    }
-
     return bSucceeded;
 }
 
@@ -199,7 +195,7 @@ void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
     }
     else
     {
-        setWindowTitle(QString(tr("%1 - %2 - Load Failed")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+        _pModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
     }
 }
 
@@ -352,6 +348,11 @@ void MainWindow::actionShowHideGraph(bool bState)
 
     _pModel->setGraphVisibility(pAction->data().toInt(), bState);
 
+}
+
+void MainWindow::updateWindowTitle()
+{
+    setWindowTitle(_pModel->windowTitle());
 }
 
 void MainWindow::showHideGraph(const quint32 index)

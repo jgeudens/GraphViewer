@@ -49,6 +49,7 @@ private slots:
 
     void actionBringToFrontGraph();
     void actionShowHideGraph(bool bState);
+    void updateWindowTitle();
 
 private:
     bool resetGraph(DataFileParser *_pDataFileParser);
@@ -68,7 +69,6 @@ private:
 
     LoadFileDialog _loadDataFileDialog;
 
-    static const QString _cWindowTitle;
     static const int cDynamicMaxUpdateInterval;
 };
 

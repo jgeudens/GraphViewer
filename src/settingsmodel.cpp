@@ -2,7 +2,7 @@
 #include "settingsmodel.h"
 
 
-
+const QString SettingsModel::_cWindowTitle = QString("GraphViewer");
 const QList<QColor> SettingsModel::_colorlist = QList<QColor>() << QColor(0, 0, 0)
                                                            << QColor(0, 0, 255)
                                                            << QColor(0, 255, 255)
@@ -206,4 +206,28 @@ QColor SettingsModel::getColor(const quint32 index)
 {
     const quint32 colorIndex = index % _colorlist.size();
     return _colorlist[colorIndex];
+}
+
+QString SettingsModel::windowTitle()
+{
+    return _windowTitle;
+}
+
+void SettingsModel::setWindowTitleDetail(QString detail)
+{
+    QString tmpTitle;
+    if (detail == "")
+    {
+        tmpTitle = _cWindowTitle;
+    }
+    else
+    {
+        tmpTitle = QString(tr("%1 - %2")).arg(_cWindowTitle).arg(detail);
+    }
+
+    if (tmpTitle != _windowTitle)
+    {
+        _windowTitle = tmpTitle;
+        emit windowTitleChanged();
+    }
 }

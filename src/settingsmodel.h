@@ -27,6 +27,7 @@ public:
     void addGraphs(QStringList labels, QList<QList<double> > data);
     void clearGraph();
     quint32 graphCount();
+    QString windowTitle();
 
 public slots:
     void setValueTooltip(bool bValueTooltip);
@@ -35,6 +36,7 @@ public slots:
     void setWatchFile(bool bWatchFile);
     void setFrontGraph(const quint32 &frontGraph);
     void setGraphVisibility(quint32 index, const bool &value);
+    void setWindowTitleDetail(QString detail);
 
 signals:
     void settingsChanged();
@@ -47,7 +49,7 @@ signals:
     void loadedFileChanged();
     void highlightSamplesChanged();
     void valueTooltipChanged();
-
+    void windowTitleChanged();
 
 public slots:
 
@@ -61,6 +63,7 @@ private:
     quint32 _frontGraph;
 
     QString _loadedFile;
+    QString _windowTitle;
 
     bool _bWatchFile;
     bool _bDynamicSession;
@@ -68,6 +71,7 @@ private:
     bool _bHighlightSamples;
     bool _bValueTooltip;
 
+    static const QString _cWindowTitle;
     static const QList<QColor> _colorlist;
 
 };
