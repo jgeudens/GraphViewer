@@ -44,6 +44,8 @@ private slots:
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
     void showContextMenu(const QPoint& pos);
+    void clearGraphMenu();
+    void addGraphMenu();
 
     void actionBringToFrontGraph();
     void actionShowHideGraph(bool bState);

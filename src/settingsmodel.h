@@ -2,6 +2,7 @@
 #define SETTINGSMODEL_H
 
 #include <QObject>
+#include "graphdata.h"
 
 class SettingsModel : public QObject
 {
@@ -12,31 +13,36 @@ public:
 
     void triggerUpdate(void);
 
-    bool GraphVisibility(quint32 index) const;
-    void setGraphVisibility(quint32 index, const bool &value);
+    bool graphVisibility(quint32 index) const;
+    QColor graphColor(quint32 index) const;
+    QString graphLabel(quint32 index) const;
 
     quint32 frontGraph() const;
-    void setFrontGraph(const quint32 &frontGraph);
-
     QString loadedFile() const;
     void setLoadedFile(const QString &loadedFile);
+    bool watchFile() const;
+    bool dynamicSession() const;
+    bool highlightSamples() const;
+    bool valueTooltip() const;
+    void addGraphs(QStringList labels, QList<QList<double> > data);
+    void clearGraph();
+    quint32 graphCount();
 
-    bool WatchFile() const;
-    void setWatchFile(bool bWatchFile);
-
-    bool DynamicSession() const;
-    void setDynamicSession(bool bDynamicSession);
-
-    bool HighlightSamples() const;
-    void setHighlightSamples(bool bHighlightSamples);
-
-    bool ValueTooltip() const;
+public slots:
     void setValueTooltip(bool bValueTooltip);
+    void setHighlightSamples(bool bHighlightSamples);
+    void setDynamicSession(bool bDynamicSession);
+    void setWatchFile(bool bWatchFile);
+    void setFrontGraph(const quint32 &frontGraph);
+    void setGraphVisibility(quint32 index, const bool &value);
 
 signals:
     void settingsChanged();
 
     void graphVisibilityChanged(const quint32 index);
+    void graphCleared();
+    void graphsAdded(QList<QList<double> > data);
+
     void frontGraphChanged();
     void loadedFileChanged();
     void highlightSamplesChanged();
@@ -48,17 +54,22 @@ public slots:
 
 private:
 
-    QList<bool> _graphVisibility; /* TODO */
+    QColor getColor(const quint32 index);
 
-    quint32 _frontGraph; /* TODO */
+    QList<GraphData * > _graphData;
 
-    QString _loadedFile; /* TODO */
+    quint32 _frontGraph;
 
-    bool _bWatchFile; /* TODO */
-    bool _bDynamicSession; /* TODO */
+    QString _loadedFile;
 
-    bool _bHighlightSamples; /* TODO */
-    bool _bValueTooltip; /* TODO */
+    bool _bWatchFile;
+    bool _bDynamicSession;
+
+    bool _bHighlightSamples;
+    bool _bValueTooltip;
+
+    static const QList<QColor> _colorlist;
+
 };
 
 #endif // SETTINGSMODEL_H

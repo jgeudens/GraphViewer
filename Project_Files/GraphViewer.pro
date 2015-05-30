@@ -49,4 +49,5 @@ HEADERS += \
     ../src/dataparsersettings.h \
     ../src/loadfiledialog.h \
     ../src/presetparser.h \
-    ../src/settingsmodel.h
+    ../src/settingsmodel.h \
+    ../src/graphdata.h

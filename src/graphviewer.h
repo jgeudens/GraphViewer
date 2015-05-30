@@ -15,14 +15,10 @@ class GraphViewer : public QObject
 public:
     explicit GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QObject *parent);
 
-    void clear();
-    void setupData(QList<QList<double> > * pDataLists, QStringList * pLabels);
     void updateData(QList<QList<double> > * pDataLists);
     void exportGraphImage(QString imageFile);
     void manualScaleXAxis(qint64 min, qint64 max);
     void manualScaleYAxis(qint64 min, qint64 max);
-
-    QColor getGraphColor(quint32 index);
 
 public slots:
     void autoScaleXAxis();
@@ -32,6 +28,8 @@ public slots:
 
     void showGraph(quint32 index);
     void bringToFront();
+    void clearGraphs();
+    void addGraphs(QList<QList<double> > data);
 
 private slots:
     void generateTickLabels();
@@ -53,8 +51,6 @@ private:
 
     bool _bEnableTooltip;
     bool _bEnableSampleHighlight;
-
-    static const QList<QColor> _colorlist;
 
     QVector<QString> tickLabels;
 

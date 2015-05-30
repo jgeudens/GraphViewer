@@ -18,6 +18,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     this->setWindowTitle(_cWindowTitle);
     
+    _pModel = new SettingsModel();
     _pGraphViewer = new GraphViewer(_pModel, _pUi->customPlot, this);
 
     connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
@@ -49,25 +50,26 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     /*-- connect model to view --*/
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphViewer, SLOT(showGraph(const quint32)));
-    connect(_pModel, SIGNAL(frontGraphChanged), this, SLOT(updateBringToFrontGrapMenu));
-    connect(_pModel, SIGNAL(frontGraphChanged), _pGraphViewer, SLOT(bringToFrontGraph));
-    connect(_pModel, SIGNAL(highlightSamplesChanged), this, SLOT(updateHighlightSampleMenu));
-    connect(_pModel, SIGNAL(highlightSamplesChanged), _pGraphViewer, SLOT(enableSamplePoints));
-    connect(_pModel, SIGNAL(valueTooltipChanged), this, SLOT(updateValueTooltipMenu));
-    connect(_pModel, SIGNAL(valueTooltipChanged), this, SLOT(enableValueTooltip));
+    connect(_pModel, SIGNAL(frontGraphChanged()), this, SLOT(updateBringToFrontGrapMenu()));
+    connect(_pModel, SIGNAL(frontGraphChanged()), _pGraphViewer, SLOT(bringToFront()));
+    connect(_pModel, SIGNAL(highlightSamplesChanged()), this, SLOT(updateHighlightSampleMenu()));
+    connect(_pModel, SIGNAL(highlightSamplesChanged()), _pGraphViewer, SLOT(enableSamplePoints()));
+    connect(_pModel, SIGNAL(valueTooltipChanged()), this, SLOT(updateValueTooltipMenu()));
+    connect(_pModel, SIGNAL(valueTooltipChanged()), _pGraphViewer, SLOT(enableValueTooltip()));
+
+    connect(_pModel, SIGNAL(graphCleared()), _pGraphViewer, SLOT(clearGraphs()));
+    connect(_pModel, SIGNAL(graphCleared()), this, SLOT(clearGraphMenu()));
+
+
+    connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphViewer, SLOT(addGraphs(QList<QList<double> >)));
+    connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
 
     /* TODO */
-    connect(_pModel, SIGNAL(settingsChanged), this, SLOT());
-    connect(_pModel, SIGNAL(loadedFileChanged), this, SLOT());
-
-
-
-
-
+    connect(_pModel, SIGNAL(settingsChanged()), this, SLOT());
+    connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT());
 
     /* Update interface via model */
     _pModel->triggerUpdate();
-
 
     /*-- proces command line arguments --*/
     QCommandLineParser argumentParser;
@@ -158,7 +160,8 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
     bool bSucceeded = false;
     if (_pDataFileParser->forceProcessDataFile())
     {
-        _pGraphViewer->setupData(&_pDataFileParser->getDataRows(), &_pDataFileParser->getDataLabels());
+        _pModel->clearGraph();
+        _pModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
 
         setWindowTitle(QString(tr("%1 - %2")).arg(_cWindowTitle, QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
 
@@ -171,40 +174,6 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pUi->actionSetManualScaleYAxis->setEnabled(true);
         _pUi->actionShowValueTooltip->setEnabled(true);
         _pUi->actionHighlightSamplePoints->setEnabled(true);
-
-        // Clear actions
-        _pGraphShowHide->clear();
-        _pBringToFrontGroup->actions().clear();
-        _pGraphBringToFront->clear();
-
-        // Add menu-items
-        for (qint32 i = 1; i < _pDataFileParser->getDataLabels().size(); i++)
-        {
-            QString label = _pDataFileParser->getDataLabels()[i];
-            QAction * pShowHideAction = _pGraphShowHide->addAction(label);
-            QAction * pBringToFront = _pGraphBringToFront->addAction(label);
-
-            QPixmap pixmap(20,5);
-            pixmap.fill(_pGraphViewer->getGraphColor(i - 1));
-            QIcon * pBringToFrontIcon = new QIcon(pixmap);
-            QIcon * pShowHideIcon = new QIcon(pixmap);
-
-            pShowHideAction->setData(i - 1);
-            pShowHideAction->setIcon(*pBringToFrontIcon);
-            pShowHideAction->setCheckable(true);
-            pShowHideAction->setChecked(true);
-
-            pBringToFront->setData(i - 1);
-            pBringToFront->setIcon(*pShowHideIcon);
-            pBringToFront->setCheckable(true);
-            pBringToFront->setActionGroup(_pBringToFrontGroup);
-
-            QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(actionShowHideGraph(bool)));
-            QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph()));
-
-            _pModel->setGraphVisibility(i - 1, true);
-        }
-
         _pUi->menuScale->setEnabled(true);
 
         bSucceeded = true;
@@ -387,10 +356,10 @@ void MainWindow::actionShowHideGraph(bool bState)
 
 void MainWindow::showHideGraph(const quint32 index)
 {
-    _pGraphShowHide->actions().at(index)->setChecked(_pModel->GraphVisibility(index));
+    _pGraphShowHide->actions().at(index)->setChecked(_pModel->graphVisibility(index));
 
     // Show/Hide corresponding "BringToFront" action
-    _pGraphBringToFront->actions().at(index)->setVisible(_pModel->GraphVisibility((index)));
+    _pGraphBringToFront->actions().at(index)->setVisible(_pModel->graphVisibility((index)));
 
     // Enable/Disable global BringToFront menu
     bool bVisible = false;
@@ -408,18 +377,61 @@ void MainWindow::showHideGraph(const quint32 index)
 void MainWindow::updateValueTooltipMenu()
 {
     /* set menu to checked */
-    _pUi->actionShowValueTooltip->setChecked(_pModel->ValueTooltip());
+    _pUi->actionShowValueTooltip->setChecked(_pModel->valueTooltip());
+}
+
+void MainWindow::clearGraphMenu()
+{
+    // Clear actions
+    _pGraphShowHide->clear();
+    _pBringToFrontGroup->actions().clear();
+    _pGraphBringToFront->clear();
+}
+
+void MainWindow::addGraphMenu()
+{
+
+    for (quint32 idx = 0; idx < _pModel->graphCount(); idx++)
+    {
+        QString label = _pModel->graphLabel(idx);
+        QAction * pShowHideAction = _pGraphShowHide->addAction(label);
+        QAction * pBringToFront = _pGraphBringToFront->addAction(label);
+
+        QPixmap pixmap(20,5);
+        pixmap.fill(_pModel->graphColor(idx));
+        QIcon * pBringToFrontIcon = new QIcon(pixmap);
+        QIcon * pShowHideIcon = new QIcon(pixmap);
+
+        pShowHideAction->setData(idx);
+        pShowHideAction->setIcon(*pBringToFrontIcon);
+        pShowHideAction->setCheckable(true);
+        pShowHideAction->setChecked(_pModel->graphVisibility(idx));
+
+        pBringToFront->setData(idx);
+        pBringToFront->setIcon(*pShowHideIcon);
+        pBringToFront->setCheckable(true);
+        pBringToFront->setActionGroup(_pBringToFrontGroup);
+
+        QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(actionShowHideGraph(bool)));
+        QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph()));
+    }
+
+    _pGraphShowHide->setEnabled(true);
+
 }
 
 void MainWindow::updateHighlightSampleMenu()
 {
     /* set menu to checked */
-    _pUi->actionHighlightSamplePoints->setChecked(_pModel->HighlightSamples());
+    _pUi->actionHighlightSamplePoints->setChecked(_pModel->highlightSamples());
 }
 
 void MainWindow::updateBringToFrontGrapMenu()
 {
-    _pBringToFrontGroup->actions().at(_pModel->frontGraph())->setChecked(true);
+    if (_pBringToFrontGroup->actions().size() > 0)
+    {
+        _pBringToFrontGroup->actions().at(_pModel->frontGraph())->setChecked(true);
+    }
 }
 
 void MainWindow::actionBringToFrontGraph()
