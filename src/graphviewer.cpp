@@ -189,8 +189,6 @@ void GraphViewer::handleSamplePoints()
     {
         if (_pPlot->graphCount() > 0 && _pPlot->graph(0)->data()->size() > 0)
         {
-            const double sizePx = _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().upper) - _pPlot->xAxis->coordToPixel(_pPlot->xAxis->range().lower);
-
             /* Get key from visible lower bound */
             double lowerBoundKey;
             if (_pPlot->xAxis->range().lower <= _pPlot->graph(0)->data()->keys().first())
@@ -216,6 +214,9 @@ void GraphViewer::handleSamplePoints()
             /* get indexes of keys */
             const quint32 lowerBoundIndex = _pPlot->graph(0)->data()->keys().indexOf(lowerBoundKey);
             const quint32 upperBoundIndex = _pPlot->graph(0)->data()->keys().lastIndexOf(upperBoundKey);
+
+            /* Get size in pixels */
+            const double sizePx = _pPlot->xAxis->coordToPixel(upperBoundKey) - _pPlot->xAxis->coordToPixel(lowerBoundKey);
 
             /* Calculate number of pixels per point */
             const double nrOfPixelsPerPoint = sizePx / qAbs(upperBoundIndex - lowerBoundIndex);
