@@ -50,6 +50,7 @@ private slots:
     void actionBringToFrontGraph();
     void actionShowHideGraph(bool bState);
     void updateWindowTitle();
+    void enableGlobalMenu();
 
 private:
     bool resetGraph(DataFileParser *_pDataFileParser);

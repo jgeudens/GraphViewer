@@ -41,8 +41,6 @@ SettingsModel::~SettingsModel()
 
 void SettingsModel::triggerUpdate(void)
 {
-    emit settingsChanged();
-
     if (_graphData.size() > 0)
     {
         for (quint8 idx = 0; idx < _graphData.size(); idx++)
@@ -55,6 +53,8 @@ void SettingsModel::triggerUpdate(void)
     emit loadedFileChanged();
     emit highlightSamplesChanged();
     emit valueTooltipChanged();
+    emit windowTitleChanged();
+
 }
 
 void SettingsModel::addGraphs(QStringList labels, QList<QList<double> > data)
@@ -79,6 +79,7 @@ void SettingsModel::addGraphs(QStringList labels, QList<QList<double> > data)
 void SettingsModel::clearGraph()
 {
     _graphData.clear();
+    setFrontGraph(-1);
     emit graphCleared();
 }
 
@@ -118,17 +119,21 @@ void SettingsModel::setGraphVisibility(quint32 index, const bool &value)
     }
 }
 
-quint32 SettingsModel::frontGraph() const
+qint32 SettingsModel::frontGraph() const
 {
     return _frontGraph;
 }
 
-void SettingsModel::setFrontGraph(const quint32 &frontGraph)
+void SettingsModel::setFrontGraph(const qint32 &frontGraph)
 {
-    if ( _frontGraph != frontGraph)
+    if (_frontGraph != frontGraph)
     {
         _frontGraph = frontGraph;
-         emit frontGraphChanged();
+
+        if (frontGraph != -1)
+        {
+            emit frontGraphChanged();
+        }
     }
 }
 

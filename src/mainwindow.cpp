@@ -44,19 +44,12 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pModel, SIGNAL(highlightSamplesChanged()), _pGraphViewer, SLOT(enableSamplePoints()));
     connect(_pModel, SIGNAL(valueTooltipChanged()), this, SLOT(updateValueTooltipMenu()));
     connect(_pModel, SIGNAL(valueTooltipChanged()), _pGraphViewer, SLOT(enableValueTooltip()));
-
     connect(_pModel, SIGNAL(graphCleared()), _pGraphViewer, SLOT(clearGraphs()));
     connect(_pModel, SIGNAL(graphCleared()), this, SLOT(clearGraphMenu()));
-
-
     connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphViewer, SLOT(addGraphs(QList<QList<double> >)));
     connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
-
     connect(_pModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
-
-    /* TODO */
-    connect(_pModel, SIGNAL(settingsChanged()), this, SLOT());
-    connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT());
+    connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
 
 
     _pGraphShowHide = _pUi->menuShowHide;
@@ -164,24 +157,11 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
     {
         _pModel->clearGraph();
         _pModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
-        _pModel->setWindowTitleDetail(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
-
-        _pUi->actionReloadDataFile->setEnabled(true);
-        _pUi->actionExportImage->setEnabled(true);
-
-        _pUi->actionAutoScaleXAxis->setEnabled(true);
-        _pUi->actionAutoScaleYAxis->setEnabled(true);
-        _pUi->actionSetManualScaleXAxis->setEnabled(true);
-        _pUi->actionSetManualScaleYAxis->setEnabled(true);
-        _pUi->actionShowValueTooltip->setEnabled(true);
-        _pUi->actionHighlightSamplePoints->setEnabled(true);
-        _pUi->menuScale->setEnabled(true);
+        _pModel->setFrontGraph(0);
+        _pModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
+        _pModel->setWindowTitleDetail(_pModel->loadedFile());
 
         bSucceeded = true;
-
-        /* TODO:: DIRTY*/
-         _pModel->triggerUpdate();
-
     }
 
     return bSucceeded;
@@ -355,6 +335,20 @@ void MainWindow::updateWindowTitle()
     setWindowTitle(_pModel->windowTitle());
 }
 
+void MainWindow::enableGlobalMenu()
+{
+    _pUi->actionReloadDataFile->setEnabled(true);
+    _pUi->actionExportImage->setEnabled(true);
+    _pUi->actionAutoScaleXAxis->setEnabled(true);
+    _pUi->actionAutoScaleYAxis->setEnabled(true);
+    _pUi->actionSetManualScaleXAxis->setEnabled(true);
+    _pUi->actionSetManualScaleYAxis->setEnabled(true);
+    _pUi->actionShowValueTooltip->setEnabled(true);
+    _pUi->actionHighlightSamplePoints->setEnabled(true);
+    _pUi->menuScale->setEnabled(true);
+    _pUi->actionWatchFile->setEnabled(true);
+}
+
 void MainWindow::showHideGraph(const quint32 index)
 {
     _pGraphShowHide->actions().at(index)->setChecked(_pModel->graphVisibility(index));
@@ -363,7 +357,7 @@ void MainWindow::showHideGraph(const quint32 index)
     _pGraphBringToFront->actions().at(index)->setVisible(_pModel->graphVisibility((index)));
 
     // Enable/Disable global BringToFront menu
-    bool bVisible = false;
+    bool bVisible = false;    _pGraphBringToFront->setEnabled(true);
     foreach(QAction * pAction, _pGraphBringToFront->actions())
     {
         if (pAction->isVisible())
@@ -418,6 +412,7 @@ void MainWindow::addGraphMenu()
     }
 
     _pGraphShowHide->setEnabled(true);
+    _pGraphBringToFront->setEnabled(true);
 
 }
 

@@ -17,7 +17,7 @@ public:
     QColor graphColor(quint32 index) const;
     QString graphLabel(quint32 index) const;
 
-    quint32 frontGraph() const;
+    qint32 frontGraph() const;
     QString loadedFile() const;
     void setLoadedFile(const QString &loadedFile);
     bool watchFile() const;
@@ -34,7 +34,7 @@ public slots:
     void setHighlightSamples(bool bHighlightSamples);
     void setDynamicSession(bool bDynamicSession);
     void setWatchFile(bool bWatchFile);
-    void setFrontGraph(const quint32 &frontGraph);
+    void setFrontGraph(const qint32 &frontGraph);
     void setGraphVisibility(quint32 index, const bool &value);
     void setWindowTitleDetail(QString detail);
 
@@ -60,7 +60,7 @@ private:
 
     QList<GraphData * > _graphData;
 
-    quint32 _frontGraph;
+    qint32 _frontGraph;
 
     QString _loadedFile;
     QString _windowTitle;
