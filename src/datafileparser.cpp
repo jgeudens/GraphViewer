@@ -1,35 +1,22 @@
-
 #include <QtWidgets>
-#include <QMessageBox>
 
 #include "dataparsersettings.h"
 #include "util.h"
 #include "datafileparser.h"
 
-DataFileParser::DataFileParser() :
-    _pFileWatcher(new QFileSystemWatcher())
+DataFileParser::DataFileParser()
 {
     _fileContentsEnd = 0;
     _fileEndPos = 0;
-    connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileDataChange(QString)));
 }
 
 DataFileParser::~DataFileParser()
 {
-    delete _pFileWatcher;
 }
 
 DataParserSettings * DataFileParser::getDataParseSettings()
 {
     return &_parseSettings;
-}
-
-void DataFileParser::fileDataChange(QString path)
-{
-    if(_parseSettings.getWatchFileData() && path == _parseSettings.getPath())
-    {
-        emit fileDataChanged();
-    }
 }
 
 bool DataFileParser::forceProcessDataFile()
@@ -54,13 +41,6 @@ bool DataFileParser::processDataFile()
     // read data structure, labels when on first load
     if (_dataRows.isEmpty())
     {
-
-        // Setup file watchers
-        if (bRet)
-        {
-            setupFileWatchers();
-        }
-
         if (bRet)
         {
             // Get number of rows (from dataRow)
@@ -184,26 +164,6 @@ bool DataFileParser::readData()
 
     return bRet;
 }
-
-void DataFileParser::setupFileWatchers()
-{
-    // Remove existing watchers
-    if(_pFileWatcher->files().length() > 0)
-    {
-        _pFileWatcher->removePaths(_pFileWatcher->files());
-    }
-    if(_pFileWatcher->directories().length() > 0)
-    {
-        _pFileWatcher->removePaths(_pFileWatcher->directories());
-    }
-
-    // add new watcher
-    if(!_pFileWatcher->addPath(_parseSettings.getPath()))
-    {
-        emit addFileWatchFailed(_parseSettings.getPath());
-    }
-}
-
 
 bool DataFileParser::loadDataFile()
 {

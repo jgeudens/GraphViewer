@@ -1,12 +1,11 @@
 #ifndef DATAFILEPARSER_H
 #define DATAFILEPARSER_H
 
-#include "QObject"
-#include "QStringList"
-#include "QList"
-#include "QFile"
+#include <QObject>
+#include <QStringList>
+#include <QList>
+#include <QFile>
 #include "dataparsersettings.h"
-#include <QFileSystemWatcher>
 
 class DataFileParser : public QObject
 {
@@ -22,17 +21,9 @@ public:
     QList<QList<double> > & getDataRows();
     QStringList & getDataLabels();
 
-signals:
-    void fileDataChanged();
-    void addFileWatchFailed(QString);
-
-private slots:
-    void fileDataChange(QString);
-
 private:
 
     bool readData();
-    void setupFileWatchers();
     bool loadDataFile();
     bool readLabels();
     bool readLineFromFile(QFile *file, QString *pLine);
@@ -47,7 +38,6 @@ private:
     QStringList _dataLabels;
 
     DataParserSettings _parseSettings;
-    QFileSystemWatcher *_pFileWatcher;
 
 };
 

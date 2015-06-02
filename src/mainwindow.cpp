@@ -5,8 +5,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-const int MainWindow::cDynamicMaxUpdateInterval = 100;
-
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow),
@@ -17,23 +15,25 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     
     _pModel = new SettingsModel();
     _pGraphViewer = new GraphViewer(_pModel, _pUi->customPlot, this);
+    _pWatchFile = new WatchFile(_pModel);
 
+    /* Add slot for file watcher */
+    connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(handleFileChange()));
+
+    /*-- Connect menu actions --*/
     connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
     connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(actionReloadDataFile()));
     connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
     connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
-
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pModel, SLOT(setHighlightSamples(bool)));
-
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
-
-    connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), this, SLOT(enableWatchFileChanged(bool)));
-    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), this, SLOT(enableDynamicSessionChanged(bool)));    
+    connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pModel, SLOT(setWatchFile(bool)));
+    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pModel, SLOT(setDynamicSession(bool)));
 
     /*-- connect model to view --*/
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
@@ -50,7 +50,8 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
     connect(_pModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
     connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
-
+    connect(_pModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
+    connect(_pModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
@@ -97,7 +98,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    _dynamicUpdateTimer.stop();
+    delete _pWatchFile;
     delete _pGraphViewer;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
@@ -133,15 +134,8 @@ void MainWindow::parseData()
         // Set pointer to new parser object
         _pParser = pNewParser;
 
-        connect(_pParser, SIGNAL(fileDataChanged()), this, SLOT(fileDataChange()));
-        connect(_pParser->getDataParseSettings(), SIGNAL(watchFileDataChanged(bool)), _pUi->actionWatchFile, SLOT(setChecked(bool)));
-        connect(_pParser->getDataParseSettings(), SIGNAL(dynamicSessionChanged(bool)), _pUi->actionDynamicSession, SLOT(setChecked(bool)));
-        connect(_pParser, SIGNAL(addFileWatchFailed(QString)), this, SLOT(addFileWatchFail(QString)));
-
-        _pUi->actionWatchFile->setEnabled(true);
-        _pUi->actionWatchFile->setChecked(_pParser->getDataParseSettings()->getWatchFileData());
-        _pUi->actionDynamicSession->setEnabled(true);
-        _pUi->actionDynamicSession->setChecked(_pParser->getDataParseSettings()->getDynamicSession());
+        _pModel->setWatchFile(true);
+        _pModel->setDynamicSession(false);
     }
     else // New file load failed
     {
@@ -160,6 +154,8 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pModel->setFrontGraph(0);
         _pModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
         _pModel->setWindowTitleDetail(_pModel->loadedFile());
+        _pModel->setWatchFile(_pDataFileParser->getDataParseSettings()->getDynamicSession());
+        _pModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
 
         bSucceeded = true;
     }
@@ -176,6 +172,9 @@ void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
     else
     {
         _pModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+
+        // disable watch
+        _pModel->setWatchFile(false);
     }
 }
 
@@ -188,55 +187,6 @@ void MainWindow::actionReloadDataFile()
 {
     // Reload data with current parser data
     resetGraph(_pParser);
-}
-
-void MainWindow::fileDataChange()
-{
-    if (!_dynamicUpdateTimer.isActive())
-	{
-        _dynamicUpdateTimer.singleShot(cDynamicMaxUpdateInterval, this, SLOT(dynamicUpdate()));
-	}
-}
-
-void MainWindow::dynamicUpdate()
-{
-
-	if(_pParser->getDataParseSettings()->getWatchFileData())
-	{
-		static QMutex mutex;
-
-		if(mutex.tryLock())
-		{
-			QFile file(_pParser->getDataParseSettings()->getPath());
-			if(file.size() > 0)
-			{
-				if(_pParser->getDataParseSettings()->getDynamicSession())
-				{
-					updateGraph(_pParser);
-				}
-				else
-				{
-					QMessageBox::StandardButton reply;
-					reply = QMessageBox::question(this, "Data file changed", "Reload data file? Press cancel to disable the auto reload  function.", QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel, QMessageBox::Yes);
-					if(reply == QMessageBox::Yes)
-					{
-						updateGraph(_pParser);
-					}
-					else if(reply == QMessageBox::Cancel)
-					{
-						_pParser->getDataParseSettings()->setWatchFileData(false);
-					}
-				}
-			}
-
-			mutex.unlock();
-		}
-	}
-}
-
-void MainWindow::addFileWatchFail(QString path)
-{
-    QMessageBox::warning(this, "Add file watch failed", "Failed to watch \"" + path + "\". Please check your system configuration!");
 }
 
 void MainWindow::prepareImageExport()
@@ -436,23 +386,25 @@ void MainWindow::actionBringToFrontGraph()
     _pModel->setFrontGraph(pAction->data().toInt());
 }
 
-void MainWindow::enableWatchFileChanged(bool bState)
+void MainWindow::enableWatchFile()
 {
-    _pUi->actionWatchFile->setChecked(bState);
-    _pUi->actionDynamicSession->setEnabled(bState);
-
-    if(_pParser != NULL)
+    // Setup file watcher
+    if (_pModel->watchFile())
     {
-        _pParser->getDataParseSettings()->setWatchFileData(bState);
+        _pWatchFile->enableFileWatch(_pParser->getDataParseSettings()->getPath());
     }
+    else
+    {
+        _pWatchFile->disableFileWatch();
+    }
+
+    _pUi->actionWatchFile->setChecked(_pModel->watchFile());
+    _pUi->actionDynamicSession->setEnabled(_pModel->watchFile());
 }
 
-void MainWindow::enableDynamicSessionChanged(bool bState)
+void MainWindow::enableDynamicSession()
 {
-    if(_pParser != NULL)
-    {
-        _pParser->getDataParseSettings()->setDynamicSession(bState);
-    }
+    _pUi->actionDynamicSession->setChecked(_pModel->dynamicSession());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *e)
@@ -478,4 +430,9 @@ void MainWindow::dropEvent(QDropEvent *e)
 void MainWindow::showContextMenu(const QPoint& pos)
 {
     _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+}
+
+void MainWindow::handleFileChange()
+{
+    updateGraph(_pParser);
 }

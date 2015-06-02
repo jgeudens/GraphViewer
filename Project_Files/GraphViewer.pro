@@ -32,7 +32,8 @@ SOURCES +=  \
     ../src/dataparsersettings.cpp \
     ../src/loadfiledialog.cpp \
     ../src/presetparser.cpp \
-    ../src/settingsmodel.cpp
+    ../src/settingsmodel.cpp \
+    ../src/watchfile.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
@@ -50,4 +51,5 @@ HEADERS += \
     ../src/loadfiledialog.h \
     ../src/presetparser.h \
     ../src/settingsmodel.h \
-    ../src/graphdata.h
+    ../src/graphdata.h \
+    ../src/watchfile.h

@@ -50,11 +50,11 @@ void SettingsModel::triggerUpdate(void)
     }
 
     emit frontGraphChanged();
-    emit loadedFileChanged();
     emit highlightSamplesChanged();
     emit valueTooltipChanged();
     emit windowTitleChanged();
-
+    emit watchFileChanged();
+    emit dynamicSessionChanged();
 }
 
 void SettingsModel::addGraphs(QStringList labels, QList<QList<double> > data)
@@ -161,7 +161,7 @@ void SettingsModel::setWatchFile(bool bWatchFile)
     if (_bWatchFile != bWatchFile)
     {
         _bWatchFile = bWatchFile;
-         emit settingsChanged();
+        emit watchFileChanged();
     }
 }
 
@@ -175,7 +175,7 @@ void SettingsModel::setDynamicSession(bool bDynamicSession)
     if (_bDynamicSession != bDynamicSession)
     {
         _bDynamicSession = bDynamicSession;
-         emit settingsChanged();
+        emit dynamicSessionChanged();
     }
 }
 

@@ -143,7 +143,6 @@ void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
     pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
     pParseSettings->setCommentSequence(_pUi->lineComment->text());
     pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
-    pParseSettings->setWatchFileData(true);
 }
 
 void LoadFileDialog::selectDataFile()

@@ -39,17 +39,17 @@ public slots:
     void setWindowTitleDetail(QString detail);
 
 signals:
-    void settingsChanged();
 
     void graphVisibilityChanged(const quint32 index);
     void graphCleared();
     void graphsAdded(QList<QList<double> > data);
-
     void frontGraphChanged();
     void loadedFileChanged();
     void highlightSamplesChanged();
     void valueTooltipChanged();
     void windowTitleChanged();
+    void watchFileChanged();
+    void dynamicSessionChanged();
 
 public slots:
 
