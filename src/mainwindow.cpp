@@ -135,7 +135,7 @@ void MainWindow::parseData()
         _pParser = pNewParser;
 
         _pModel->setWatchFile(true);
-        _pModel->setDynamicSession(false);
+        // Dynamic session is set in loadFileDialog
     }
     else // New file load failed
     {
@@ -154,7 +154,6 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pModel->setFrontGraph(0);
         _pModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
         _pModel->setWindowTitleDetail(_pModel->loadedFile());
-        _pModel->setWatchFile(_pDataFileParser->getDataParseSettings()->getDynamicSession());
         _pModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
 
         bSucceeded = true;
