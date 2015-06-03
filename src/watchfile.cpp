@@ -3,7 +3,6 @@
 #include <QMessageBox>
 
 #include "util.h"
-#include "QDebug"
 #include "watchfile.h"
 
 const int WatchFile::cDynamicMaxUpdateInterval = 100;
@@ -41,31 +40,33 @@ void WatchFile::dynamicUpdate()
 
         if(mutex.tryLock())
         {
-            qDebug() << "@dynamicUpdate: " << _pFileWatcher->files();
-            //QFile file(_pFileWatcher->files().first());
-            //if(file.size() > 0)
+            /*
+             * Known issue: some editors (on Linux) don't edit a file, they create a copy to edit and then copy over the original file
+             * QT will detect a removal of the file and then QT will remove the file from the list
+             *
+             * http://stackoverflow.com/questions/18300376/qt-qfilesystemwatcher-singal-filechanged-gets-emited-only-once
+            */
+
+            if(_pModel->dynamicSession())
             {
-                if(_pModel->dynamicSession())
+                emit fileDataChanged();
+            }
+            else
+            {
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("Data file changed");
+                msgBox.setText("Reload data file? Press cancel to disable the auto reload  function.");
+                msgBox.setStandardButtons(QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel);
+                msgBox.setDefaultButton(QMessageBox::Yes);
+                int button = msgBox.exec();
+
+                if(button == QMessageBox::Yes)
                 {
                     emit fileDataChanged();
                 }
-                else
+                else if(button == QMessageBox::Cancel)
                 {
-                    QMessageBox msgBox;
-                    msgBox.setWindowTitle("Data file changed");
-                    msgBox.setText("Reload data file? Press cancel to disable the auto reload  function.");
-                    msgBox.setStandardButtons(QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel);
-                    msgBox.setDefaultButton(QMessageBox::Yes);
-                    int button = msgBox.exec();
-
-                    if(button == QMessageBox::Yes)
-                    {
-                        emit fileDataChanged();
-                    }
-                    else if(button == QMessageBox::Cancel)
-                    {
-                        _pModel->setWatchFile(false);
-                    }
+                    _pModel->setWatchFile(false);
                 }
             }
 
@@ -89,8 +90,6 @@ void WatchFile::enableFileWatch(QString path)
     {
         Util::showError("Failed to watch \"" + path + "\". Please check your system configuration!");
     }
-
-    qDebug() << "@init: " << _pFileWatcher->files();
 }
 
 void WatchFile::clearWatchList()
