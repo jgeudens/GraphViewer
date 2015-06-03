@@ -313,18 +313,32 @@ void GraphViewer::addGraphs(QList<QList<double> > data)
 
 void GraphViewer::updateData(QList<QList<double> > * pDataLists)
 {
-   const QVector<double> timeData = pDataLists->at(0).toVector();
+    bool bFullScale = false;
+    const QVector<double> timeData = pDataLists->at(0).toVector();
 
-   for (qint32 i = 1; i < pDataLists->size(); i++)
-   {
+    if (_pPlot->graph(0)->data()->keys().size() > 0)
+    {
+        if (
+        (_pPlot->xAxis->range().lower <= _pPlot->graph(0)->data()->keys().first())
+        && (_pPlot->xAxis->range().upper >= _pPlot->graph(0)->data()->keys().last())
+        )
+        {
+            bFullScale = true;
+        }
+    }
+
+    for (qint32 i = 1; i < pDataLists->size(); i++)
+    {
         //Add data to graphs
         QVector<double> graphData = pDataLists->at(i).toVector();
         _pPlot->graph(i - 1)->setData(timeData, graphData);
-   }
+    }
 
-   _pPlot->rescaleAxes(true);
-   _pPlot->replot();
-
+    if (bFullScale)
+    {
+        _pPlot->rescaleAxes(true);
+    }
+    _pPlot->replot();
 }
 
 void GraphViewer::exportGraphImage(QString imageFile)
@@ -375,7 +389,7 @@ void GraphViewer::bringToFront()
 
 void GraphViewer::autoScaleXAxis()
 {
-    _pPlot->xAxis->rescale(true);
+    _pPlot->rescaleAxes(true);
     _pPlot->replot();
 }
 
@@ -512,6 +526,16 @@ void GraphViewer::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * a
 
 void GraphViewer::axisDoubleClicked(QCPAxis * axis)
 {
-    axis->rescale(true);
-    _pPlot->replot();
+    if (axis == _pPlot->xAxis)
+    {
+        autoScaleXAxis();
+    }
+    else if (axis == _pPlot->yAxis)
+    {
+        autoScaleYAxis();
+    }
+    else
+    {
+        // do nothing
+    }
 }
