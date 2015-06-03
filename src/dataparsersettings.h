@@ -22,7 +22,6 @@ public:
     quint32 getColumn();
     qint32 getLabelRow();
     bool getDynamicSession();
-    bool getWatchFileData();
 
     void setPath(QString path);
     void setFieldSeparator(QString fieldSeparator);
@@ -33,11 +32,8 @@ public:
     void setColumn(quint32 column);
     void setLabelRow(qint32 labelRow);
     void setDynamicSession(bool bDynamicSession);
-    void setWatchFileData(bool bWatchFileData);
-
 signals:
     void dynamicSessionChanged(bool);
-    void watchFileDataChanged(bool);
 
 private:
 
@@ -50,7 +46,6 @@ private:
     quint32 _column;
     qint32 _labelRow;
     bool _bDynamicSession;
-    bool _bWatchFileData;
 
 };
 

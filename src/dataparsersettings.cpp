@@ -64,13 +64,6 @@ bool DataParserSettings::getDynamicSession()
     return _bDynamicSession;
 }
 
-bool DataParserSettings::getWatchFileData()
-{
-    return _bWatchFileData;
-}
-
-
-
 void DataParserSettings::setPath(QString path)
 {
     _path = path.trimmed();
@@ -121,15 +114,4 @@ void DataParserSettings::setLabelRow(qint32 labelRow)
 void DataParserSettings::setDynamicSession(bool bDynamicSession)
 {
     _bDynamicSession = bDynamicSession;
-
-    emit dynamicSessionChanged(_bDynamicSession);
-}
-
-void DataParserSettings::setWatchFileData(bool bWatchFileData)
-{
-    if(_bWatchFileData != bWatchFileData)
-    {
-        _bWatchFileData = bWatchFileData;
-        emit watchFileDataChanged(_bWatchFileData);
-    }
 }

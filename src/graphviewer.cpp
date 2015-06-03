@@ -8,29 +8,11 @@
 
 #include "graphviewer.h"
 
-const QList<QColor> GraphViewer::_colorlist = QList<QColor>() << QColor(0, 0, 0)
-                                                           << QColor(0, 0, 255)
-                                                           << QColor(0, 255, 255)
-                                                           << QColor(0, 255, 0)
-                                                           << QColor(220, 220, 0)
-                                                           << QColor(220, 153, 14)
-                                                           << QColor(255, 165, 0)
-                                                           << QColor(255, 0, 0)
-                                                           << QColor(255, 160, 122)
-                                                           << QColor(230, 104, 86)
-                                                           << QColor(205, 205, 180)
-                                                           << QColor(157, 153, 120)
-                                                           << QColor(139, 69, 19)
-                                                           << QColor(255, 20, 147)
-                                                           << QColor(74, 112, 139)
-                                                           << QColor(46, 139, 87)
-                                                           << QColor(128, 0, 128)
-                                                           << QColor(189, 183, 107)
-                                                           ;
-
-GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
+GraphViewer::GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QObject *parent) :
    QObject(parent)
 {
+
+    _pSettingsModel = pSettingsModel;
 
    _pPlot = pPlot;
 
@@ -83,16 +65,11 @@ GraphViewer::GraphViewer(QCustomPlot * pPlot, QObject *parent) :
    connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
-   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showValueToolTip(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(paintValueToolTip(QMouseEvent*)));
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
-void GraphViewer::clear()
-{
-    _pPlot->clearGraphs();
-}
-
-void GraphViewer::showValueToolTip(QMouseEvent *event)
+void GraphViewer::paintValueToolTip(QMouseEvent *event)
 {
     if  (_bEnableTooltip)
     {
@@ -288,30 +265,30 @@ void GraphViewer::highlightSamples(bool bState)
     }
 }
 
-void GraphViewer::setupData(QList<QList<double> > * pDataLists, QStringList * pLabels)
+void GraphViewer::clearGraphs()
 {
-   _pPlot->clearGraphs();
+    _pPlot->clearGraphs();
+}
 
-   for (qint32 i = 1; i < pDataLists->size(); i++)
-   {
-        const quint32 colorIndex = _pPlot->graphCount() % _colorlist.size();
-
+void GraphViewer::addGraphs(QList<QList<double> > data)
+{
+    for(quint32 idx = 0; idx < _pSettingsModel->graphCount(); idx++)
+    {
         QCPGraph * pGraph = _pPlot->addGraph();
 
-        pGraph->setName(pLabels->at(i));
+        pGraph->setName(_pSettingsModel->graphLabel(idx));
 
         QPen pen;
-        pen.setColor(_colorlist[colorIndex]);
+        pen.setColor(_pSettingsModel->graphColor(idx));
         pen.setWidth(2);
         pen.setCosmetic(true);
 
         pGraph->setPen(pen);
-   }
+    }
 
-   _pPlot->legend->setVisible(true);
+    _pPlot->legend->setVisible(true);
 
-   updateData(pDataLists);
-
+    updateData(&data);
 }
 
 void GraphViewer::updateData(QList<QList<double> > * pDataLists)
@@ -354,8 +331,9 @@ void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
     _pPlot->replot();
 }
 
-void GraphViewer::showGraph(quint32 index, bool bShow)
+void GraphViewer::showGraph(quint32 index)
 {
+    const bool bShow = _pSettingsModel->graphVisibility(index);
     _pPlot->graph(index)->setVisible(bShow);
 
     QFont itemFont = _pPlot->legend->item(index)->font();
@@ -366,24 +344,13 @@ void GraphViewer::showGraph(quint32 index, bool bShow)
     _pPlot->replot();
 }
 
-void GraphViewer::bringToFront(quint32 index, bool bFront)
+void GraphViewer::bringToFront()
 {
-
-    if (bFront)
+    if (_pPlot->graphCount() > 0)
     {
-        _pPlot->graph(index)->setLayer("topMain");
+        _pPlot->graph(_pSettingsModel->frontGraph())->setLayer("topMain");
+        _pPlot->replot();
     }
-    else
-    {
-        _pPlot->graph(index)->setLayer("grid");
-    }
-
-    _pPlot->replot();
-}
-
-QColor GraphViewer::getGraphColor(quint32 index)
-{
-    return _pPlot->graph(index)->pen().color();
 }
 
 void GraphViewer::autoScaleXAxis()
@@ -398,14 +365,14 @@ void GraphViewer::autoScaleYAxis()
     _pPlot->replot();
 }
 
-void GraphViewer::enableValueTooltip(bool bState)
+void GraphViewer::enableValueTooltip()
 {
-    _bEnableTooltip = bState;
+    _bEnableTooltip = _pSettingsModel->valueTooltip();
 }
 
-void GraphViewer::enableSamplePoints(bool bState)
+void GraphViewer::enableSamplePoints()
 {
-    _bEnableSampleHighlight = bState;
+    _bEnableSampleHighlight = _pSettingsModel->highlightSamples();
     _pPlot->replot();
 }
 
