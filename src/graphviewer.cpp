@@ -311,6 +311,12 @@ void GraphViewer::addGraphs(QList<QList<double> > data)
     updateData(&data);
 }
 
+void GraphViewer::showHideLegend()
+{
+    _pPlot->legend->setVisible(_pSettingsModel->legendVisibility());
+    _pPlot->replot();
+}
+
 void GraphViewer::updateData(QList<QList<double> > * pDataLists)
 {
     bool bFullScale = false;

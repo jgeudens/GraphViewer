@@ -34,6 +34,8 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pModel, SLOT(setWatchFile(bool)));
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pModel, SLOT(setDynamicSession(bool)));
+    connect(_pUi->actionShowHideLegend, SIGNAL(toggled(bool)), _pModel, SLOT(setLegendVisibility(bool)));
+
 
     /*-- connect model to view --*/
     connect(_pModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
@@ -52,6 +54,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
     connect(_pModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
+    connect(_pModel, SIGNAL(legendVisibilityChanged()), _pGraphViewer, SLOT(showHideLegend()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
@@ -296,6 +299,7 @@ void MainWindow::enableGlobalMenu()
     _pUi->actionHighlightSamplePoints->setEnabled(true);
     _pUi->menuScale->setEnabled(true);
     _pUi->actionWatchFile->setEnabled(true);
+    _pUi->actionShowHideLegend->setEnabled(true);
 }
 
 void MainWindow::showHideGraph(const quint32 index)

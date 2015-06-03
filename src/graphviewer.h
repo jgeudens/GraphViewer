@@ -30,6 +30,7 @@ public slots:
     void bringToFront();
     void clearGraphs();
     void addGraphs(QList<QList<double> > data);
+    void showHideLegend();
 
 private slots:
     void generateTickLabels();

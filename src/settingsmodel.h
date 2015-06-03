@@ -28,6 +28,7 @@ public:
     void clearGraph();
     quint32 graphCount();
     QString windowTitle();
+    bool legendVisibility();
 
 public slots:
     void setValueTooltip(bool bValueTooltip);
@@ -37,6 +38,7 @@ public slots:
     void setFrontGraph(const qint32 &frontGraph);
     void setGraphVisibility(quint32 index, const bool &value);
     void setWindowTitleDetail(QString detail);
+    void setLegendVisibility(bool bLegendVisibility);
 
 signals:
 
@@ -50,6 +52,7 @@ signals:
     void windowTitleChanged();
     void watchFileChanged();
     void dynamicSessionChanged();
+    void legendVisibilityChanged();
 
 public slots:
 
@@ -70,6 +73,7 @@ private:
 
     bool _bHighlightSamples;
     bool _bValueTooltip;
+    bool _bLegendVisibility;
 
     static const QString _cWindowTitle;
     static const QList<QColor> _colorlist;

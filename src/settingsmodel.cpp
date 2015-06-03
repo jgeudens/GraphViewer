@@ -32,6 +32,7 @@ SettingsModel::SettingsModel(QObject *parent) : QObject(parent)
     _bDynamicSession = false;
     _bHighlightSamples = true;
     _bValueTooltip = false;
+    _bLegendVisibility = true;
 }
 
 SettingsModel::~SettingsModel()
@@ -234,5 +235,19 @@ void SettingsModel::setWindowTitleDetail(QString detail)
     {
         _windowTitle = tmpTitle;
         emit windowTitleChanged();
+    }
+}
+
+bool SettingsModel::legendVisibility()
+{
+    return _bLegendVisibility;
+}
+
+void SettingsModel::setLegendVisibility(bool bLegendVisibility)
+{
+    if (_bLegendVisibility != bLegendVisibility)
+    {
+        _bLegendVisibility = bLegendVisibility;
+         emit legendVisibilityChanged();
     }
 }
