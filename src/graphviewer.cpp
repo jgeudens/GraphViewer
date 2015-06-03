@@ -332,6 +332,11 @@ void GraphViewer::updateData(QList<QList<double> > * pDataLists)
             bFullScale = true;
         }
     }
+    else
+    {
+        /* First load of file: always rescale */
+        bFullScale = true;
+    }
 
     for (qint32 i = 1; i < pDataLists->size(); i++)
     {
