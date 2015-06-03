@@ -65,6 +65,8 @@ GraphViewer::GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QO
    connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
+   connect(_pPlot, SIGNAL(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
+   connect(_pPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
    connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(paintValueToolTip(QMouseEvent*)));
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
@@ -208,6 +210,24 @@ void GraphViewer::handleSamplePoints()
     highlightSamples(bHighlight);
 
 }
+
+
+int GraphViewer::getGraphIndex(QCPGraph * pGraph)
+{
+    int ret = -1;
+
+    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+    {
+        if (pGraph == _pPlot->graph(graphIndex))
+        {
+            ret = graphIndex;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 
 QString GraphViewer::createTickLabelString(qint32 tickKey)
 {
@@ -450,6 +470,44 @@ void GraphViewer::mouseWheel()
    {
        _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
    }
+}
+
+void GraphViewer::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
+{
+    Q_UNUSED(event);
+
+    if ((NULL != legend) && (NULL != abstractLegendItem))
+    {
+        // Check for selection
+        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
+        if (legendItem != 0)
+        {
+            const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            if (graphIndex >= 0)
+            {
+                _pSettingsModel->setFrontGraph(graphIndex);
+            }
+        }
+    }
+}
+
+void GraphViewer::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
+{
+    Q_UNUSED(event);
+
+    if ((NULL != legend) && (NULL != abstractLegendItem))
+    {
+        // Check for selection
+        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
+        if (legendItem != 0)
+        {
+            const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            if (graphIndex >= 0)
+            {
+                _pSettingsModel->setGraphVisibility(graphIndex, !_pSettingsModel->graphVisibility(graphIndex));
+            }
+        }
+    }
 }
 
 void GraphViewer::axisDoubleClicked(QCPAxis * axis)

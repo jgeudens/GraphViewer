@@ -36,6 +36,8 @@ private slots:
     void selectionChanged();
     void mousePress();
     void mouseWheel();
+    void legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
+    void legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
     void axisDoubleClicked(QCPAxis * axis);
     void paintValueToolTip(QMouseEvent *event);
     void handleSamplePoints();
@@ -44,6 +46,7 @@ private:
 
     QString createTickLabelString(qint32 tickKey);
     void highlightSamples(bool bState);
+    int getGraphIndex(QCPGraph * pGraph);
 
     SettingsModel * _pSettingsModel;
 
