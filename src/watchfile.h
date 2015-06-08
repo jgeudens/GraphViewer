@@ -4,13 +4,13 @@
 #include <QObject>
 #include <QFileSystemWatcher>
 #include <QTimer>
-#include "settingsmodel.h"
+#include "guimodel.h"
 
 class WatchFile : public QObject
 {
     Q_OBJECT
 public:
-    explicit WatchFile(SettingsModel * pModel);
+    explicit WatchFile(GuiModel * pGuiModel);
     ~WatchFile();
 
     void disableFileWatch();
@@ -26,7 +26,7 @@ private slots:
 private:
     void clearWatchList();
 
-    SettingsModel * _pModel;
+    GuiModel * _pGuiModel;
     QFileSystemWatcher *_pFileWatcher;
 
     QTimer _dynamicUpdateTimer;

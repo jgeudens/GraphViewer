@@ -5,7 +5,7 @@
 #include <QVector>
 #include <QMouseEvent>
 
-#include <settingsmodel.h>
+#include <guimodel.h>
 
 #include "qcustomplot.h"
 
@@ -13,7 +13,7 @@ class GraphViewer : public QObject
 {
     Q_OBJECT
 public:
-    explicit GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QObject *parent);
+    explicit GraphViewer(GuiModel *pGuiModel, QCustomPlot * pPlot, QObject *parent);
 
     void updateData(QList<QList<double> > * pDataLists);
     void exportGraphImage(QString imageFile);
@@ -49,7 +49,7 @@ private:
     void highlightSamples(bool bState);
     int getGraphIndex(QCPGraph * pGraph);
 
-    SettingsModel * _pSettingsModel;
+    GuiModel * _pGuiModel;
 
     QCustomPlot * _pPlot;
 

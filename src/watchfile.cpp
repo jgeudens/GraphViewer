@@ -7,10 +7,10 @@
 
 const int WatchFile::cDynamicMaxUpdateInterval = 100;
 
-WatchFile::WatchFile(SettingsModel * pModel):
+WatchFile::WatchFile(GuiModel * pGuiModel):
     _pFileWatcher(new QFileSystemWatcher())
 {
-    _pModel = pModel;
+    _pGuiModel = pGuiModel;
 
     connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileDataChange()));
 }
@@ -23,7 +23,7 @@ WatchFile::~WatchFile()
 
 void WatchFile::fileDataChange()
 {
-    if(_pModel->watchFile())
+    if(_pGuiModel->watchFile())
     {
         if (!_dynamicUpdateTimer.isActive())
         {
@@ -34,7 +34,7 @@ void WatchFile::fileDataChange()
 
 void WatchFile::dynamicUpdate()
 {
-    if(_pModel->watchFile())
+    if(_pGuiModel->watchFile())
     {
         static QMutex mutex;
 
@@ -47,7 +47,7 @@ void WatchFile::dynamicUpdate()
              * http://stackoverflow.com/questions/18300376/qt-qfilesystemwatcher-singal-filechanged-gets-emited-only-once
             */
 
-            if(_pModel->dynamicSession())
+            if(_pGuiModel->dynamicSession())
             {
                 emit fileDataChanged();
             }
@@ -66,7 +66,7 @@ void WatchFile::dynamicUpdate()
                 }
                 else if(button == QMessageBox::Cancel)
                 {
-                    _pModel->setWatchFile(false);
+                    _pGuiModel->setWatchFile(false);
                 }
             }
 

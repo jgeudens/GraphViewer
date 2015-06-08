@@ -5,7 +5,7 @@
 #include <QMenu>
 #include <QTimer>
 
-#include "settingsmodel.h"
+#include "guimodel.h"
 #include "watchfile.h"
 #include "datafileparser.h"
 #include "dataparsersettings.h"
@@ -57,7 +57,7 @@ private:
 
     Ui::MainWindow * _pUi;
 
-    SettingsModel * _pModel;
+    GuiModel * _pGuiModel;
 
     GraphViewer * _pGraphViewer;
     DataFileParser * _pParser;

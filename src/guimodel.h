@@ -1,15 +1,15 @@
-#ifndef SETTINGSMODEL_H
-#define SETTINGSMODEL_H
+#ifndef GUIMODEL_H
+#define GUIMODEL_H
 
 #include <QObject>
 #include "graphdata.h"
 
-class SettingsModel : public QObject
+class GuiModel : public QObject
 {
     Q_OBJECT
 public:
-    explicit SettingsModel(QObject *parent = 0);
-    ~SettingsModel();
+    explicit GuiModel(QObject *parent = 0);
+    ~GuiModel();
 
     void triggerUpdate(void);
 
@@ -80,4 +80,4 @@ private:
 
 };
 
-#endif // SETTINGSMODEL_H
+#endif // GUIMODEL_H

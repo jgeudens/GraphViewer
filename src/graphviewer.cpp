@@ -8,11 +8,11 @@
 
 #include "graphviewer.h"
 
-GraphViewer::GraphViewer(SettingsModel * pSettingsModel, QCustomPlot * pPlot, QObject *parent) :
+GraphViewer::GraphViewer(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent) :
    QObject(parent)
 {
 
-    _pSettingsModel = pSettingsModel;
+    _pGuiModel = pGuiModel;
 
    _pPlot = pPlot;
 
@@ -292,14 +292,14 @@ void GraphViewer::clearGraphs()
 
 void GraphViewer::addGraphs(QList<QList<double> > data)
 {
-    for(quint32 idx = 0; idx < _pSettingsModel->graphCount(); idx++)
+    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
     {
         QCPGraph * pGraph = _pPlot->addGraph();
 
-        pGraph->setName(_pSettingsModel->graphLabel(idx));
+        pGraph->setName(_pGuiModel->graphLabel(idx));
 
         QPen pen;
-        pen.setColor(_pSettingsModel->graphColor(idx));
+        pen.setColor(_pGuiModel->graphColor(idx));
         pen.setWidth(2);
         pen.setCosmetic(true);
 
@@ -313,7 +313,7 @@ void GraphViewer::addGraphs(QList<QList<double> > data)
 
 void GraphViewer::showHideLegend()
 {
-    _pPlot->legend->setVisible(_pSettingsModel->legendVisibility());
+    _pPlot->legend->setVisible(_pGuiModel->legendVisibility());
     _pPlot->replot();
 }
 
@@ -378,7 +378,7 @@ void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
 
 void GraphViewer::showGraph(quint32 index)
 {
-    const bool bShow = _pSettingsModel->graphVisibility(index);
+    const bool bShow = _pGuiModel->graphVisibility(index);
     _pPlot->graph(index)->setVisible(bShow);
 
     QFont itemFont = _pPlot->legend->item(index)->font();
@@ -393,7 +393,7 @@ void GraphViewer::bringToFront()
 {
     if (_pPlot->graphCount() > 0)
     {
-        _pPlot->graph(_pSettingsModel->frontGraph())->setLayer("topMain");
+        _pPlot->graph(_pGuiModel->frontGraph())->setLayer("topMain");
         _pPlot->replot();
     }
 }
@@ -412,12 +412,12 @@ void GraphViewer::autoScaleYAxis()
 
 void GraphViewer::enableValueTooltip()
 {
-    _bEnableTooltip = _pSettingsModel->valueTooltip();
+    _bEnableTooltip = _pGuiModel->valueTooltip();
 }
 
 void GraphViewer::enableSamplePoints()
 {
-    _bEnableSampleHighlight = _pSettingsModel->highlightSamples();
+    _bEnableSampleHighlight = _pGuiModel->highlightSamples();
     _pPlot->replot();
 }
 
@@ -510,7 +510,7 @@ void GraphViewer::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstra
             const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
             if (graphIndex >= 0)
             {
-                _pSettingsModel->setFrontGraph(graphIndex);
+                _pGuiModel->setFrontGraph(graphIndex);
             }
         }
     }
@@ -529,7 +529,7 @@ void GraphViewer::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * a
             const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
             if (graphIndex >= 0)
             {
-                _pSettingsModel->setGraphVisibility(graphIndex, !_pSettingsModel->graphVisibility(graphIndex));
+                _pGuiModel->setGraphVisibility(graphIndex, !_pGuiModel->graphVisibility(graphIndex));
             }
         }
     }

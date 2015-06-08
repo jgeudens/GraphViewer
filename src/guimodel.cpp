@@ -1,9 +1,9 @@
 #include <QColor>
-#include "settingsmodel.h"
+#include "guimodel.h"
 
 
-const QString SettingsModel::_cWindowTitle = QString("GraphViewer");
-const QList<QColor> SettingsModel::_colorlist = QList<QColor>() << QColor(0, 0, 0)
+const QString GuiModel::_cWindowTitle = QString("GraphViewer");
+const QList<QColor> GuiModel::_colorlist = QList<QColor>() << QColor(0, 0, 0)
                                                            << QColor(0, 0, 255)
                                                            << QColor(0, 255, 255)
                                                            << QColor(0, 255, 0)
@@ -23,7 +23,7 @@ const QList<QColor> SettingsModel::_colorlist = QList<QColor>() << QColor(0, 0, 
                                                            << QColor(189, 183, 107)
                                                            ;
 
-SettingsModel::SettingsModel(QObject *parent) : QObject(parent)
+GuiModel::GuiModel(QObject *parent) : QObject(parent)
 {
     _graphData.clear();
     _frontGraph = 0;
@@ -35,12 +35,12 @@ SettingsModel::SettingsModel(QObject *parent) : QObject(parent)
     _bLegendVisibility = true;
 }
 
-SettingsModel::~SettingsModel()
+GuiModel::~GuiModel()
 {
 
 }
 
-void SettingsModel::triggerUpdate(void)
+void GuiModel::triggerUpdate(void)
 {
     if (_graphData.size() > 0)
     {
@@ -58,7 +58,7 @@ void SettingsModel::triggerUpdate(void)
     emit dynamicSessionChanged();
 }
 
-void SettingsModel::addGraphs(QStringList labels, QList<QList<double> > data)
+void GuiModel::addGraphs(QStringList labels, QList<QList<double> > data)
 {
 
     for (qint32 idx = 1; idx < labels.size(); idx++)
@@ -77,14 +77,14 @@ void SettingsModel::addGraphs(QStringList labels, QList<QList<double> > data)
     emit graphsAdded(data);
 }
 
-void SettingsModel::clearGraph()
+void GuiModel::clearGraph()
 {
     _graphData.clear();
     setFrontGraph(-1);
     emit graphCleared();
 }
 
-quint32 SettingsModel::graphCount()
+quint32 GuiModel::graphCount()
 {
     if (_graphData.size() > 0)
     {
@@ -96,22 +96,22 @@ quint32 SettingsModel::graphCount()
     }
 }
 
-bool SettingsModel::graphVisibility(quint32 index) const
+bool GuiModel::graphVisibility(quint32 index) const
 {
     return _graphData[index]->bVisibility;
 }
 
-QColor SettingsModel::graphColor(quint32 index) const
+QColor GuiModel::graphColor(quint32 index) const
 {
     return _graphData[index]->color;
 }
 
-QString SettingsModel::graphLabel(quint32 index) const
+QString GuiModel::graphLabel(quint32 index) const
 {
     return _graphData[index]->label;
 }
 
-void SettingsModel::setGraphVisibility(quint32 index, const bool &value)
+void GuiModel::setGraphVisibility(quint32 index, const bool &value)
 {
     if (_graphData[index]->bVisibility != value)
     {
@@ -120,12 +120,12 @@ void SettingsModel::setGraphVisibility(quint32 index, const bool &value)
     }
 }
 
-qint32 SettingsModel::frontGraph() const
+qint32 GuiModel::frontGraph() const
 {
     return _frontGraph;
 }
 
-void SettingsModel::setFrontGraph(const qint32 &frontGraph)
+void GuiModel::setFrontGraph(const qint32 &frontGraph)
 {
     if (_frontGraph != frontGraph)
     {
@@ -138,12 +138,12 @@ void SettingsModel::setFrontGraph(const qint32 &frontGraph)
     }
 }
 
-QString SettingsModel::loadedFile() const
+QString GuiModel::loadedFile() const
 {
     return _loadedFile;
 }
 
-void SettingsModel::setLoadedFile(const QString &loadedFile)
+void GuiModel::setLoadedFile(const QString &loadedFile)
 {
     if (_loadedFile != loadedFile)
     {
@@ -152,12 +152,12 @@ void SettingsModel::setLoadedFile(const QString &loadedFile)
     }
 }
 
-bool SettingsModel::watchFile() const
+bool GuiModel::watchFile() const
 {
     return _bWatchFile;
 }
 
-void SettingsModel::setWatchFile(bool bWatchFile)
+void GuiModel::setWatchFile(bool bWatchFile)
 {
     if (_bWatchFile != bWatchFile)
     {
@@ -166,12 +166,12 @@ void SettingsModel::setWatchFile(bool bWatchFile)
     }
 }
 
-bool SettingsModel::dynamicSession() const
+bool GuiModel::dynamicSession() const
 {
     return _bDynamicSession;
 }
 
-void SettingsModel::setDynamicSession(bool bDynamicSession)
+void GuiModel::setDynamicSession(bool bDynamicSession)
 {
     if (_bDynamicSession != bDynamicSession)
     {
@@ -180,12 +180,12 @@ void SettingsModel::setDynamicSession(bool bDynamicSession)
     }
 }
 
-bool SettingsModel::highlightSamples() const
+bool GuiModel::highlightSamples() const
 {
     return _bHighlightSamples;
 }
 
-void SettingsModel::setHighlightSamples(bool bHighlightSamples)
+void GuiModel::setHighlightSamples(bool bHighlightSamples)
 {
     if (_bHighlightSamples != bHighlightSamples)
     {
@@ -194,12 +194,12 @@ void SettingsModel::setHighlightSamples(bool bHighlightSamples)
     }
 }
 
-bool SettingsModel::valueTooltip() const
+bool GuiModel::valueTooltip() const
 {
     return _bValueTooltip;
 }
 
-void SettingsModel::setValueTooltip(bool bValueTooltip)
+void GuiModel::setValueTooltip(bool bValueTooltip)
 {
     if (_bValueTooltip != bValueTooltip)
     {
@@ -208,18 +208,18 @@ void SettingsModel::setValueTooltip(bool bValueTooltip)
     }
 }
 
-QColor SettingsModel::getColor(const quint32 index)
+QColor GuiModel::getColor(const quint32 index)
 {
     const quint32 colorIndex = index % _colorlist.size();
     return _colorlist[colorIndex];
 }
 
-QString SettingsModel::windowTitle()
+QString GuiModel::windowTitle()
 {
     return _windowTitle;
 }
 
-void SettingsModel::setWindowTitleDetail(QString detail)
+void GuiModel::setWindowTitleDetail(QString detail)
 {
     QString tmpTitle;
     if (detail == "")
@@ -238,12 +238,12 @@ void SettingsModel::setWindowTitleDetail(QString detail)
     }
 }
 
-bool SettingsModel::legendVisibility()
+bool GuiModel::legendVisibility()
 {
     return _bLegendVisibility;
 }
 
-void SettingsModel::setLegendVisibility(bool bLegendVisibility)
+void GuiModel::setLegendVisibility(bool bLegendVisibility)
 {
     if (_bLegendVisibility != bLegendVisibility)
     {
