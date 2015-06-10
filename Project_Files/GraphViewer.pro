@@ -27,13 +27,14 @@ SOURCES +=  \
     ../src/main.cpp \
     ../libraries/qcustomplot/qcustomplot.cpp \
     ../src/datafileparser.cpp \
-    ../src/graphviewer.cpp \
     ../src/axisscaledialog.cpp \
     ../src/dataparsersettings.cpp \
     ../src/loadfiledialog.cpp \
     ../src/presetparser.cpp \
     ../src/watchfile.cpp \
-    ../src/guimodel.cpp
+    ../src/guimodel.cpp \
+    ../src/basicgraphview.cpp \
+    ../src/extendedgraphview.cpp
 
 FORMS    += \
     ../src/mainwindow.ui \
@@ -44,7 +45,6 @@ HEADERS += \
     ../src/mainwindow.h \
     ../libraries/qcustomplot/qcustomplot.h \
     ../src/datafileparser.h \
-    ../src/graphviewer.h \
     ../src/util.h \
     ../src/axisscaledialog.h \
     ../src/dataparsersettings.h \
@@ -52,4 +52,6 @@ HEADERS += \
     ../src/presetparser.h \
     ../src/graphdata.h \
     ../src/watchfile.h \
-    ../src/guimodel.h
+    ../src/guimodel.h \
+    ../src/basicgraphview.h \
+    ../src/extendedgraphview.h

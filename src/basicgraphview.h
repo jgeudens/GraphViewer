@@ -1,21 +1,17 @@
-#ifndef GraphViewer_H
-#define GraphViewer_H
+#ifndef BASICGRAPHVIEW_H
+#define BASICGRAPHVIEW_H
 
 #include <QObject>
-#include <QVector>
-#include <QMouseEvent>
-
-#include <guimodel.h>
-
+#include "guimodel.h"
 #include "qcustomplot.h"
 
-class GraphViewer : public QObject
+
+class BasicGraphView : public QObject
 {
     Q_OBJECT
 public:
-    explicit GraphViewer(GuiModel *pGuiModel, QCustomPlot * pPlot, QObject *parent);
+    explicit BasicGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent = 0);
 
-    void updateData(QList<QList<double> > * pDataLists);
     void exportGraphImage(QString imageFile);
     void manualScaleXAxis(qint64 min, qint64 max);
     void manualScaleYAxis(qint64 min, qint64 max);
@@ -23,35 +19,38 @@ public:
 public slots:
     void autoScaleXAxis();
     void autoScaleYAxis();
+
     void enableValueTooltip();
     void enableSamplePoints();
-
+    void clearGraphs();
+    void addGraphs();
+    void showHideLegend();
     void showGraph(quint32 index);
     void bringToFront();
-    void clearGraphs();
-    void addGraphs(QList<QList<double> > data);
-    void showHideLegend();
+
+signals:
 
 private slots:
     void generateTickLabels();
     void selectionChanged();
+
     void mousePress();
     void mouseWheel();
     void legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
     void legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
-    void axisDoubleClicked(QCPAxis * axis);
+
     void paintValueToolTip(QMouseEvent *event);
     void handleSamplePoints();
+    void axisDoubleClicked(QCPAxis * axis);
+
+protected:
+    GuiModel * _pGuiModel;
+    QCustomPlot * _pPlot;
 
 private:
-
     QString createTickLabelString(qint32 tickKey);
     void highlightSamples(bool bState);
-    int getGraphIndex(QCPGraph * pGraph);
-
-    GuiModel * _pGuiModel;
-
-    QCustomPlot * _pPlot;
+    qint32 getGraphIndex(QCPGraph * pGraph);
 
     bool _bEnableTooltip;
     bool _bEnableSampleHighlight;
@@ -61,6 +60,7 @@ private:
     static const qint32 _cPixelNearThreshold = 20; /* in pixels */
     static const qint32 _cPixelPerPointThreshold = 5; /* in pixels */
 
+
 };
 
-#endif // GraphViewer_H
+#endif // BASICGRAPHVIEW_H

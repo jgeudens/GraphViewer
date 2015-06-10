@@ -9,7 +9,7 @@
 #include "watchfile.h"
 #include "datafileparser.h"
 #include "dataparsersettings.h"
-#include "graphviewer.h"
+#include "extendedgraphview.h"
 #include "loadfiledialog.h"
 
 namespace Ui {
@@ -59,7 +59,7 @@ private:
 
     GuiModel * _pGuiModel;
 
-    GraphViewer * _pGraphViewer;
+    ExtendedGraphView * _pGraphView;
     DataFileParser * _pParser;
     WatchFile * _pWatchFile;
     QMenu * _pGraphShowHide;

@@ -8,13 +8,13 @@
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow),
-    _pGraphViewer(NULL),
+    _pGraphView(NULL),
     _pParser(NULL)
 {
     _pUi->setupUi(this);
     
     _pGuiModel = new GuiModel();
-    _pGraphViewer = new GraphViewer(_pGuiModel, _pUi->customPlot, this);
+    _pGraphView = new ExtendedGraphView(_pGuiModel, _pUi->customPlot, this);
     _pWatchFile = new WatchFile(_pGuiModel);
 
     /* Add slot for file watcher */
@@ -26,8 +26,8 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
     connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
-    connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleXAxis()));
-    connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphViewer, SLOT(autoScaleYAxis()));
+    connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleXAxis()));
+    connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleYAxis()));
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setHighlightSamples(bool)));
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
@@ -39,22 +39,22 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     /*-- connect model to view --*/
     connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
-    connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphViewer, SLOT(showGraph(const quint32)));
+    connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphView, SLOT(showGraph(const quint32)));
     connect(_pGuiModel, SIGNAL(frontGraphChanged()), this, SLOT(updateBringToFrontGrapMenu()));
-    connect(_pGuiModel, SIGNAL(frontGraphChanged()), _pGraphViewer, SLOT(bringToFront()));
+    connect(_pGuiModel, SIGNAL(frontGraphChanged()), _pGraphView, SLOT(bringToFront()));
     connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), this, SLOT(updateHighlightSampleMenu()));
-    connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), _pGraphViewer, SLOT(enableSamplePoints()));
+    connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), _pGraphView, SLOT(enableSamplePoints()));
     connect(_pGuiModel, SIGNAL(valueTooltipChanged()), this, SLOT(updateValueTooltipMenu()));
-    connect(_pGuiModel, SIGNAL(valueTooltipChanged()), _pGraphViewer, SLOT(enableValueTooltip()));
-    connect(_pGuiModel, SIGNAL(graphCleared()), _pGraphViewer, SLOT(clearGraphs()));
+    connect(_pGuiModel, SIGNAL(valueTooltipChanged()), _pGraphView, SLOT(enableValueTooltip()));
+    connect(_pGuiModel, SIGNAL(graphCleared()), _pGraphView, SLOT(clearGraphs()));
     connect(_pGuiModel, SIGNAL(graphCleared()), this, SLOT(clearGraphMenu()));
-    connect(_pGuiModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphViewer, SLOT(addGraphs(QList<QList<double> >)));
+    connect(_pGuiModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphView, SLOT(addGraphs(QList<QList<double> >)));
     connect(_pGuiModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
     connect(_pGuiModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
     connect(_pGuiModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pGuiModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
-    connect(_pGuiModel, SIGNAL(legendVisibilityChanged()), _pGraphViewer, SLOT(showHideLegend()));
+    connect(_pGuiModel, SIGNAL(legendVisibilityChanged()), _pGraphView, SLOT(showHideLegend()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
@@ -102,7 +102,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete _pWatchFile;
-    delete _pGraphViewer;
+    delete _pGraphView;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
     delete _pParser;
@@ -169,7 +169,7 @@ void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
 {
     if (_pDataFileParser->processDataFile())
     {
-        _pGraphViewer->updateData(&_pDataFileParser->getDataRows());
+        _pGraphView->updateData(&_pDataFileParser->getDataRows());
     }
     else
     {
@@ -211,7 +211,7 @@ void MainWindow::prepareImageExport()
     if (fileDialog.exec())
     {
         filePath = fileDialog.selectedFiles().first();
-        _pGraphViewer->exportGraphImage(filePath);
+        _pGraphView->exportGraphImage(filePath);
     }
 }
 
@@ -255,7 +255,7 @@ void MainWindow::showXAxisScaleDialog()
     {
         if (scaleDialog.result() == QDialog::Accepted)
         {
-            _pGraphViewer->manualScaleXAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+            _pGraphView->manualScaleXAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
         }
     }
 }
@@ -268,7 +268,7 @@ void MainWindow::showYAxisScaleDialog()
     {
         if (scaleDialog.result() == QDialog::Accepted)
         {
-            _pGraphViewer->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
+            _pGraphView->manualScaleYAxis(scaleDialog.getMinimum(), scaleDialog.getMaximum());
         }
     }
 }

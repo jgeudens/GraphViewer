@@ -1,4 +1,3 @@
-
 #include <QMessageBox>
 #include <QVector>
 #include <QtGlobal>
@@ -6,12 +5,11 @@
 
 #include <algorithm> // std::upperbound, std::lowerbound
 
-#include "graphviewer.h"
+#include "basicgraphview.h"
 
-GraphViewer::GraphViewer(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent) :
-   QObject(parent)
+BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent) :
+    QObject(parent)
 {
-
     _pGuiModel = pGuiModel;
 
    _pPlot = pPlot;
@@ -71,7 +69,220 @@ GraphViewer::GraphViewer(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *par
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
-void GraphViewer::paintValueToolTip(QMouseEvent *event)
+void BasicGraphView::exportGraphImage(QString imageFile)
+{
+    if (!_pPlot->savePng(imageFile))
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(tr("Export image"));
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText(tr("Save to png file (%1) failed").arg(imageFile));
+        msgBox.exec();
+    }
+}
+
+void BasicGraphView::manualScaleXAxis(qint64 min, qint64 max)
+{
+    _pPlot->xAxis->setRange(min, max);
+    _pPlot->replot();
+}
+
+void BasicGraphView::manualScaleYAxis(qint64 min, qint64 max)
+{
+    _pPlot->yAxis->setRange(min, max);
+    _pPlot->replot();
+}
+
+void BasicGraphView::autoScaleXAxis()
+{
+    _pPlot->rescaleAxes(true);
+    _pPlot->replot();
+}
+
+void BasicGraphView::autoScaleYAxis()
+{
+    _pPlot->yAxis->rescale(true);
+    _pPlot->replot();
+}
+
+void BasicGraphView::enableValueTooltip()
+{
+    _bEnableTooltip = _pGuiModel->valueTooltip();
+}
+
+void BasicGraphView::enableSamplePoints()
+{
+    _bEnableSampleHighlight = _pGuiModel->highlightSamples();
+    _pPlot->replot();
+}
+
+void BasicGraphView::clearGraphs()
+{
+    _pPlot->clearGraphs();
+}
+
+void BasicGraphView::addGraphs()
+{
+    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
+    {
+        QCPGraph * pGraph = _pPlot->addGraph();
+
+        pGraph->setName(_pGuiModel->graphLabel(idx));
+
+        QPen pen;
+        pen.setColor(_pGuiModel->graphColor(idx));
+        pen.setWidth(2);
+        pen.setCosmetic(true);
+
+        pGraph->setPen(pen);
+    }
+
+    _pPlot->legend->setVisible(true);
+}
+
+void BasicGraphView::showHideLegend()
+{
+    _pPlot->legend->setVisible(_pGuiModel->legendVisibility());
+    _pPlot->replot();
+}
+
+void BasicGraphView::showGraph(quint32 index)
+{
+    const bool bShow = _pGuiModel->graphVisibility(index);
+    _pPlot->graph(index)->setVisible(bShow);
+
+    QFont itemFont = _pPlot->legend->item(index)->font();
+    itemFont.setStrikeOut(!bShow);
+
+    _pPlot->legend->item(index)->setFont(itemFont);
+
+    _pPlot->replot();
+}
+
+void BasicGraphView::bringToFront()
+{
+    if (_pPlot->graphCount() > 0)
+    {
+        _pPlot->graph(_pGuiModel->frontGraph())->setLayer("topMain");
+        _pPlot->replot();
+    }
+}
+
+void BasicGraphView::generateTickLabels()
+{
+    QVector<double> ticks = _pPlot->xAxis->tickVector();
+
+    /* Clear ticks vector */
+    tickLabels.clear();
+
+    /* Generate correct labels */
+    for (qint32 index = 0; index < ticks.size(); index++)
+    {
+        tickLabels.append(createTickLabelString(ticks[index]));
+    }
+
+    /* Set labels */
+    _pPlot->xAxis->setTickVectorLabels(tickLabels);
+}
+
+void BasicGraphView::selectionChanged()
+{
+   /*
+   normally, axis base line, axis tick labels and axis labels are selectable separately, but we want
+   the user only to be able to select the axis as a whole, so we tie the selected states of the tick labels
+   and the axis base line together. However, the axis label shall be selectable individually.
+   */
+
+   // handle axis and tick labels as one selectable object:
+   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || _pPlot->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) || _pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxisLabel))
+   {
+       _pPlot->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spAxisLabel|QCPAxis::spTickLabels);
+   }
+   // handle axis and tick labels as one selectable object:
+   if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || _pPlot->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) || _pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxisLabel))
+   {
+       _pPlot->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spAxisLabel|QCPAxis::spTickLabels);
+   }
+
+}
+
+void BasicGraphView::mousePress()
+{
+   // if an axis is selected, only allow the direction of that axis to be dragged
+   // if no axis is selected, both directions may be dragged
+
+   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+   {
+       _pPlot->axisRect()->setRangeDrag(_pPlot->xAxis->orientation());
+   }
+   else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+   {
+       _pPlot->axisRect()->setRangeDrag(_pPlot->yAxis->orientation());
+   }
+   else
+   {
+       _pPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+   }
+}
+
+void BasicGraphView::mouseWheel()
+{
+   // if an axis is selected, only allow the direction of that axis to be zoomed
+   // if no axis is selected, both directions may be zoomed
+
+   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+   {
+       _pPlot->axisRect()->setRangeZoom(_pPlot->xAxis->orientation());
+   }
+   else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+   {
+       _pPlot->axisRect()->setRangeZoom(_pPlot->yAxis->orientation());
+   }
+   else
+   {
+       _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+   }
+}
+
+void BasicGraphView::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
+{
+    Q_UNUSED(event);
+
+    if ((NULL != legend) && (NULL != abstractLegendItem))
+    {
+        // Check for selection
+        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
+        if (legendItem != 0)
+        {
+            const qint32 graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            if (graphIndex >= 0)
+            {
+                _pGuiModel->setFrontGraph(graphIndex);
+            }
+        }
+    }
+}
+
+void BasicGraphView::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
+{
+    Q_UNUSED(event);
+
+    if ((NULL != legend) && (NULL != abstractLegendItem))
+    {
+        // Check for selection
+        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
+        if (legendItem != 0)
+        {
+            const qint32 graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            if (graphIndex >= 0)
+            {
+                _pGuiModel->setGraphVisibility(graphIndex, !_pGuiModel->graphVisibility(graphIndex));
+            }
+        }
+    }
+}
+
+void BasicGraphView::paintValueToolTip(QMouseEvent *event)
 {
     if  (_bEnableTooltip)
     {
@@ -159,8 +370,7 @@ void GraphViewer::paintValueToolTip(QMouseEvent *event)
     }
 }
 
-
-void GraphViewer::handleSamplePoints()
+void BasicGraphView::handleSamplePoints()
 {
     bool bHighlight = false;
 
@@ -211,25 +421,23 @@ void GraphViewer::handleSamplePoints()
 
 }
 
-
-int GraphViewer::getGraphIndex(QCPGraph * pGraph)
+void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
 {
-    int ret = -1;
-
-    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+    if (axis == _pPlot->xAxis)
     {
-        if (pGraph == _pPlot->graph(graphIndex))
-        {
-            ret = graphIndex;
-            break;
-        }
+        autoScaleXAxis();
     }
-
-    return ret;
+    else if (axis == _pPlot->yAxis)
+    {
+        autoScaleYAxis();
+    }
+    else
+    {
+        // do nothing
+    }
 }
 
-
-QString GraphViewer::createTickLabelString(qint32 tickKey)
+QString BasicGraphView::createTickLabelString(qint32 tickKey)
 {
     QString tickLabel;
     bool bNegative;
@@ -270,7 +478,7 @@ QString GraphViewer::createTickLabelString(qint32 tickKey)
     return tickLabel;
 }
 
-void GraphViewer::highlightSamples(bool bState)
+void BasicGraphView::highlightSamples(bool bState)
 {
     for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
     {
@@ -285,268 +493,18 @@ void GraphViewer::highlightSamples(bool bState)
     }
 }
 
-void GraphViewer::clearGraphs()
+qint32 BasicGraphView::getGraphIndex(QCPGraph * pGraph)
 {
-    _pPlot->clearGraphs();
-}
+    qint32 ret = -1;
 
-void GraphViewer::addGraphs(QList<QList<double> > data)
-{
-    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
+    for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
     {
-        QCPGraph * pGraph = _pPlot->addGraph();
-
-        pGraph->setName(_pGuiModel->graphLabel(idx));
-
-        QPen pen;
-        pen.setColor(_pGuiModel->graphColor(idx));
-        pen.setWidth(2);
-        pen.setCosmetic(true);
-
-        pGraph->setPen(pen);
-    }
-
-    _pPlot->legend->setVisible(true);
-
-    updateData(&data);
-}
-
-void GraphViewer::showHideLegend()
-{
-    _pPlot->legend->setVisible(_pGuiModel->legendVisibility());
-    _pPlot->replot();
-}
-
-void GraphViewer::updateData(QList<QList<double> > * pDataLists)
-{
-    bool bFullScale = false;
-    const QVector<double> timeData = pDataLists->at(0).toVector();
-
-    if (_pPlot->graph(0)->data()->keys().size() > 0)
-    {
-        if (
-        (_pPlot->xAxis->range().lower <= _pPlot->graph(0)->data()->keys().first())
-        && (_pPlot->xAxis->range().upper >= _pPlot->graph(0)->data()->keys().last())
-        )
+        if (pGraph == _pPlot->graph(graphIndex))
         {
-            bFullScale = true;
+            ret = graphIndex;
+            break;
         }
     }
-    else
-    {
-        /* First load of file: always rescale */
-        bFullScale = true;
-    }
 
-    for (qint32 i = 1; i < pDataLists->size(); i++)
-    {
-        //Add data to graphs
-        QVector<double> graphData = pDataLists->at(i).toVector();
-        _pPlot->graph(i - 1)->setData(timeData, graphData);
-    }
-
-    if (bFullScale)
-    {
-        _pPlot->rescaleAxes(true);
-    }
-    _pPlot->replot();
-}
-
-void GraphViewer::exportGraphImage(QString imageFile)
-{
-    if (!_pPlot->savePng(imageFile))
-    {
-        QMessageBox msgBox;
-        msgBox.setWindowTitle(tr("GraphViewer"));
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText(tr("Save to png file (%1) failed").arg(imageFile));
-        msgBox.exec();
-    }
-}
-
-void GraphViewer::manualScaleXAxis(qint64 min, qint64 max)
-{
-    _pPlot->xAxis->setRange(min, max);
-    _pPlot->replot();
-}
-
-void GraphViewer::manualScaleYAxis(qint64 min, qint64 max)
-{
-    _pPlot->yAxis->setRange(min, max);
-    _pPlot->replot();
-}
-
-void GraphViewer::showGraph(quint32 index)
-{
-    const bool bShow = _pGuiModel->graphVisibility(index);
-    _pPlot->graph(index)->setVisible(bShow);
-
-    QFont itemFont = _pPlot->legend->item(index)->font();
-    itemFont.setStrikeOut(!bShow);
-
-    _pPlot->legend->item(index)->setFont(itemFont);
-
-    _pPlot->replot();
-}
-
-void GraphViewer::bringToFront()
-{
-    if (_pPlot->graphCount() > 0)
-    {
-        _pPlot->graph(_pGuiModel->frontGraph())->setLayer("topMain");
-        _pPlot->replot();
-    }
-}
-
-void GraphViewer::autoScaleXAxis()
-{
-    _pPlot->rescaleAxes(true);
-    _pPlot->replot();
-}
-
-void GraphViewer::autoScaleYAxis()
-{
-    _pPlot->yAxis->rescale(true);
-    _pPlot->replot();
-}
-
-void GraphViewer::enableValueTooltip()
-{
-    _bEnableTooltip = _pGuiModel->valueTooltip();
-}
-
-void GraphViewer::enableSamplePoints()
-{
-    _bEnableSampleHighlight = _pGuiModel->highlightSamples();
-    _pPlot->replot();
-}
-
-void GraphViewer::generateTickLabels()
-{
-    QVector<double> ticks = _pPlot->xAxis->tickVector();
-
-    /* Clear ticks vector */
-    tickLabels.clear();
-
-    /* Generate correct labels */
-    for (qint32 index = 0; index < ticks.size(); index++)
-    {       
-        tickLabels.append(createTickLabelString(ticks[index]));
-    }
-
-    /* Set labels */
-    _pPlot->xAxis->setTickVectorLabels(tickLabels);
-}
-
-void GraphViewer::selectionChanged()
-{
-   /*
-   normally, axis base line, axis tick labels and axis labels are selectable separately, but we want
-   the user only to be able to select the axis as a whole, so we tie the selected states of the tick labels
-   and the axis base line together. However, the axis label shall be selectable individually.
-   */
-
-   // handle axis and tick labels as one selectable object:
-   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || _pPlot->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) || _pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxisLabel))
-   {
-       _pPlot->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spAxisLabel|QCPAxis::spTickLabels);
-   }
-   // handle axis and tick labels as one selectable object:
-   if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || _pPlot->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) || _pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxisLabel))
-   {
-       _pPlot->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spAxisLabel|QCPAxis::spTickLabels);
-   }
-
-}
-
-void GraphViewer::mousePress()
-{
-   // if an axis is selected, only allow the direction of that axis to be dragged
-   // if no axis is selected, both directions may be dragged
-
-   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeDrag(_pPlot->xAxis->orientation());
-   }
-   else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeDrag(_pPlot->yAxis->orientation());
-   }
-   else
-   {
-       _pPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
-   }
-}
-
-void GraphViewer::mouseWheel()
-{
-   // if an axis is selected, only allow the direction of that axis to be zoomed
-   // if no axis is selected, both directions may be zoomed
-
-   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeZoom(_pPlot->xAxis->orientation());
-   }
-   else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeZoom(_pPlot->yAxis->orientation());
-   }
-   else
-   {
-       _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-   }
-}
-
-void GraphViewer::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
-{
-    Q_UNUSED(event);
-
-    if ((NULL != legend) && (NULL != abstractLegendItem))
-    {
-        // Check for selection
-        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
-        if (legendItem != 0)
-        {
-            const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
-            if (graphIndex >= 0)
-            {
-                _pGuiModel->setFrontGraph(graphIndex);
-            }
-        }
-    }
-}
-
-void GraphViewer::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
-{
-    Q_UNUSED(event);
-
-    if ((NULL != legend) && (NULL != abstractLegendItem))
-    {
-        // Check for selection
-        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
-        if (legendItem != 0)
-        {
-            const int graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
-            if (graphIndex >= 0)
-            {
-                _pGuiModel->setGraphVisibility(graphIndex, !_pGuiModel->graphVisibility(graphIndex));
-            }
-        }
-    }
-}
-
-void GraphViewer::axisDoubleClicked(QCPAxis * axis)
-{
-    if (axis == _pPlot->xAxis)
-    {
-        autoScaleXAxis();
-    }
-    else if (axis == _pPlot->yAxis)
-    {
-        autoScaleYAxis();
-    }
-    else
-    {
-        // do nothing
-    }
+    return ret;
 }
