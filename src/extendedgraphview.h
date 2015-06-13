@@ -10,7 +10,7 @@ class ExtendedGraphView : public BasicGraphView
 
 public:
     ExtendedGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent);
-    ~ExtendedGraphView();
+    virtual ~ExtendedGraphView();
 
     void updateData(QList<QList<double> > * pDataLists);
 

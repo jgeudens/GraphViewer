@@ -69,6 +69,11 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObjec
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
+BasicGraphView::~BasicGraphView()
+{
+
+}
+
 void BasicGraphView::exportGraphImage(QString imageFile)
 {
     if (!_pPlot->savePng(imageFile))

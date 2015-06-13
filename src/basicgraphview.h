@@ -11,6 +11,7 @@ class BasicGraphView : public QObject
     Q_OBJECT
 public:
     explicit BasicGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent = 0);
+    virtual ~BasicGraphView();
 
     void exportGraphImage(QString imageFile);
     void manualScaleXAxis(qint64 min, qint64 max);
