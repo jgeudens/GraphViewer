@@ -45,7 +45,7 @@ private slots:
     void clearGraphMenu();
     void addGraphMenu();
 
-    void actionBringToFrontGraph();
+    void actionBringToFrontGraph(bool bState);
     void actionShowHideGraph(bool bState);
     void updateWindowTitle();
     void enableGlobalMenu();

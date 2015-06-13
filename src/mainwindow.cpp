@@ -361,7 +361,7 @@ void MainWindow::addGraphMenu()
         pBringToFront->setActionGroup(_pBringToFrontGroup);
 
         QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(actionShowHideGraph(bool)));
-        QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph()));
+        QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph(bool)));
     }
 
     _pGraphShowHide->setEnabled(true);
@@ -383,10 +383,14 @@ void MainWindow::updateBringToFrontGrapMenu()
     }
 }
 
-void MainWindow::actionBringToFrontGraph()
+void MainWindow::actionBringToFrontGraph(bool bState)
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
-    _pGuiModel->setFrontGraph(pAction->data().toInt());
+
+    if (bState)
+    {
+        _pGuiModel->setFrontGraph(pAction->data().toInt());
+    }
 }
 
 void MainWindow::enableWatchFile()
