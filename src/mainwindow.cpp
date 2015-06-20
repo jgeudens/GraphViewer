@@ -22,20 +22,19 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     /*-- Connect menu actions --*/
     connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
-    connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(actionReloadDataFile()));
+    connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
     connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
     connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
     connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
+    connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
+    connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleYAxis()));
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setHighlightSamples(bool)));
-    connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
-    connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setWatchFile(bool)));
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setDynamicSession(bool)));
     connect(_pUi->actionShowHideLegend, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setLegendVisibility(bool)));
-
 
     /*-- connect model to view --*/
     connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
@@ -70,42 +69,18 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     /* Update interface via model */
     _pGuiModel->triggerUpdate();
 
-    /*-- proces command line arguments --*/
-    QCommandLineParser argumentParser;
-
-    argumentParser.setApplicationDescription("GraphViewer");
-    argumentParser.addHelpOption();
-
-    // datafile option
-    argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
-
-    // skipDialog option
-    QCommandLineOption skipOption(QStringList() << "s" << "skip-dialog", QCoreApplication::translate("main", "Skip parse settings dialog if possible (option is ignored when datafile is not specified)"));
-    argumentParser.addOption(skipOption);
-
-    // Process arguments
-    argumentParser.process(cmdArguments);
-
-    if (!argumentParser.positionalArguments().isEmpty())
-    {
-        QString filename = argumentParser.positionalArguments().first();
-
-        bool bSkipDialog = argumentParser.isSet(skipOption);
-
-        if (_loadDataFileDialog.exec(filename, bSkipDialog) == QDialog::Accepted)
-        {
-            parseData();
-        }
-    }
+    handleCommandLineArguments(cmdArguments);
 }
 
 MainWindow::~MainWindow()
 {
+    delete _pBringToFrontGroup;
     delete _pWatchFile;
     delete _pGraphView;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
     delete _pParser;
+    delete _pGuiModel;
     delete _pUi;
 }
 
@@ -117,78 +92,15 @@ void MainWindow::loadDataFile()
     }
 }
 
-void MainWindow::parseData()
+void MainWindow::reloadDataFile()
 {
-    DataFileParser * pNewParser = new DataFileParser();
-
-    //Get settings from dialog
-    _loadDataFileDialog.getParserSettings(pNewParser->getDataParseSettings());
-
-    if (resetGraph(pNewParser))
-    {
-        // Data file parse succeeded
-
-        // delete previous parser is necessairy
-        if (_pParser)
-        {
-            delete _pParser;
-        }
-
-        // Set pointer to new parser object
-        _pParser = pNewParser;
-
-        _pGuiModel->setWatchFile(true);
-        // Dynamic session is set in loadFileDialog
-    }
-    else // New file load failed
-    {
-        // Delete new parser, because invalid
-        delete pNewParser;
-    }
-}
-
-bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
-{
-    bool bSucceeded = false;
-    if (_pDataFileParser->forceProcessDataFile())
-    {
-        _pGuiModel->clearGraph();
-        _pGuiModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
-        _pGuiModel->setFrontGraph(0);
-        _pGuiModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
-        _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
-        _pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
-
-        bSucceeded = true;
-    }
-
-    return bSucceeded;
-}
-
-void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
-{
-    if (_pDataFileParser->processDataFile())
-    {
-        _pGraphView->updateData(&_pDataFileParser->getDataRows());
-    }
-    else
-    {
-        _pGuiModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
-
-        // disable watch
-        _pGuiModel->setWatchFile(false);
-    }
+    // Reload data with current parser data
+    resetGraph(_pParser);
 }
 
 void MainWindow::exitApplication()
 {
     QApplication::quit();
-}
-
-void MainWindow::actionReloadDataFile()
-{
-    // Reload data with current parser data
-    resetGraph(_pParser);
 }
 
 void MainWindow::prepareImageExport()
@@ -273,33 +185,22 @@ void MainWindow::showYAxisScaleDialog()
     }
 }
 
+void MainWindow::menuBringToFrontGraphClicked(bool bState)
+{
+    QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
-void MainWindow::actionShowHideGraph(bool bState)
+    if (bState)
+    {
+        _pGuiModel->setFrontGraph(pAction->data().toInt());
+    }
+}
+
+void MainWindow::menuShowHideGraphClicked(bool bState)
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
     _pGuiModel->setGraphVisibility(pAction->data().toInt(), bState);
 
-}
-
-void MainWindow::updateWindowTitle()
-{
-    setWindowTitle(_pGuiModel->windowTitle());
-}
-
-void MainWindow::enableGlobalMenu()
-{
-    _pUi->actionReloadDataFile->setEnabled(true);
-    _pUi->actionExportImage->setEnabled(true);
-    _pUi->actionAutoScaleXAxis->setEnabled(true);
-    _pUi->actionAutoScaleYAxis->setEnabled(true);
-    _pUi->actionSetManualScaleXAxis->setEnabled(true);
-    _pUi->actionSetManualScaleYAxis->setEnabled(true);
-    _pUi->actionShowValueTooltip->setEnabled(true);
-    _pUi->actionHighlightSamplePoints->setEnabled(true);
-    _pUi->menuScale->setEnabled(true);
-    _pUi->actionWatchFile->setEnabled(true);
-    _pUi->actionShowHideLegend->setEnabled(true);
 }
 
 void MainWindow::showHideGraph(const quint32 index)
@@ -310,7 +211,7 @@ void MainWindow::showHideGraph(const quint32 index)
     _pGraphBringToFront->actions().at(index)->setVisible(_pGuiModel->graphVisibility((index)));
 
     // Enable/Disable global BringToFront menu
-    bool bVisible = false;    _pGraphBringToFront->setEnabled(true);
+    bool bVisible = false;
     foreach(QAction * pAction, _pGraphBringToFront->actions())
     {
         if (pAction->isVisible())
@@ -320,6 +221,20 @@ void MainWindow::showHideGraph(const quint32 index)
         }
     }
     _pGraphBringToFront->setEnabled(bVisible);
+}
+
+void MainWindow::updateBringToFrontGrapMenu()
+{
+    if (_pBringToFrontGroup->actions().size() > 0)
+    {
+        _pBringToFrontGroup->actions().at(_pGuiModel->frontGraph())->setChecked(true);
+    }
+}
+
+void MainWindow::updateHighlightSampleMenu()
+{
+    /* set menu to checked */
+    _pUi->actionHighlightSamplePoints->setChecked(_pGuiModel->highlightSamples());
 }
 
 void MainWindow::updateValueTooltipMenu()
@@ -360,37 +275,32 @@ void MainWindow::addGraphMenu()
         pBringToFront->setCheckable(true);
         pBringToFront->setActionGroup(_pBringToFrontGroup);
 
-        QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(actionShowHideGraph(bool)));
-        QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(actionBringToFrontGraph(bool)));
+        QObject::connect(pShowHideAction, SIGNAL(toggled(bool)), this, SLOT(menuShowHideGraphClicked(bool)));
+        QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(menuBringToFrontGraphClicked(bool)));
     }
 
     _pGraphShowHide->setEnabled(true);
     _pGraphBringToFront->setEnabled(true);
-
 }
 
-void MainWindow::updateHighlightSampleMenu()
+void MainWindow::updateWindowTitle()
 {
-    /* set menu to checked */
-    _pUi->actionHighlightSamplePoints->setChecked(_pGuiModel->highlightSamples());
+    setWindowTitle(_pGuiModel->windowTitle());
 }
 
-void MainWindow::updateBringToFrontGrapMenu()
+void MainWindow::enableGlobalMenu()
 {
-    if (_pBringToFrontGroup->actions().size() > 0)
-    {
-        _pBringToFrontGroup->actions().at(_pGuiModel->frontGraph())->setChecked(true);
-    }
-}
-
-void MainWindow::actionBringToFrontGraph(bool bState)
-{
-    QAction * pAction = qobject_cast<QAction *>(QObject::sender());
-
-    if (bState)
-    {
-        _pGuiModel->setFrontGraph(pAction->data().toInt());
-    }
+    _pUi->actionReloadDataFile->setEnabled(true);
+    _pUi->actionExportImage->setEnabled(true);
+    _pUi->actionAutoScaleXAxis->setEnabled(true);
+    _pUi->actionAutoScaleYAxis->setEnabled(true);
+    _pUi->actionSetManualScaleXAxis->setEnabled(true);
+    _pUi->actionSetManualScaleYAxis->setEnabled(true);
+    _pUi->actionShowValueTooltip->setEnabled(true);
+    _pUi->actionHighlightSamplePoints->setEnabled(true);
+    _pUi->menuScale->setEnabled(true);
+    _pUi->actionWatchFile->setEnabled(true);
+    _pUi->actionShowHideLegend->setEnabled(true);
 }
 
 void MainWindow::enableWatchFile()
@@ -414,6 +324,16 @@ void MainWindow::enableDynamicSession()
     _pUi->actionDynamicSession->setChecked(_pGuiModel->dynamicSession());
 }
 
+void MainWindow::showContextMenu(const QPoint& pos)
+{
+    _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+}
+
+void MainWindow::handleFileChange()
+{
+    updateGraph(_pParser);
+}
+
 void MainWindow::dragEnterEvent(QDragEnterEvent *e)
 {
     if (e->mimeData()->hasUrls())
@@ -434,12 +354,96 @@ void MainWindow::dropEvent(QDropEvent *e)
     }
 }
 
-void MainWindow::showContextMenu(const QPoint& pos)
+void MainWindow::parseData()
 {
-    _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+    DataFileParser * pNewParser = new DataFileParser();
+
+    //Get settings from dialog
+    _loadDataFileDialog.getParserSettings(pNewParser->getDataParseSettings());
+
+    if (resetGraph(pNewParser))
+    {
+        // Data file parse succeeded
+
+        // delete previous parser is necessairy
+        if (_pParser)
+        {
+            delete _pParser;
+        }
+
+        // Set pointer to new parser object
+        _pParser = pNewParser;
+
+        _pGuiModel->setWatchFile(true);
+        // Dynamic session is set in loadFileDialog
+    }
+    else // New file load failed
+    {
+        // Delete new parser, because invalid
+        delete pNewParser;
+    }
 }
 
-void MainWindow::handleFileChange()
+bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
 {
-    updateGraph(_pParser);
+    bool bSucceeded = false;
+    if (_pDataFileParser->forceProcessDataFile())
+    {
+        _pGuiModel->clearGraph();
+        _pGuiModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
+        _pGuiModel->setFrontGraph(0);
+        _pGuiModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
+        _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
+        _pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
+
+        bSucceeded = true;
+    }
+
+    return bSucceeded;
+}
+
+void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
+{
+    if (_pDataFileParser->processDataFile())
+    {
+        _pGraphView->updateData(&_pDataFileParser->getDataRows());
+    }
+    else
+    {
+        _pGuiModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+
+        // disable watch
+        _pGuiModel->setWatchFile(false);
+    }
+}
+
+void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
+{
+    /*-- proces command line arguments --*/
+    QCommandLineParser argumentParser;
+
+    argumentParser.setApplicationDescription("GraphViewer");
+    argumentParser.addHelpOption();
+
+    // datafile option
+    argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
+
+    // skipDialog option
+    QCommandLineOption skipOption(QStringList() << "s" << "skip-dialog", QCoreApplication::translate("main", "Skip parse settings dialog if possible (option is ignored when datafile is not specified)"));
+    argumentParser.addOption(skipOption);
+
+    // Process arguments
+    argumentParser.process(cmdArguments);
+
+    if (!argumentParser.positionalArguments().isEmpty())
+    {
+        QString filename = argumentParser.positionalArguments().first();
+
+        bool bSkipDialog = argumentParser.isSet(skipOption);
+
+        if (_loadDataFileDialog.exec(filename, bSkipDialog) == QDialog::Accepted)
+        {
+            parseData();
+        }
+    }
 }

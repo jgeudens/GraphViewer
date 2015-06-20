@@ -25,35 +25,41 @@ public:
     ~MainWindow();
 
 private slots:
+
+    /* Menu handlers */
     void loadDataFile();
-    void parseData();
+    void reloadDataFile();
     void exitApplication();
-    void actionReloadDataFile();
     void prepareImageExport();
     void showAbout();
     void showXAxisScaleDialog();
     void showYAxisScaleDialog();
+    void menuBringToFrontGraphClicked(bool bState);
+    void menuShowHideGraphClicked(bool bState);
+
+    /* Model change handlers */
     void showHideGraph(const quint32 index);
     void updateBringToFrontGrapMenu();
     void updateHighlightSampleMenu();
     void updateValueTooltipMenu();
-    void enableWatchFile();
-    void enableDynamicSession();
-    void dragEnterEvent(QDragEnterEvent *e);
-    void dropEvent(QDropEvent *e);
-    void showContextMenu(const QPoint& pos);
     void clearGraphMenu();
     void addGraphMenu();
-
-    void actionBringToFrontGraph(bool bState);
-    void actionShowHideGraph(bool bState);
     void updateWindowTitle();
     void enableGlobalMenu();
+    void enableWatchFile();
+    void enableDynamicSession();
+
+    /* Misc */
+    void showContextMenu(const QPoint& pos);
     void handleFileChange();
+    void dragEnterEvent(QDragEnterEvent *e);
+    void dropEvent(QDropEvent *e);
 
 private:
+    void parseData();
     bool resetGraph(DataFileParser *_pDataFileParser);
     void updateGraph(DataFileParser *_pDataFileParser);
+    void handleCommandLineArguments(QStringList cmdArguments);
 
     Ui::MainWindow * _pUi;
 
