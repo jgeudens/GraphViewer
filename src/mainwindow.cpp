@@ -109,23 +109,23 @@ void MainWindow::exitApplication()
 void MainWindow::prepareImageExport()
 {
     QString filePath;
-    QFileDialog fileDialog(this);
-    fileDialog.setFileMode(QFileDialog::AnyFile);
-    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
-    fileDialog.setOption(QFileDialog::HideNameFilterDetails, false);
-    fileDialog.setDefaultSuffix("png");
-    fileDialog.setWindowTitle(tr("Select png file"));
-    fileDialog.setNameFilter(tr("PNG files (*.png)"));
+    QFileDialog dialog(this);
+    dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setOption(QFileDialog::HideNameFilterDetails, false);
+    dialog.setDefaultSuffix("png");
+    dialog.setWindowTitle(tr("Select png file"));
+    dialog.setNameFilter(tr("PNG files (*.png)"));
 
     QStringList docPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     if (docPath.size() > 0)
     {
-        fileDialog.setDirectory(docPath[0]);
+        dialog.setDirectory(docPath[0]);
     }
 
-    if (fileDialog.exec())
+    if (dialog.exec())
     {
-        filePath = fileDialog.selectedFiles().first();
+        filePath = dialog.selectedFiles().first();
         _pGraphView->exportGraphImage(filePath);
     }
 }
