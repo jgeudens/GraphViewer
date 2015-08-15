@@ -7,11 +7,11 @@
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
-    _pUi(new Ui::MainWindow),
-    _pGraphView(NULL),
-    _pParser(NULL)
+    _pUi(new Ui::MainWindow)
 {
     _pUi->setupUi(this);
+
+    _pParser = NULL;
     
     _pGuiModel = new GuiModel();
     _pGraphView = new ExtendedGraphView(_pGuiModel, _pUi->customPlot, this);
@@ -79,7 +79,10 @@ MainWindow::~MainWindow()
     delete _pGraphView;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
-    delete _pParser;
+    if (_pParser)
+    {
+        delete _pParser;
+    }
     delete _pGuiModel;
     delete _pUi;
 }
