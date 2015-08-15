@@ -5,6 +5,7 @@
 
 #include <algorithm> // std::upperbound, std::lowerbound
 
+#include "guimodel.h"
 #include "basicgraphview.h"
 
 BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent) :
@@ -65,7 +66,7 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObjec
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
    connect(_pPlot, SIGNAL(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
    connect(_pPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
-   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(paintValueToolTip(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(paintValueToolTip(QMouseEvent*)));
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
 }
 
@@ -124,6 +125,7 @@ void BasicGraphView::enableSamplePoints()
 void BasicGraphView::clearGraphs()
 {
     _pPlot->clearGraphs();
+    _pPlot->replot();
 }
 
 void BasicGraphView::addGraphs()
@@ -142,7 +144,7 @@ void BasicGraphView::addGraphs()
         pGraph->setPen(pen);
     }
 
-    _pPlot->legend->setVisible(true);
+    _pPlot->replot();
 }
 
 void BasicGraphView::showHideLegend()
@@ -171,6 +173,23 @@ void BasicGraphView::bringToFront()
         _pPlot->graph(_pGuiModel->frontGraph())->setLayer("topMain");
         _pPlot->replot();
     }
+}
+
+void BasicGraphView::updateLegendPosition()
+{
+    if (_pGuiModel->legendPosition() == LEGEND_LEFT)
+    {
+         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft|Qt::AlignTop);
+    }
+    else if (_pGuiModel->legendPosition() == LEGEND_MIDDLE)
+    {
+         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignCenter|Qt::AlignTop);
+    }
+    else if (_pGuiModel->legendPosition() == LEGEND_RIGHT)
+    {
+         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignRight|Qt::AlignTop);
+    }
+    _pPlot->replot();
 }
 
 void BasicGraphView::generateTickLabels()
@@ -238,14 +257,18 @@ void BasicGraphView::mouseWheel()
    if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
    {
        _pPlot->axisRect()->setRangeZoom(_pPlot->xAxis->orientation());
+       _pGuiModel->setxAxisScale(SCALE_MANUAL); // change to manual scaling
    }
    else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
    {
        _pPlot->axisRect()->setRangeZoom(_pPlot->yAxis->orientation());
+       _pGuiModel->setyAxisScale(SCALE_MANUAL); // change to manual scaling
    }
    else
    {
        _pPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+       _pGuiModel->setyAxisScale(SCALE_MANUAL); // change to manual scaling
+       _pGuiModel->setxAxisScale(SCALE_MANUAL);
    }
 }
 
@@ -259,7 +282,7 @@ void BasicGraphView::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abs
         QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
         if (legendItem != 0)
         {
-            const qint32 graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            const qint32 graphIndex = this->graphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
             if (graphIndex >= 0)
             {
                 _pGuiModel->setFrontGraph(graphIndex);
@@ -278,7 +301,7 @@ void BasicGraphView::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem 
         QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
         if (legendItem != 0)
         {
-            const qint32 graphIndex = getGraphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
+            const qint32 graphIndex = this->graphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
             if (graphIndex >= 0)
             {
                 _pGuiModel->setGraphVisibility(graphIndex, !_pGuiModel->graphVisibility(graphIndex));
@@ -347,7 +370,7 @@ void BasicGraphView::paintValueToolTip(QMouseEvent *event)
                             if (_pPlot->graph(graphIndex)->visible())
                             {
                                 const double value = _pPlot->graph(graphIndex)->data()->values()[keyIndex].value;
-                                toolText += QString("\n%1: %2").arg(_pPlot->graph(graphIndex)->name()).arg(value);
+                                toolText += QString("\n%1: %2").arg(_pGuiModel->graphLabel(graphIndex)).arg(value);
                             }
                         }
                         break;
@@ -430,11 +453,11 @@ void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
 {
     if (axis == _pPlot->xAxis)
     {
-        autoScaleXAxis();
+        _pGuiModel->setxAxisScale(SCALE_AUTO);
     }
     else if (axis == _pPlot->yAxis)
     {
-        autoScaleYAxis();
+        _pGuiModel->setyAxisScale(SCALE_AUTO);
     }
     else
     {
@@ -442,11 +465,11 @@ void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
     }
 }
 
-QString BasicGraphView::createTickLabelString(qint32 tickKey)
+QString BasicGraphView::createTickLabelString(qint64 tickKey)
 {
     QString tickLabel;
     bool bNegative;
-    quint32 tmp;
+    quint64 tmp;
 
     if (tickKey < 0)
     {
@@ -458,6 +481,8 @@ QString BasicGraphView::createTickLabelString(qint32 tickKey)
         bNegative = false;
         tmp = tickKey;
     }
+
+    tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
 
     quint32 hours = tmp / (60 * 60 * 1000);
     tmp = tmp % (60 * 60 * 1000);
@@ -498,7 +523,7 @@ void BasicGraphView::highlightSamples(bool bState)
     }
 }
 
-qint32 BasicGraphView::getGraphIndex(QCPGraph * pGraph)
+qint32 BasicGraphView::graphIndex(QCPGraph * pGraph)
 {
     qint32 ret = -1;
 

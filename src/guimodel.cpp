@@ -32,7 +32,8 @@ GuiModel::GuiModel(QObject *parent) : QObject(parent)
     _bDynamicSession = false;
     _bHighlightSamples = true;
     _bValueTooltip = false;
-    _bLegendVisibility = true;
+    _bLegendVisibility = false;
+    _legendPosition = BasicGraphView::LEGEND_MIDDLE;
 }
 
 GuiModel::~GuiModel()
@@ -56,6 +57,9 @@ void GuiModel::triggerUpdate(void)
     emit windowTitleChanged();
     emit watchFileChanged();
     emit dynamicSessionChanged();
+
+    emit legendVisibilityChanged();
+    emit legendPositionChanged();
 }
 
 void GuiModel::addGraphs(QStringList labels, QList<QList<double> > data)
@@ -249,5 +253,67 @@ void GuiModel::setLegendVisibility(bool bLegendVisibility)
     {
         _bLegendVisibility = bLegendVisibility;
          emit legendVisibilityChanged();
+    }
+}
+
+BasicGraphView::LegendsPositionOptions GuiModel::legendPosition()
+{
+    return _legendPosition;
+}
+
+void GuiModel::setLegendPosition(BasicGraphView::LegendsPositionOptions pos)
+{
+    if (_legendPosition != pos)
+    {
+        _legendPosition = pos;
+         emit legendPositionChanged();
+    }
+}
+
+BasicGraphView::AxisScaleOptions GuiModel::xAxisScalingMode()
+{
+    return _guiSettings.xScaleMode;
+}
+
+void GuiModel::setxAxisScale(BasicGraphView::AxisScaleOptions scaleMode)
+{
+    // We only allow manual or auto
+    if (
+            (scaleMode != BasicGraphView::SCALE_MANUAL)
+            && (scaleMode != BasicGraphView::SCALE_AUTO)
+        )
+    {
+        scaleMode = BasicGraphView::SCALE_AUTO;
+        qDebug() << "Unsupported x axis scaling selected";
+    }
+
+    if (_guiSettings.xScaleMode != scaleMode)
+    {
+        _guiSettings.xScaleMode = scaleMode;
+        emit xAxisScalingChanged();
+    }
+}
+
+BasicGraphView::AxisScaleOptions GuiModel::yAxisScalingMode()
+{
+    return _guiSettings.yScaleMode;
+}
+
+void GuiModel::setyAxisScale(BasicGraphView::AxisScaleOptions scaleMode)
+{
+    // We only allow manual or auto
+    if (
+            (scaleMode != BasicGraphView::SCALE_MANUAL)
+            && (scaleMode != BasicGraphView::SCALE_AUTO)
+        )
+    {
+        scaleMode = BasicGraphView::SCALE_AUTO;
+        qDebug() << "Unsupported y axis scaling selected";
+    }
+
+    if (_guiSettings.yScaleMode != scaleMode)
+    {
+        _guiSettings.yScaleMode = scaleMode;
+        emit yAxisScalingChanged();
     }
 }

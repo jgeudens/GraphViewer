@@ -97,6 +97,19 @@
       <string>Bring to front</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuLegend">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Legend</string>
+     </property>
+     <addaction name="actionShowHideLegend"/>
+     <addaction name="separator"/>
+     <addaction name="actionLegendLeft"/>
+     <addaction name="actionLegendMiddle"/>
+     <addaction name="actionLegendRight"/>
+    </widget>
     <addaction name="menuScale"/>
     <addaction name="separator"/>
     <addaction name="menuShowHide"/>
@@ -104,7 +117,7 @@
     <addaction name="separator"/>
     <addaction name="actionShowValueTooltip"/>
     <addaction name="actionHighlightSamplePoints"/>
-    <addaction name="actionShowHideLegend"/>
+    <addaction name="menuLegend"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuGraph"/>
@@ -236,6 +249,33 @@
    </property>
    <property name="text">
     <string>Show/Hide Legend</string>
+   </property>
+  </action>
+  <action name="actionLegendLeft">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Legend To Left</string>
+   </property>
+  </action>
+  <action name="actionLegendMiddle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Legend To Middle</string>
+   </property>
+  </action>
+  <action name="actionLegendRight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Legend To Right</string>
    </property>
   </action>
  </widget>

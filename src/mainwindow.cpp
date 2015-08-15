@@ -54,10 +54,25 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pGuiModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
     connect(_pGuiModel, SIGNAL(legendVisibilityChanged()), _pGraphView, SLOT(showHideLegend()));
+    connect(_pGuiModel, SIGNAL(legendPositionChanged()), this, SLOT(updateLegendPositionMenu()));
+    connect(_pGuiModel, SIGNAL(legendPositionChanged()), _pGraphView, SLOT(updateLegendPosition()));
+
+    connect(_pGuiModel, SIGNAL(xAxisScalingChanged()), _pGraphView, SLOT(rescalePlot()));
+    connect(_pGuiModel, SIGNAL(yAxisScalingChanged()), _pGraphView, SLOT(rescalePlot()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
     _pBringToFrontGroup = new QActionGroup(this);
+
+    _pLegendPositionGroup = new QActionGroup(this);
+    _pUi->actionLegendLeft->setActionGroup(_pLegendPositionGroup);
+    _pUi->actionLegendMiddle->setActionGroup(_pLegendPositionGroup);
+    _pUi->actionLegendRight->setActionGroup(_pLegendPositionGroup);
+    connect(_pLegendPositionGroup, SIGNAL(triggered(QAction*)), this, SLOT(changeLegendPosition(QAction*)));
+
+    // Default to full auto scaling
+    _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
+    _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
 
     this->setAcceptDrops(true);
 
@@ -206,6 +221,22 @@ void MainWindow::menuShowHideGraphClicked(bool bState)
 
 }
 
+void MainWindow::changeLegendPosition(QAction* pAction)
+{
+    if (pAction == _pUi->actionLegendLeft)
+    {
+        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_LEFT);
+    }
+    else if (pAction == _pUi->actionLegendMiddle)
+    {
+        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_MIDDLE);
+    }
+    else if (pAction == _pUi->actionLegendRight)
+    {
+        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_RIGHT);
+    }
+}
+
 void MainWindow::showHideGraph(const quint32 index)
 {
     _pGraphShowHide->actions().at(index)->setChecked(_pGuiModel->graphVisibility(index));
@@ -327,6 +358,22 @@ void MainWindow::enableDynamicSession()
     _pUi->actionDynamicSession->setChecked(_pGuiModel->dynamicSession());
 }
 
+void MainWindow::updateLegendPositionMenu()
+{
+    if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_LEFT)
+    {
+        _pUi->actionLegendLeft->setChecked(true);
+    }
+    else if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_MIDDLE)
+    {
+        _pUi->actionLegendMiddle->setChecked(true);
+    }
+    else if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_RIGHT)
+    {
+        _pUi->actionLegendRight->setChecked(true);
+    }
+}
+
 void MainWindow::showContextMenu(const QPoint& pos)
 {
     _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
@@ -398,6 +445,11 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pGuiModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
         _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
         _pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
+        _pGuiModel->setLegendVisibility(true);
+        _pUi->menuLegend->setEnabled(true);
+
+        _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
+        _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
 
         bSucceeded = true;
     }

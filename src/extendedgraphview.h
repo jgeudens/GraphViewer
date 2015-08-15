@@ -16,6 +16,7 @@ public:
 
 public slots:
     void addGraphs(QList<QList<double> > data);
+    void rescalePlot();
 
 };
 

@@ -36,6 +36,7 @@ private slots:
     void showYAxisScaleDialog();
     void menuBringToFrontGraphClicked(bool bState);
     void menuShowHideGraphClicked(bool bState);
+    void changeLegendPosition(QAction* pAction);
 
     /* Model change handlers */
     void showHideGraph(const quint32 index);
@@ -48,6 +49,7 @@ private slots:
     void enableGlobalMenu();
     void enableWatchFile();
     void enableDynamicSession();
+    void updateLegendPositionMenu();
 
     /* Misc */
     void showContextMenu(const QPoint& pos);
@@ -71,6 +73,7 @@ private:
     QMenu * _pGraphShowHide;
     QMenu * _pGraphBringToFront;
     QActionGroup* _pBringToFrontGroup;
+    QActionGroup * _pLegendPositionGroup;
 
     LoadFileDialog _loadDataFileDialog;
 };

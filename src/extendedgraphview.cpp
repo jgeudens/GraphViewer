@@ -1,4 +1,5 @@
 #include "extendedgraphview.h"
+#include "guimodel.h"
 
 
 ExtendedGraphView::ExtendedGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent):
@@ -51,5 +52,45 @@ void ExtendedGraphView::updateData(QList<QList<double> > * pDataLists)
     {
         _pPlot->rescaleAxes(true);
     }
+    _pPlot->replot();
+}
+
+void ExtendedGraphView::rescalePlot()
+{
+
+    // scale x-axis
+    if (_pGuiModel->xAxisScalingMode() == SCALE_AUTO)
+    {
+        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        {
+            _pPlot->xAxis->rescale();
+        }
+        else
+        {
+            _pPlot->xAxis->setRange(0, 10000);
+        }
+    }
+    else // Manual
+    {
+
+    }
+
+    // scale y-axis
+    if (_pGuiModel->yAxisScalingMode() == SCALE_AUTO)
+    {
+        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        {
+            _pPlot->yAxis->rescale(true);
+        }
+        else
+        {
+            _pPlot->yAxis->setRange(0, 10);
+        }
+    }
+    else // Manual
+    {
+
+    }
+
     _pPlot->replot();
 }

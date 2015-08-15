@@ -2,32 +2,53 @@
 #define BASICGRAPHVIEW_H
 
 #include <QObject>
-#include "guimodel.h"
 #include "qcustomplot.h"
 
+
+/* forward declaration */
+class GuiModel;
 
 class BasicGraphView : public QObject
 {
     Q_OBJECT
 public:
+
+    typedef enum
+    {
+        SCALE_AUTO = 0,
+        SCALE_SLIDING,
+        SCALE_MINMAX,
+        SCALE_MANUAL
+    } AxisScaleOptions;
+
+    typedef enum
+    {
+        LEGEND_LEFT = 0,
+        LEGEND_MIDDLE,
+        LEGEND_RIGHT,
+    } LegendsPositionOptions;
+
     explicit BasicGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent = 0);
     virtual ~BasicGraphView();
 
     void exportGraphImage(QString imageFile);
-    void manualScaleXAxis(qint64 min, qint64 max);
-    void manualScaleYAxis(qint64 min, qint64 max);
 
 public slots:
-    void autoScaleXAxis();
-    void autoScaleYAxis();
 
-    void enableValueTooltip();
-    void enableSamplePoints();
-    void clearGraphs();
-    void addGraphs();
-    void showHideLegend();
-    void showGraph(quint32 index);
-    void bringToFront();
+    virtual void manualScaleXAxis(qint64 min, qint64 max);
+    virtual void manualScaleYAxis(qint64 min, qint64 max);
+
+    virtual void autoScaleXAxis();
+    virtual void autoScaleYAxis();
+
+    virtual void enableValueTooltip();
+    virtual void enableSamplePoints();
+    virtual void clearGraphs();
+    virtual void addGraphs();
+    virtual void showHideLegend();
+    virtual void showGraph(quint32 index);
+    virtual void bringToFront();
+    virtual void updateLegendPosition();
 
 signals:
 
@@ -40,21 +61,21 @@ private slots:
     void legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
     void legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
 
-    void paintValueToolTip(QMouseEvent *event);
-    void handleSamplePoints();
-    void axisDoubleClicked(QCPAxis * axis);
+protected slots:
+    virtual void paintValueToolTip(QMouseEvent *event);
+    virtual void handleSamplePoints();
+    virtual void axisDoubleClicked(QCPAxis * axis);
 
 protected:
     GuiModel * _pGuiModel;
     QCustomPlot * _pPlot;
-
-private:
-    QString createTickLabelString(qint32 tickKey);
-    void highlightSamples(bool bState);
-    qint32 getGraphIndex(QCPGraph * pGraph);
-
     bool _bEnableTooltip;
     bool _bEnableSampleHighlight;
+
+private:
+    QString createTickLabelString(qint64 tickKey);
+    void highlightSamples(bool bState);
+    qint32 graphIndex(QCPGraph * pGraph);
 
     QVector<QString> tickLabels;
 
