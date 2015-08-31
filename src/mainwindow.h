@@ -75,7 +75,7 @@ private:
     QActionGroup* _pBringToFrontGroup;
     QActionGroup * _pLegendPositionGroup;
 
-    LoadFileDialog _loadDataFileDialog;
+    LoadFileDialog * _pLoadDataFileDialog;
 };
 
 #endif // MAINWINDOW_H

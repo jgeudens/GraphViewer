@@ -17,6 +17,8 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pGraphView = new ExtendedGraphView(_pGuiModel, _pUi->customPlot, this);
     _pWatchFile = new WatchFile(_pGuiModel);
 
+    _pLoadDataFileDialog = new LoadFileDialog(this);
+
     /* Add slot for file watcher */
     connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(handleFileChange()));
 
@@ -94,6 +96,7 @@ MainWindow::~MainWindow()
     delete _pGraphView;
     delete _pGraphShowHide;
     delete _pGraphBringToFront;
+    delete _pLoadDataFileDialog;
     if (_pParser)
     {
         delete _pParser;
@@ -104,7 +107,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::loadDataFile()
 {
-    if (_loadDataFileDialog.exec() == QDialog::Accepted)
+    if (_pLoadDataFileDialog->exec() == QDialog::Accepted)
     {
         parseData();
     }
@@ -179,7 +182,7 @@ void MainWindow::showAbout()
 
 void MainWindow::showXAxisScaleDialog()
 {
-    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_X);
+    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_X, this);
 
     if (scaleDialog.exec())
     {
@@ -192,7 +195,7 @@ void MainWindow::showXAxisScaleDialog()
 
 void MainWindow::showYAxisScaleDialog()
 {
-    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_Y);
+    AxisScaleDialog scaleDialog(AxisScaleDialog::AXIS_Y, this);
 
     if (scaleDialog.exec())
     {
@@ -397,7 +400,7 @@ void MainWindow::dropEvent(QDropEvent *e)
     foreach (const QUrl &url, e->mimeData()->urls())
     {
         const QString &fileName = url.toLocalFile();
-        if (_loadDataFileDialog.exec(fileName, false) == QDialog::Accepted)
+        if (_pLoadDataFileDialog->exec(fileName, false) == QDialog::Accepted)
         {
             parseData();
         }
@@ -409,7 +412,7 @@ void MainWindow::parseData()
     DataFileParser * pNewParser = new DataFileParser();
 
     //Get settings from dialog
-    _loadDataFileDialog.getParserSettings(pNewParser->getDataParseSettings());
+    _pLoadDataFileDialog->getParserSettings(pNewParser->getDataParseSettings());
 
     if (resetGraph(pNewParser))
     {
@@ -496,7 +499,7 @@ void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
 
         bool bSkipDialog = argumentParser.isSet(skipOption);
 
-        if (_loadDataFileDialog.exec(filename, bSkipDialog) == QDialog::Accepted)
+        if (_pLoadDataFileDialog->exec(filename, bSkipDialog) == QDialog::Accepted)
         {
             parseData();
         }
