@@ -266,7 +266,7 @@ bool DataFileParser::readLabels()
 bool DataFileParser::readLineFromFile(QFile * file, QString *pLine)
 {
     bool bRet = false;
-    char buf[512];
+    char buf[2048];
     qint32 lineLength;
 
     // Read first line of data (labels)
