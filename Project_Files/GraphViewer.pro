@@ -20,38 +20,43 @@ DEFINES += QT_DEBUG_OUTPUT
 
 INCLUDEPATH += \
     ../libraries/qcustomplot \
-    ../src
+    ../src    \
+    ../src/dialogs \
+    ../src/graphview \
+    ../src/models \
+    ../src/parser \
+    ../src/util \
 
 SOURCES +=  \
-    ../src/mainwindow.cpp \
     ../src/main.cpp \
     ../libraries/qcustomplot/qcustomplot.cpp \
-    ../src/datafileparser.cpp \
-    ../src/axisscaledialog.cpp \
-    ../src/dataparsersettings.cpp \
-    ../src/loadfiledialog.cpp \
-    ../src/presetparser.cpp \
-    ../src/watchfile.cpp \
-    ../src/guimodel.cpp \
-    ../src/basicgraphview.cpp \
-    ../src/extendedgraphview.cpp
+    ../src/dialogs/axisscaledialog.cpp \
+    ../src/dialogs/loadfiledialog.cpp \
+    ../src/dialogs/mainwindow.cpp \
+    ../src/graphview/basicgraphview.cpp \
+    ../src/graphview/extendedgraphview.cpp \
+    ../src/models/guimodel.cpp \
+    ../src/parser/datafileparser.cpp \
+    ../src/parser/dataparsersettings.cpp \
+    ../src/parser/presetparser.cpp \
+    ../src/watchfile.cpp
 
 FORMS    += \
-    ../src/mainwindow.ui \
-    ../src/axisscaledialog.ui \
-    ../src/loadfiledialog.ui
+    ../src/dialogs/axisscaledialog.ui \
+    ../src/dialogs/loadfiledialog.ui \
+    ../src/dialogs/mainwindow.ui
 
 HEADERS += \
-    ../src/mainwindow.h \
     ../libraries/qcustomplot/qcustomplot.h \
-    ../src/datafileparser.h \
-    ../src/util.h \
-    ../src/axisscaledialog.h \
-    ../src/dataparsersettings.h \
-    ../src/loadfiledialog.h \
-    ../src/presetparser.h \
-    ../src/graphdata.h \
-    ../src/watchfile.h \
-    ../src/guimodel.h \
-    ../src/basicgraphview.h \
-    ../src/extendedgraphview.h
+    ../src/dialogs/axisscaledialog.h \
+    ../src/dialogs/loadfiledialog.h \
+    ../src/dialogs/mainwindow.h \
+    ../src/graphview/basicgraphview.h \
+    ../src/graphview/extendedgraphview.h \
+    ../src/models/graphdata.h \
+    ../src/models/guimodel.h \
+    ../src/parser/datafileparser.h \
+    ../src/parser/dataparsersettings.h \
+    ../src/parser/presetparser.h \
+    ../src/util/util.h \
+    ../src/watchfile.h
