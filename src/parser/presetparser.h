@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QDomDocument>
+#include <QDateTime>
 
 class PresetParser : public QObject
 {
@@ -12,42 +13,28 @@ public:
 		
     typedef struct _Preset
     {
-        _Preset() : bName(false), bFieldSeparator(false), bDecimalSeparator(false),
-                    bThousandSeparator(false), commentSequence(QString()), bColumn(false), labelRow(-1),
-                    bDataRow(false), bDynamicSession(false), bKeyword(false) {}
+        _Preset() : commentSequence(QString("")), column(1), labelRow(1),
+                    dataRow(1),bDynamicSession(false), keyword(QString("")) {}
 
-        bool bName;
         QString name;
-
-        bool bFieldSeparator;
-        QString fieldSeparator;
-
-        bool bDecimalSeparator;
-        QString decimalSeparator;
-
-        bool bThousandSeparator;
-        QString thousandSeparator;
-
+        QChar fieldSeparator;
+        QChar decimalSeparator;
+        QChar thousandSeparator;
         QString commentSequence;
-
-        bool bColumn;
         quint32 column;
-        
         qint32 labelRow;
-        
-        bool bDataRow;
         quint32 dataRow;
         
         bool bDynamicSession;
 
-        bool bKeyword;
         QString keyword;
         
     } Preset;
 
     explicit PresetParser();
 
-    bool parseFile(QIODevice *device, QList<Preset> *pPresetList);
+    void loadPresetsFromFile();
+    QList<PresetParser::Preset> presetList();
 
 signals:
 
@@ -55,12 +42,14 @@ public slots:
 
 private:
 
+    bool parseFile(QIODevice *device, QList<Preset> *pPresetList);
     bool parsePresetTag(const QDomElement &element, Preset *pPreset);
 
     QDomDocument _domDocument;
+    QDateTime _lastModified;
+    QList<PresetParser::Preset> _presetList;
 
-    QMessageBox _msgBox;
-
+    static const QString _presetFilename;
 };
 
 #endif // PRESETPARSER_H

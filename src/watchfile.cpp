@@ -7,10 +7,11 @@
 
 const int WatchFile::cDynamicMaxUpdateInterval = 100;
 
-WatchFile::WatchFile(GuiModel * pGuiModel):
+WatchFile::WatchFile(GuiModel * pGuiModel, ParserModel * pParserModel):
     _pFileWatcher(new QFileSystemWatcher())
 {
     _pGuiModel = pGuiModel;
+    _pParserModel = pParserModel;
 
     connect(_pFileWatcher, SIGNAL(fileChanged(QString)), this, SLOT(fileDataChange()));
 }
@@ -47,7 +48,7 @@ void WatchFile::dynamicUpdate()
              * http://stackoverflow.com/questions/18300376/qt-qfilesystemwatcher-singal-filechanged-gets-emited-only-once
             */
 
-            if(_pGuiModel->dynamicSession())
+            if(_pParserModel->dynamicSession())
             {
                 emit fileDataChanged();
             }

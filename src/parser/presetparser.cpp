@@ -3,12 +3,71 @@
 #include "util.h"
 #include "presetparser.h"
 
+const QString PresetParser::_presetFilename = QString("presets.xml");
+
 PresetParser::PresetParser()
 {
-    _msgBox.setWindowTitle(tr("GraphViewer preset file load error"));
-    _msgBox.setIcon(QMessageBox::Warning);
 }
 
+QList<PresetParser::Preset> PresetParser::presetList()
+{
+    return _presetList;
+}
+
+void PresetParser::loadPresetsFromFile()
+{
+    QString presetFile;
+    /* Check if preset file exists (2 locations)
+    *   <document_folder>\GraphViewer\
+    *   directory of executable
+    */
+    QString documentsfolder = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).first();
+
+    presetFile = documentsfolder + "/GraphViewer/" + _presetFilename;
+    if (!QFileInfo(presetFile).exists())
+    {
+        // xml in documents folder doesn't exist, check directory of executable
+        presetFile = _presetFilename;
+        if (!QFileInfo(presetFile).exists())
+        {
+            presetFile = "";
+            _lastModified = QDateTime();
+        }
+    }
+
+    if (presetFile != "")
+    {
+        if (_lastModified != QFileInfo(presetFile).lastModified())
+        {
+            _lastModified = QFileInfo(presetFile).lastModified();
+
+            _presetList.clear();
+
+            QFile file(presetFile);
+
+            /* If we can't open it, let's show an error message. */
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                PresetParser presetParser;
+                if (presetParser.parseFile(&file, &_presetList))
+                {
+                    // Parsing failed
+                }
+
+                file.close();
+            }
+            else
+            {
+                Util::showError(tr("Couldn't open preset file: %1").arg(presetFile));
+            }
+        }
+
+    }
+    else
+    {
+        _presetList.clear();
+    }
+}
 
 bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
 {
@@ -19,11 +78,10 @@ bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
 
     if (!_domDocument.setContent(device, true, &errorStr, &errorLine, &errorColumn))
     {
-        _msgBox.setText(tr("Parse error at line %1, column %2:\n%3")
+        Util::showError(tr("Parse error at line %1, column %2:\n%3")
                 .arg(errorLine)
                 .arg(errorColumn)
                 .arg(errorStr));
-        _msgBox.exec();
 
         bRet = false;
     }
@@ -32,8 +90,7 @@ bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
         QDomElement root = _domDocument.documentElement();
         if (root.tagName() != "graphviewer")
         {
-            _msgBox.setText(tr("The file is not a valid graphviewer preset file."));
-            _msgBox.exec();
+            Util::showError(tr("The file is not a valid graphviewer preset file."));
             bRet = false;
         }
         else
@@ -51,7 +108,7 @@ bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
                     }
                     else
                     {
-                    		break;
+                        break;
                     }
                 }
                 else
@@ -69,29 +126,62 @@ bool PresetParser::parseFile(QIODevice *device, QList<Preset> *pPresetList)
 
 bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
 {
+    bool bFieldseparator = false;
+    bool bName = false;
+    bool bDecimalSeparator = false;
+
     bool bRet = true;
     QDomElement child = element.firstChildElement();
     while (!child.isNull())
     {
         if (child.tagName() == "name")
         {
-            pPreset->bName = true;
+            bName = true;
             pPreset->name = child.text();
         }
         else if (child.tagName() == "fieldseparator")
         {
-            pPreset->bFieldSeparator = true;
-            pPreset->fieldSeparator = child.text();
+            bFieldseparator = true;
+            if (child.text().trimmed().compare(QString("\\t"), Qt::CaseInsensitive) == 0)
+            {
+                pPreset->fieldSeparator = '\t';
+            }
+            else if (child.text().size() > 0)
+            {
+                pPreset->fieldSeparator = child.text().at(0);
+            }
+            else
+            {
+                // No data
+                bRet = false;
+                Util::showError(tr("Field separator is empty."));
+                break;
+            }
         }
         else if (child.tagName() == "decimalseparator")
         {
-            pPreset->bDecimalSeparator = true;
-            pPreset->decimalSeparator = child.text();
+            bDecimalSeparator = true;
+            if (child.text().size() > 0)
+            {
+                pPreset->decimalSeparator = child.text().at(0);
+            }
+            else
+            {
+                bRet = false;
+                Util::showError(tr("Decimal separator is empty."));
+                break;
+            }
         }
         else if (child.tagName() == "thousandseparator")
         {
-            pPreset->bThousandSeparator = true;
-            pPreset->thousandSeparator = child.text();
+            if (child.text().size() > 0)
+            {
+                pPreset->thousandSeparator = child.text().at(0);
+            }
+            else
+            {
+                pPreset->thousandSeparator = ' ';
+            }
         }
         else if (child.tagName() == "commentSequence")
         {
@@ -99,12 +189,10 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
         }
         else if (child.tagName() == "column")
         {
-            pPreset->bColumn = true;
             pPreset->column = child.text().toUInt(&bRet);
             if (!bRet)
             {
-                _msgBox.setText(tr("Column ( %1 ) is not a valid number.").arg(child.text()));
-                _msgBox.exec();
+                Util::showError(tr("Column ( %1 ) is not a valid number.").arg(child.text()));
                 break;
             }
         }
@@ -116,19 +204,16 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
                 || (pPreset->labelRow < -1)
                )
             {
-                _msgBox.setText(tr("Label row ( %1 ) is not a valid number. Specify -1 to indicate the absence of label row").arg(child.text()));
-                _msgBox.exec();
+                Util::showError(tr("Label row ( %1 ) is not a valid number. Specify -1 to indicate the absence of label row").arg(child.text()));
                 break;
             }
         }
         else if (child.tagName() == "datarow")
         {
-            pPreset->bDataRow = true;
             pPreset->dataRow = child.text().toUInt(&bRet);
             if (!bRet)
             {
-                _msgBox.setText(tr("Data row ( %1 ) is not a valid number.").arg(child.text()));
-                _msgBox.exec();
+                Util::showError(tr("Data row ( %1 ) is not a valid number.").arg(child.text()));
                 break;
             }
         }
@@ -145,7 +230,6 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
         }
         else if (child.tagName() == "keyword")
         {
-            pPreset->bKeyword = true;
             pPreset->keyword = child.text();
         }
         else
@@ -153,6 +237,22 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
             // unkown tag: ignore
         }
         child = child.nextSiblingElement();
+    }
+
+    if (!bName)
+    {
+        Util::showError(tr("Name is not specified."));
+        bRet = false;
+    }
+    else if (!bFieldseparator)
+    {
+        Util::showError(tr("Field separator is not specified (%1).").arg(pPreset->name));
+        bRet = false;
+    }
+    else if (!bDecimalSeparator)
+    {
+        Util::showError(tr("Decimal separator is not specified (%1).").arg(pPreset->name));
+        bRet = false;
     }
 
     return bRet;

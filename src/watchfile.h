@@ -5,12 +5,13 @@
 #include <QFileSystemWatcher>
 #include <QTimer>
 #include "guimodel.h"
+#include "parsermodel.h"
 
 class WatchFile : public QObject
 {
     Q_OBJECT
 public:
-    explicit WatchFile(GuiModel * pGuiModel);
+    explicit WatchFile(GuiModel * pGuiModel, ParserModel * pParserModel);
     ~WatchFile();
 
     void disableFileWatch();
@@ -27,6 +28,7 @@ private:
     void clearWatchList();
 
     GuiModel * _pGuiModel;
+    ParserModel * _pParserModel;
     QFileSystemWatcher *_pFileWatcher;
 
     QTimer _dynamicUpdateTimer;

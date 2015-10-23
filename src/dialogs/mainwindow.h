@@ -6,9 +6,9 @@
 #include <QTimer>
 
 #include "guimodel.h"
+#include "parsermodel.h"
 #include "watchfile.h"
 #include "datafileparser.h"
-#include "dataparsersettings.h"
 #include "extendedgraphview.h"
 #include "loadfiledialog.h"
 
@@ -21,7 +21,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QStringList cmdArguments, QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
 private slots:
@@ -61,11 +61,11 @@ private:
     void parseData();
     bool resetGraph(DataFileParser *_pDataFileParser);
     void updateGraph(DataFileParser *_pDataFileParser);
-    void handleCommandLineArguments(QStringList cmdArguments);
 
     Ui::MainWindow * _pUi;
 
     GuiModel * _pGuiModel;
+    ParserModel * _pParserModel;
 
     ExtendedGraphView * _pGraphView;
     DataFileParser * _pParser;

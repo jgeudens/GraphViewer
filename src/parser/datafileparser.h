@@ -5,17 +5,16 @@
 #include <QStringList>
 #include <QList>
 #include <QFile>
-#include "dataparsersettings.h"
+#include "parsermodel.h"
 
 class DataFileParser : public QObject
 {
     Q_OBJECT
 
 public:
-    DataFileParser();
+    DataFileParser(ParserModel *pParserModel);
     ~DataFileParser();
 
-    DataParserSettings * getDataParseSettings();
     bool forceProcessDataFile();
     bool processDataFile();
     QList<QList<double> > & getDataRows();
@@ -29,6 +28,8 @@ private:
     bool readLineFromFile(QFile *file, QString *pLine);
     bool IsCommentLine(QString line);
 
+    ParserModel * _pParserModel;
+
     QStringList _fileContents;
     int _fileContentsEnd; // Index of last parsed line in _fileContents
     qint64 _fileEndPos; // Last position in datafile
@@ -36,9 +37,6 @@ private:
 
     QList<QList<double> > _dataRows;
     QStringList _dataLabels;
-
-    DataParserSettings _parseSettings;
-
 };
 
 #endif // DATAFILEPARSER_H

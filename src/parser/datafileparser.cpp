@@ -1,22 +1,17 @@
 #include <QtWidgets>
 
-#include "dataparsersettings.h"
 #include "util.h"
 #include "datafileparser.h"
 
-DataFileParser::DataFileParser()
+DataFileParser::DataFileParser(ParserModel *pParserModel)
 {
+    _pParserModel = pParserModel;
     _fileContentsEnd = 0;
     _fileEndPos = 0;
 }
 
 DataFileParser::~DataFileParser()
 {
-}
-
-DataParserSettings * DataFileParser::getDataParseSettings()
-{
-    return &_parseSettings;
 }
 
 bool DataFileParser::forceProcessDataFile()
@@ -44,7 +39,7 @@ bool DataFileParser::processDataFile()
         if (bRet)
         {
             // Get number of rows (from dataRow)
-            _expectedFields = _fileContents[_parseSettings.getDataRow()].split(_parseSettings.getFieldSeparator()).size() - _parseSettings.getColumn();
+            _expectedFields = _fileContents[_pParserModel->dataRow()].split(_pParserModel->fieldSeparator()).size() - _pParserModel->column();
 
             // Check number of expected fields
             if (_expectedFields < 2)
@@ -71,7 +66,7 @@ bool DataFileParser::processDataFile()
 
         if (bRet)
         {
-            _fileContentsEnd = _parseSettings.getDataRow();
+            _fileContentsEnd = _pParserModel->dataRow();
         }
     }
 
@@ -105,8 +100,8 @@ bool DataFileParser::readData()
             && (!IsCommentLine(_fileContents[index]))
           )
         {
-            QStringList paramList = _fileContents[index].split(_parseSettings.getFieldSeparator());
-            if ((paramList.size() - (qint32)_parseSettings.getColumn()) != _expectedFields)
+            QStringList paramList = _fileContents[index].split(_pParserModel->fieldSeparator());
+            if ((paramList.size() - (qint32)_pParserModel->column()) != _expectedFields)
             {
                 QString txt = QString(tr("The number of label columns doesn't match number of data columns (while checking data: line %1).")).arg(index + 1);
                 Util::showError(txt);
@@ -114,17 +109,17 @@ bool DataFileParser::readData()
                 break;
             }
 
-            for (qint32 i = _parseSettings.getColumn(); i < paramList.size(); i++)
+            for (qint32 i = _pParserModel->column(); i < paramList.size(); i++)
             {
                 bool bError = false;
 
                 // Remove group separator
-                QString tmpData = paramList[i].simplified().replace(_parseSettings.getGroupSeparator(), "");
+                QString tmpData = paramList[i].simplified().replace(_pParserModel->groupSeparator(), "");
 
                 // Replace decimal point if needed
-                if (QLocale::system().decimalPoint() != _parseSettings.getDecimalSeparator())
+                if (QLocale::system().decimalPoint() != _pParserModel->decimalSeparator())
                 {
-                    tmpData = tmpData.replace(_parseSettings.getDecimalSeparator(), QLocale::system().decimalPoint());
+                    tmpData = tmpData.replace(_pParserModel->decimalSeparator(), QLocale::system().decimalPoint());
                 }
 
                 double number = QLocale::system().toDouble(tmpData, &bError);
@@ -147,7 +142,7 @@ bool DataFileParser::readData()
                 }
                 else
                 {
-                    _dataRows[i - _parseSettings.getColumn()].append(number);
+                    _dataRows[i - _pParserModel->column()].append(number);
                 }
             }
         }
@@ -169,7 +164,7 @@ bool DataFileParser::loadDataFile()
 {
     bool bRet = true;
     QString line;
-    QFile file(_parseSettings.getPath());
+    QFile file(_pParserModel->path());
 
     /* If we can't open it, let's show an error message. */
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -196,13 +191,13 @@ bool DataFileParser::loadDataFile()
         }
         else
         {
-            Util::showError(tr("Error while reading data file: %1").arg(_parseSettings.getPath()));
+            Util::showError(tr("Error while reading data file: %1").arg(_pParserModel->path()));
             bRet = false;
         }
     }
     else
     {
-        Util::showError(tr("Couldn't open data file: %1").arg(_parseSettings.getPath()));
+        Util::showError(tr("Couldn't open data file: %1").arg(_pParserModel->path()));
         bRet = false;
     }
 
@@ -216,10 +211,10 @@ bool DataFileParser::readLabels()
     //Read labels
     QStringList tmpLabels;
 
-    if (_parseSettings.getLabelRow() != -1)
+    if (_pParserModel->labelRow() != -1)
     {
-        tmpLabels = _fileContents[_parseSettings.getLabelRow()].split(_parseSettings.getFieldSeparator());
-        if ((tmpLabels.size() - (qint32)_parseSettings.getColumn()) != _expectedFields)
+        tmpLabels = _fileContents[_pParserModel->labelRow()].split(_pParserModel->fieldSeparator());
+        if ((tmpLabels.size() - (qint32)_pParserModel->column()) != _expectedFields)
         {
             Util::showError(tr("The number of label columns doesn't match number of data columns (while checking labels)."));
             bRet = false;
@@ -227,11 +222,11 @@ bool DataFileParser::readLabels()
     }
     else
     {
-        for (qint32 i = 0; i < ((qint32)_parseSettings.getColumn() + _expectedFields); i++)
+        for (qint32 i = 0; i < ((qint32)_pParserModel->column() + _expectedFields); i++)
         {
             tmpLabels.append(QString(""));
         }
-        tmpLabels[_parseSettings.getColumn()] = tr("Time");
+        tmpLabels[_pParserModel->column()] = tr("Time");
     }
 
 
@@ -252,7 +247,7 @@ bool DataFileParser::readLabels()
     // Process labels
     if (bRet)
     {
-        for (qint32 i = _parseSettings.getColumn(); i < tmpLabels.size(); i++)
+        for (qint32 i = _pParserModel->column(); i < tmpLabels.size(); i++)
         {
             _dataLabels.append(tmpLabels[i]);
         }
@@ -284,7 +279,7 @@ bool DataFileParser::IsCommentLine(QString line)
 {
     bool bRet = false;
 
-    const QString commentSequence = _parseSettings.getCommentSequence();
+    const QString commentSequence = _pParserModel->commentSequence();
     if (!commentSequence.isEmpty())
     {
         if (line.trimmed().left(commentSequence.length()) == commentSequence)

@@ -1,6 +1,5 @@
 
 #include <QFileDialog>
-#include <QStandardPaths>
 
 #include "util.h"
 
@@ -11,7 +10,7 @@
 const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_fieldSeparatorList
                                     = QList<ComboListItem>() << ComboListItem(" ; (semicolon)", ";")
                                                              << ComboListItem(" , (comma)", ",")
-                                                             << ComboListItem(" tab", "\t")
+                                                             << ComboListItem(" tab", QString('\t'))
                                                              << ComboListItem(" custom", "custom");
 
 const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_decimalSeparatorList
@@ -23,13 +22,16 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
                                                             << ComboListItem(" . (point)", ".")
                                                             << ComboListItem("   (space)", " ");
 
-const QString LoadFileDialog::_presetFilename = QString("presets.xml");
-
-LoadFileDialog::LoadFileDialog(QWidget *parent) :
+LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
 {
     _pUi->setupUi(this);
+
+    _pParserModel = pParserModel;
+
+    // load presets
+    loadPreset();
 
     /*-- Fill combo boxes --*/
     foreach(ComboListItem listItem, _decimalSeparatorList)
@@ -47,39 +49,38 @@ LoadFileDialog::LoadFileDialog(QWidget *parent) :
         _pUi->comboGroupSeparator->addItem(listItem.name, listItem.userData);
     }
 
+    // Handle signals from model
+    connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(updateDynamicSession()));
+    connect(_pParserModel, SIGNAL(pathChanged()), this, SLOT(updatePath()));
+    connect(_pParserModel, SIGNAL(fieldSeparatorChanged()), this, SLOT(updateFieldSeparator()));
+    connect(_pParserModel, SIGNAL(groupSeparatorChanged()), this, SLOT(updategroupSeparator()));
+    connect(_pParserModel, SIGNAL(decimalSeparatorChanged()), this, SLOT(updateDecimalSeparator()));
+    connect(_pParserModel, SIGNAL(commentSequenceChanged()), this, SLOT(updateCommentSequence()));
+    connect(_pParserModel, SIGNAL(dataRowChanged()), this, SLOT(updateDataRow()));
+    connect(_pParserModel, SIGNAL(columnChanged()), this, SLOT(updateColumn()));
+    connect(_pParserModel, SIGNAL(labelRowChanged()), this, SLOT(updateLabelRow()));
 
-    /*-- Set default item --*/
-    const QChar decimalPoint = QLocale::system().decimalPoint();
 
-    // DecimalSeparator
-    if (decimalPoint == '.')
-    {
-        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, "."));
-    }
-    else
-    {
-        _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, ","));
-    }
-
-    // FieldSeparator
-    if (decimalPoint == ',')
-    {
-        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, ";"));
-    }
-    else
-    {
-        _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, ","));
-    }
-
-    // group separator
-    _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, QLocale::system().groupSeparator()));
-
-    _pUi->lineComment->setText(QString());
-
-    connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
-    connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+    // Handle signal from controls
+    connect(_pUi->checkDynamicSession, SIGNAL(toggled(bool)), this, SLOT(dynamicSessionUpdated(bool)));
+    connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(dataFileSelected()));
     connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
+    connect(_pUi->lineCustomFieldSeparator, SIGNAL(editingFinished()), this, SLOT(customFieldSeparatorUpdated()));
+    connect(_pUi->comboGroupSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(groupSeparatorSelected(int)));
+    connect(_pUi->comboDecimalSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(decimalSeparatorSelected(int)));
+    connect(_pUi->lineComment, SIGNAL(editingFinished()), this, SLOT(commentUpdated()));
+    connect(_pUi->spinDataRow, SIGNAL(valueChanged(int)), this, SLOT(dataRowUpdated()));
+    connect(_pUi->spinColumn, SIGNAL(valueChanged(int)), this, SLOT(columnUpdated()));
     connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
+    connect(_pUi->spinLabelRow, SIGNAL(valueChanged(int)), this, SLOT(labelRowUpdated()));
+
+    connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+
+    // Select first preset
+    //presetSelected(0);
+    _pUi->comboPreset->setCurrentIndex(-1);
+    _pUi->comboPreset->setCurrentIndex(0);
+
 }
 
 LoadFileDialog::~LoadFileDialog()
@@ -89,63 +90,97 @@ LoadFileDialog::~LoadFileDialog()
 
 int LoadFileDialog::exec()
 {
-    loadPreset();
+    return QDialog::exec();
+}
+
+int LoadFileDialog::exec(QString file)
+{
+    _pParserModel->setPath(file);
 
     return QDialog::exec();
 }
 
-int LoadFileDialog::exec(QString file, bool bSkipDialog)
+void LoadFileDialog::updateDynamicSession()
 {
-    int result = QDialog::Rejected;
-    loadPreset();
-
-    _pUi->lineDataFile->setText(file);
-    setPreset(file);
-
-    if (bSkipDialog && validateSettingsData())
-    {
-        result = QDialog::Accepted;
-    }
-    else
-    {
-        result = QDialog::exec();
-    }
-
-    return result;
+    _pUi->checkDynamicSession->setChecked(_pParserModel->dynamicSession());
 }
 
-void LoadFileDialog::getParserSettings(DataParserSettings * pParseSettings)
+void LoadFileDialog::updatePath()
 {
-    pParseSettings->setPath(_pUi->lineDataFile->text());
-    pParseSettings->setColumn(_pUi->spinColumn->value() - 1); // 1 based to 0 based
-    pParseSettings->setDataRow(_pUi->spinDataRow->value() - 1); // 1 based to 0 based
+    _pUi->lineDataFile->setText(_pParserModel->path());
 
-    if (_pUi->checkLabelRow->checkState() == Qt::Checked)
-    {
-        pParseSettings->setLabelRow(_pUi->spinLabelRow->value() - 1); // 1 based to 0 based
-    }
-    else
-    {
-        // No label row
-        pParseSettings->setLabelRow(-1);
-    }
+    setPreset(_pUi->lineDataFile->text());
 
-    if (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-    {
-        pParseSettings->setFieldSeparator(_pUi->lineCustomFieldSeparator->text());
-    }
-    else
-    {
-        pParseSettings->setFieldSeparator(_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString());
-    }
-
-    pParseSettings->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(_pUi->comboDecimalSeparator->currentIndex()).toString());
-    pParseSettings->setGroupSeparator(_pUi->comboGroupSeparator->itemData(_pUi->comboGroupSeparator->currentIndex()).toString());
-    pParseSettings->setCommentSequence(_pUi->lineComment->text());
-    pParseSettings->setDynamicSession(_pUi->checkDynamicSession->checkState() == Qt::Checked ? true : false);
+    // TODO: if no preset => preset to manual and auto settings
 }
 
-void LoadFileDialog::selectDataFile()
+void LoadFileDialog::updateFieldSeparator()
+{
+    const qint32 comboIndex = findIndexInCombo(_fieldSeparatorList, QString(_pParserModel->fieldSeparator()));
+    const qint32 customIndex = findIndexInCombo(_fieldSeparatorList, tr("custom"));
+
+    if (comboIndex == -1)
+    {
+        // Custom field seperator
+        if (_pUi->comboFieldSeparator->currentIndex() != customIndex)
+        {
+            _pUi->comboFieldSeparator->setCurrentIndex(customIndex);
+        }
+
+        _pUi->lineCustomFieldSeparator->setText(QString(_pParserModel->fieldSeparator()));
+    }
+    else
+    {
+        _pUi->comboFieldSeparator->setCurrentIndex(comboIndex);
+        _pUi->lineCustomFieldSeparator->setText('\0');
+    }
+}
+
+void LoadFileDialog::updategroupSeparator()
+{
+    _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, QString(_pParserModel->groupSeparator())));
+}
+
+void LoadFileDialog::updateDecimalSeparator()
+{
+    _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, QString(_pParserModel->decimalSeparator())));
+}
+
+void LoadFileDialog::updateCommentSequence()
+{
+    _pUi->lineComment->setText(_pParserModel->commentSequence());
+}
+
+void LoadFileDialog::updateDataRow()
+{
+    _pUi->spinDataRow->setValue(_pParserModel->dataRow() + 1);  // + 1 based because 0 based internally
+}
+
+void LoadFileDialog::updateColumn()
+{
+    _pUi->spinColumn->setValue(_pParserModel->column() + 1);  // + 1 based because 0 based internally
+}
+
+void LoadFileDialog::updateLabelRow()
+{
+    if (_pParserModel->labelRow() == -1)
+    {
+        _pUi->checkLabelRow->setCheckState(Qt::Unchecked);
+    }
+    else
+    {
+        _pUi->checkLabelRow->setCheckState(Qt::Checked);
+        _pUi->spinLabelRow->setValue(_pParserModel->labelRow() + 1);   // + 1 based because 0 based internally
+    }
+}
+
+
+void LoadFileDialog::dynamicSessionUpdated(bool bDynamic)
+{
+    _pParserModel->setDynamicSession(bDynamic);
+}
+
+void LoadFileDialog::dataFileSelected()
 {
     QFileDialog fileDialog(this);
     fileDialog.setFileMode(QFileDialog::ExistingFile);
@@ -156,96 +191,82 @@ void LoadFileDialog::selectDataFile()
 
     if (fileDialog.exec() == QDialog::Accepted)
     {
-        _pUi->lineDataFile->setText(fileDialog.selectedFiles().first());
-
-        setPreset(_pUi->lineDataFile->text());
+        _pParserModel->setPath(fileDialog.selectedFiles().first());
     }
 }
-
-void LoadFileDialog::presetSelected(int index)
-{
-    if ((index >= 0) && (index < _presetList.size()))
-    {
-
-        if (_presetList[index].bColumn)
-        {
-            _pUi->spinColumn->setValue(_presetList[index].column);
-        }
-
-        if (_presetList[index].bDataRow)
-        {
-            _pUi->spinDataRow->setValue(_presetList[index].dataRow);
-        }
-
-        if (_presetList[index].labelRow == -1)
-        {
-            _pUi->spinLabelRow->setValue(0);
-            _pUi->checkLabelRow->setChecked(false);
-        }
-        else
-        {
-            _pUi->spinLabelRow->setValue(_presetList[index].labelRow);
-            _pUi->checkLabelRow->setChecked(true);
-        }
-
-        if (_presetList[index].bDecimalSeparator)
-        {
-            _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, _presetList[index].decimalSeparator));
-        }
-
-        if (_presetList[index].bFieldSeparator)
-        {
-            // DIRTY DIRTY workaround for tab input problem
-            if (
-                (_presetList[index].fieldSeparator.at(0) == '\\')
-                && (_presetList[index].fieldSeparator.at(1) == 't')
-                )
-            {
-                _presetList[index].fieldSeparator = QString("\t");
-            }
-
-            qint32 comboIndex = findIndexInCombo(_fieldSeparatorList, _presetList[index].fieldSeparator);
-
-            if (comboIndex == -1)
-            {
-                _pUi->comboFieldSeparator->setCurrentIndex(findIndexInCombo(_fieldSeparatorList, "custom"));
-                _pUi->lineCustomFieldSeparator->setText(_presetList[index].fieldSeparator);
-            }
-            else
-            {
-                _pUi->comboFieldSeparator->setCurrentIndex(comboIndex);
-            }
-        }
-
-        if (_presetList[index].bThousandSeparator)
-        {
-            _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, _presetList[index].thousandSeparator));
-        }
-
-        _pUi->lineComment->setText(_presetList[index].commentSequence);
-
-        _pUi->checkDynamicSession->setChecked(_presetList[index].bDynamicSession);
-    }
-
-}
-
 
 void LoadFileDialog::fieldSeparatorSelected(int index)
 {
-    if (_pUi->comboFieldSeparator->itemData(index).toString().toLower() == "custom")
+    if (_pUi->comboFieldSeparator->itemData(index).toString().toLower() == tr("custom"))
     {
+        // Enable custom field box
         _pUi->lineCustomFieldSeparator->setEnabled(true);
     }
     else
     {
+        // Disable custom field box
         _pUi->lineCustomFieldSeparator->setEnabled(false);
+
+        _pParserModel->setFieldSeparator(_pUi->comboFieldSeparator->itemData(index).toString().at(0));
     }
 }
 
-
-void LoadFileDialog::toggledLabelRow(bool bState)
+void LoadFileDialog::customFieldSeparatorUpdated()
 {
-    _pUi->spinLabelRow->setEnabled(bState);
+    if (!_pUi->lineCustomFieldSeparator->text().isEmpty())
+    {
+        _pParserModel->setFieldSeparator(_pUi->lineCustomFieldSeparator->text().at(0));
+    }
+}
+
+void LoadFileDialog::groupSeparatorSelected(int index)
+{
+    _pParserModel->setGroupSeparator(_pUi->comboGroupSeparator->itemData(index).toString().at(0));
+}
+
+void LoadFileDialog::decimalSeparatorSelected(int index)
+{
+    _pParserModel->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(index).toString().at(0));
+}
+
+void LoadFileDialog::commentUpdated()
+{
+    _pParserModel->setCommentSequence(_pUi->lineComment->text());
+}
+
+void LoadFileDialog::dataRowUpdated()
+{
+    _pParserModel->setDataRow(_pUi->spinDataRow->value() - 1);  // - 1 based because 0 based internally
+}
+
+void LoadFileDialog::columnUpdated()
+{
+    _pParserModel->setColumn(_pUi->spinColumn->value() - 1);  // - 1 based because 0 based internally
+}
+
+void LoadFileDialog::toggledLabelRow(bool bLabelRow)
+{
+    _pUi->spinLabelRow->setEnabled(bLabelRow);
+}
+
+void LoadFileDialog::labelRowUpdated()
+{
+    _pParserModel->setLabelRow(_pUi->spinLabelRow->value() - 1);   // - 1 based because 0 based internally
+}
+
+void LoadFileDialog::presetSelected(int index)
+{
+    if ((index >= 0) && (index < _presetParser.presetList().size()))
+    {
+        _pParserModel->setColumn(_presetParser.presetList()[index].column -1);
+        _pParserModel->setDataRow(_presetParser.presetList()[index].dataRow - 1);
+        _pParserModel->setLabelRow(_presetParser.presetList()[index].labelRow - 1);
+        _pParserModel->setDecimalSeparator(_presetParser.presetList()[index].decimalSeparator);
+        _pParserModel->setFieldSeparator(_presetParser.presetList()[index].fieldSeparator);
+        _pParserModel->setGroupSeparator(_presetParser.presetList()[index].thousandSeparator);
+        _pParserModel->setCommentSequence(_presetParser.presetList()[index].commentSequence);
+        _pUi->checkDynamicSession->setChecked(_presetParser.presetList()[index].bDynamicSession);
+    }
 }
 
 void LoadFileDialog::done(int r)
@@ -259,7 +280,7 @@ void LoadFileDialog::done(int r)
     }
     else
     {
-        // cancel, close or exc was pressed
+        // cancel, close or exc was pressed;
         bValid = true;
     }
 
@@ -275,7 +296,7 @@ bool LoadFileDialog::validateSettingsData()
 
     if (bOk)
     {
-        if (!QFileInfo(_pUi->lineDataFile->text()).exists())
+        if (!QFileInfo(_pParserModel->path()).exists())
         {
             bOk = false;
             Util::showError(tr("Data file doesn't exist"));
@@ -284,10 +305,7 @@ bool LoadFileDialog::validateSettingsData()
 
     if (bOk)
     {
-        if (
-                (_pUi->comboFieldSeparator->itemData(_pUi->comboFieldSeparator->currentIndex()).toString().toLower() == "custom")
-                && (_pUi->lineCustomFieldSeparator->text().isEmpty())
-            )
+        if (_pParserModel->fieldSeparator().isNull())
         {
             bOk = false;
             Util::showError(tr("Custom field separator isn't defined correctly"));
@@ -315,83 +333,26 @@ qint32 LoadFileDialog::findIndexInCombo(QList<ComboListItem> comboItemList, QStr
 
 void LoadFileDialog::loadPreset(void)
 {
-    QString presetFile;
-    /* Check if preset file exists (2 locations)
-    *   <document_folder>\GraphViewer\
-    *   directory of executable
-    */
-    QString documentsfolder = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation).first();
+    _presetParser.loadPresetsFromFile();
 
-    presetFile = documentsfolder + "/GraphViewer/" + _presetFilename;
-    if (!QFileInfo(presetFile).exists())
+    _pUi->comboPreset->clear();
+
+    foreach(PresetParser::Preset preset, _presetParser.presetList())
     {
-        // xml in documents folder doesn't exist, check directory of executable
-        presetFile = _presetFilename;
-        if (!QFileInfo(presetFile).exists())
-        {
-            presetFile = "";
-            _lastModified = QDateTime();
-        }
+        _pUi->comboPreset->addItem(preset.name);
     }
-
-    if (presetFile != "")
-    {
-        if (_lastModified != QFileInfo(presetFile).lastModified())
-        {
-            _lastModified = QFileInfo(presetFile).lastModified();
-
-            _pUi->comboPreset->clear();
-
-            QFile file(presetFile);
-
-            /* If we can't open it, let's show an error message. */
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-            {
-                PresetParser presetParser;
-                _presetList.clear();
-                if (presetParser.parseFile(&file, &_presetList))
-                {
-                    foreach(PresetParser::Preset preset, _presetList)
-                    {
-                        if (preset.bName)
-                        {
-                            _pUi->comboPreset->addItem(preset.name);
-                        }
-                        else
-                        {
-                            _pUi->comboPreset->addItem(QString("(%1)").arg(preset.keyword));
-                        }
-                    }
-                }
-
-                file.close();
-            }
-            else
-            {
-                QMessageBox::critical(this,
-                                      "GraphViewer",
-                                      tr("Couldn't open preset file: %1").arg(presetFile),
-                                      QMessageBox::Ok);
-            }
-        }
-    }
-    else
-    {
-        _presetList.clear();
-        _pUi->comboPreset->clear();
-    }
-
 }
 
 void LoadFileDialog::setPreset(QString filename)
 {
     // Loop through presets and set preset if keyword is in filename
-    for (qint32 index = 0; index < _presetList.size(); index ++)
+    for (qint32 index = 0; index < _presetParser.presetList().size(); index ++)
     {
-        if (_presetList[index].bKeyword)
+        if (!_presetParser.presetList()[index].keyword.isEmpty())
         {
-            if (QFileInfo(filename).fileName().contains(_presetList[index].keyword, Qt::CaseInsensitive))
+            if (QFileInfo(filename).fileName().contains(_presetParser.presetList()[index].keyword, Qt::CaseInsensitive))
             {
+                _pUi->comboPreset->setCurrentIndex(-1);
                 _pUi->comboPreset->setCurrentIndex(index);
                 break;
             }

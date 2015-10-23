@@ -1,11 +1,10 @@
 
-#include "dataparsersettings.h"
 #include "datafileparser.h"
 #include "axisscaledialog.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow)
 {
@@ -14,10 +13,11 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pParser = NULL;
     
     _pGuiModel = new GuiModel();
+    _pParserModel = new ParserModel();
     _pGraphView = new ExtendedGraphView(_pGuiModel, _pUi->customPlot, this);
-    _pWatchFile = new WatchFile(_pGuiModel);
+    _pWatchFile = new WatchFile(_pGuiModel, _pParserModel);
 
-    _pLoadDataFileDialog = new LoadFileDialog(this);
+    _pLoadDataFileDialog = new LoadFileDialog(_pParserModel, this);
 
     /* Add slot for file watcher */
     connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(handleFileChange()));
@@ -35,7 +35,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setHighlightSamples(bool)));
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setWatchFile(bool)));
-    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setDynamicSession(bool)));
+    connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pParserModel, SLOT(setDynamicSession(bool)));
     connect(_pUi->actionShowHideLegend, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setLegendVisibility(bool)));
 
     /*-- connect model to view --*/
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pGuiModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
     connect(_pGuiModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
-    connect(_pGuiModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
+    connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
     connect(_pGuiModel, SIGNAL(legendVisibilityChanged()), _pGraphView, SLOT(showHideLegend()));
     connect(_pGuiModel, SIGNAL(legendPositionChanged()), this, SLOT(updateLegendPositionMenu()));
     connect(_pGuiModel, SIGNAL(legendPositionChanged()), _pGraphView, SLOT(updateLegendPosition()));
@@ -85,8 +85,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     /* Update interface via model */
     _pGuiModel->triggerUpdate();
-
-    handleCommandLineArguments(cmdArguments);
+    _pParserModel->triggerUpdate();
 }
 
 MainWindow::~MainWindow()
@@ -345,7 +344,7 @@ void MainWindow::enableWatchFile()
     // Setup file watcher
     if (_pGuiModel->watchFile())
     {
-        _pWatchFile->enableFileWatch(_pParser->getDataParseSettings()->getPath());
+        _pWatchFile->enableFileWatch(_pParserModel->path());
     }
     else
     {
@@ -358,7 +357,7 @@ void MainWindow::enableWatchFile()
 
 void MainWindow::enableDynamicSession()
 {
-    _pUi->actionDynamicSession->setChecked(_pGuiModel->dynamicSession());
+    _pUi->actionDynamicSession->setChecked(_pParserModel->dynamicSession());
 }
 
 void MainWindow::updateLegendPositionMenu()
@@ -400,7 +399,7 @@ void MainWindow::dropEvent(QDropEvent *e)
     foreach (const QUrl &url, e->mimeData()->urls())
     {
         const QString &fileName = url.toLocalFile();
-        if (_pLoadDataFileDialog->exec(fileName, false) == QDialog::Accepted)
+        if (_pLoadDataFileDialog->exec(fileName) == QDialog::Accepted)
         {
             parseData();
         }
@@ -409,10 +408,7 @@ void MainWindow::dropEvent(QDropEvent *e)
 
 void MainWindow::parseData()
 {
-    DataFileParser * pNewParser = new DataFileParser();
-
-    //Get settings from dialog
-    _pLoadDataFileDialog->getParserSettings(pNewParser->getDataParseSettings());
+    DataFileParser * pNewParser = new DataFileParser(_pParserModel);
 
     if (resetGraph(pNewParser))
     {
@@ -445,9 +441,9 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pGuiModel->clearGraph();
         _pGuiModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
         _pGuiModel->setFrontGraph(0);
-        _pGuiModel->setLoadedFile(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName());
+        _pGuiModel->setLoadedFile(QFileInfo(_pParserModel->path()).fileName());
         _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
-        _pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
+        //TODO_pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
         _pGuiModel->setLegendVisibility(true);
         _pUi->menuLegend->setEnabled(true);
 
@@ -468,40 +464,9 @@ void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
     }
     else
     {
-        _pGuiModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pDataFileParser->getDataParseSettings()->getPath()).fileName()));
+        _pGuiModel->setWindowTitleDetail(QString(tr("Load Failed - %1")).arg(QFileInfo(_pParserModel->path()).fileName()));
 
         // disable watch
         _pGuiModel->setWatchFile(false);
-    }
-}
-
-void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
-{
-    /*-- proces command line arguments --*/
-    QCommandLineParser argumentParser;
-
-    argumentParser.setApplicationDescription("GraphViewer");
-    argumentParser.addHelpOption();
-
-    // datafile option
-    argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
-
-    // skipDialog option
-    QCommandLineOption skipOption(QStringList() << "s" << "skip-dialog", QCoreApplication::translate("main", "Skip parse settings dialog if possible (option is ignored when datafile is not specified)"));
-    argumentParser.addOption(skipOption);
-
-    // Process arguments
-    argumentParser.process(cmdArguments);
-
-    if (!argumentParser.positionalArguments().isEmpty())
-    {
-        QString filename = argumentParser.positionalArguments().first();
-
-        bool bSkipDialog = argumentParser.isSet(skipOption);
-
-        if (_pLoadDataFileDialog->exec(filename, bSkipDialog) == QDialog::Accepted)
-        {
-            parseData();
-        }
     }
 }

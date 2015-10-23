@@ -2,10 +2,9 @@
 #define LoadFileDialog_H
 
 #include <QDialog>
-#include <QDateTime>
 
+#include "parsermodel.h"
 #include "presetparser.h"
-#include "dataparsersettings.h"
 
 namespace Ui {
 class LoadFileDialog;
@@ -17,18 +16,37 @@ class LoadFileDialog : public QDialog
 
 public:
 
-    explicit LoadFileDialog(QWidget *parent = 0);
+    explicit LoadFileDialog(ParserModel * pParserModel, QWidget *parent = 0);
     ~LoadFileDialog();
 
     int exec();
-    int exec(QString file, bool bSkipDialog);
-    void getParserSettings(DataParserSettings *pParseSettings);
+    int exec(QString file);
 
 private slots:
-    void selectDataFile();
-    void presetSelected(int index);
+
+    void updateDynamicSession();
+    void updatePath();
+    void updateFieldSeparator();
+    void updategroupSeparator();
+    void updateDecimalSeparator();
+    void updateCommentSequence();
+    void updateDataRow();
+    void updateColumn();
+    void updateLabelRow();
+
+    void dynamicSessionUpdated(bool bDynamic);
+    void dataFileSelected();
     void fieldSeparatorSelected(int index);
-    void toggledLabelRow(bool bState);
+    void customFieldSeparatorUpdated();
+    void groupSeparatorSelected(int  index);
+    void decimalSeparatorSelected(int  index);
+    void commentUpdated();
+    void dataRowUpdated();
+    void columnUpdated();
+    void toggledLabelRow(bool bLabelRow);
+    void labelRowUpdated();
+
+    void presetSelected(int index);
 
     void done(int r);
 
@@ -52,13 +70,11 @@ private:
     static const QList<ComboListItem> _fieldSeparatorList;
     static const QList<ComboListItem> _decimalSeparatorList;
     static const QList<ComboListItem> _groupSeparatorList;
-    static const QString _presetFilename;
-
 
     Ui::LoadFileDialog * _pUi;
 
-    QDateTime _lastModified;
-    QList<PresetParser::Preset> _presetList;
+    ParserModel * _pParserModel;
+    PresetParser _presetParser;
 
     qint32 findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey);
     void loadPreset(void);

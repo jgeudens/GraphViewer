@@ -37,9 +37,9 @@ SOURCES +=  \
     ../src/graphview/extendedgraphview.cpp \
     ../src/models/guimodel.cpp \
     ../src/parser/datafileparser.cpp \
-    ../src/parser/dataparsersettings.cpp \
     ../src/parser/presetparser.cpp \
-    ../src/watchfile.cpp
+    ../src/watchfile.cpp \
+    ../src/models/parsermodel.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
@@ -56,7 +56,7 @@ HEADERS += \
     ../src/models/graphdata.h \
     ../src/models/guimodel.h \
     ../src/parser/datafileparser.h \
-    ../src/parser/dataparsersettings.h \
     ../src/parser/presetparser.h \
     ../src/util/util.h \
-    ../src/watchfile.h
+    ../src/watchfile.h \
+    ../src/models/parsermodel.h

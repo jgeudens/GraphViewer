@@ -29,7 +29,6 @@ GuiModel::GuiModel(QObject *parent) : QObject(parent)
     _frontGraph = 0;
     _loadedFile = "";
     _bWatchFile = false;
-    _bDynamicSession = false;
     _bHighlightSamples = true;
     _bValueTooltip = false;
     _bLegendVisibility = false;
@@ -56,8 +55,6 @@ void GuiModel::triggerUpdate(void)
     emit valueTooltipChanged();
     emit windowTitleChanged();
     emit watchFileChanged();
-    emit dynamicSessionChanged();
-
     emit legendVisibilityChanged();
     emit legendPositionChanged();
 }
@@ -167,20 +164,6 @@ void GuiModel::setWatchFile(bool bWatchFile)
     {
         _bWatchFile = bWatchFile;
         emit watchFileChanged();
-    }
-}
-
-bool GuiModel::dynamicSession() const
-{
-    return _bDynamicSession;
-}
-
-void GuiModel::setDynamicSession(bool bDynamicSession)
-{
-    if (_bDynamicSession != bDynamicSession)
-    {
-        _bDynamicSession = bDynamicSession;
-        emit dynamicSessionChanged();
     }
 }
 
