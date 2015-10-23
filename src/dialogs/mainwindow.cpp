@@ -4,7 +4,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
     _pUi(new Ui::MainWindow)
 {
@@ -86,6 +86,8 @@ MainWindow::MainWindow(QWidget *parent) :
     /* Update interface via model */
     _pGuiModel->triggerUpdate();
     _pParserModel->triggerUpdate();
+
+    handleCommandLineArguments(cmdArguments);
 }
 
 MainWindow::~MainWindow()
@@ -468,5 +470,30 @@ void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
 
         // disable watch
         _pGuiModel->setWatchFile(false);
+    }
+}
+
+void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
+{
+    /*-- proces command line arguments --*/
+    QCommandLineParser argumentParser;
+
+    argumentParser.setApplicationDescription("GraphViewer");
+    argumentParser.addHelpOption();
+
+    // datafile option
+    argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
+
+    // Process arguments
+    argumentParser.process(cmdArguments);
+
+    if (!argumentParser.positionalArguments().isEmpty())
+    {
+        QString filename = argumentParser.positionalArguments().first();
+
+        if (_pLoadDataFileDialog->exec(filename) == QDialog::Accepted)
+        {
+            parseData();
+        }
     }
 }

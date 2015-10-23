@@ -77,7 +77,6 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
 
     // Select first preset
-    //presetSelected(0);
     _pUi->comboPreset->setCurrentIndex(-1);
     _pUi->comboPreset->setCurrentIndex(0);
 

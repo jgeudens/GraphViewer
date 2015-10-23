@@ -21,7 +21,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QStringList cmdArguments, QWidget *parent = 0);
     ~MainWindow();
 
 private slots:
@@ -61,6 +61,7 @@ private:
     void parseData();
     bool resetGraph(DataFileParser *_pDataFileParser);
     void updateGraph(DataFileParser *_pDataFileParser);
+    void handleCommandLineArguments(QStringList cmdArguments);
 
     Ui::MainWindow * _pUi;
 
