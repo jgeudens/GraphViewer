@@ -18,6 +18,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pWatchFile = new WatchFile(_pGuiModel, _pParserModel);
 
     _pLoadDataFileDialog = new LoadFileDialog(_pParserModel, this);
+    connect(_pLoadDataFileDialog, SIGNAL(accepted()), this, SLOT(loadDataFileAccepted()));
 
     /* Add slot for file watcher */
     connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(handleFileChange()));
@@ -102,16 +103,14 @@ MainWindow::~MainWindow()
     {
         delete _pParser;
     }
+    delete _pParserModel;
     delete _pGuiModel;
     delete _pUi;
 }
 
 void MainWindow::loadDataFile()
 {
-    if (_pLoadDataFileDialog->exec() == QDialog::Accepted)
-    {
-        parseData();
-    }
+    _pLoadDataFileDialog->open();
 }
 
 void MainWindow::reloadDataFile()
@@ -401,11 +400,13 @@ void MainWindow::dropEvent(QDropEvent *e)
     foreach (const QUrl &url, e->mimeData()->urls())
     {
         const QString &fileName = url.toLocalFile();
-        if (_pLoadDataFileDialog->exec(fileName) == QDialog::Accepted)
-        {
-            parseData();
-        }
+        _pLoadDataFileDialog->open(fileName);
     }
+}
+
+void MainWindow::loadDataFileAccepted()
+{
+    parseData();
 }
 
 void MainWindow::parseData()
@@ -490,10 +491,6 @@ void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
     if (!argumentParser.positionalArguments().isEmpty())
     {
         QString filename = argumentParser.positionalArguments().first();
-
-        if (_pLoadDataFileDialog->exec(filename) == QDialog::Accepted)
-        {
-            parseData();
-        }
+        _pLoadDataFileDialog->open(filename);
     }
 }

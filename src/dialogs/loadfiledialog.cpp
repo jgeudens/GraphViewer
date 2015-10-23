@@ -87,16 +87,16 @@ LoadFileDialog::~LoadFileDialog()
     delete _pUi;
 }
 
-int LoadFileDialog::exec()
+void LoadFileDialog::open()
 {
-    return QDialog::exec();
+    QDialog::open();
 }
 
-int LoadFileDialog::exec(QString file)
+void LoadFileDialog::open(QString file)
 {
     _pParserModel->setPath(file);
 
-    return QDialog::exec();
+    QDialog::open();
 }
 
 void LoadFileDialog::updateDynamicSession()

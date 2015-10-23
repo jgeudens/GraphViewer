@@ -19,8 +19,8 @@ public:
     explicit LoadFileDialog(ParserModel * pParserModel, QWidget *parent = 0);
     ~LoadFileDialog();
 
-    int exec();
-    int exec(QString file);
+    void open();
+    void open(QString file);
 
 private slots:
 

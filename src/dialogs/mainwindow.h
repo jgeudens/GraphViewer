@@ -56,6 +56,7 @@ private slots:
     void handleFileChange();
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
+    void loadDataFileAccepted();
 
 private:
     void parseData();
