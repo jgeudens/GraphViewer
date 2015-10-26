@@ -33,7 +33,7 @@ ParserModel::ParserModel(QObject *parent) : QObject(parent)
     _groupSeparator = QLocale::system().groupSeparator();
     _commentSequence = "";
     _bDynamicSession = false;
-    _dataRow = 0;
+    _dataRow = 1;
     _column = 0;
     _labelRow = 0;
 }
