@@ -4,11 +4,6 @@
 
 ParserModel::ParserModel(QObject *parent) : QObject(parent)
 {
-    _bDynamicSession = false;
-}
-
-ParserModel::~ParserModel()
-{
     _path = "";
     _bDynamicSession = false;
 
@@ -41,6 +36,11 @@ ParserModel::~ParserModel()
     _dataRow = 0;
     _column = 0;
     _labelRow = 0;
+}
+
+ParserModel::~ParserModel()
+{
+
 }
 
 void ParserModel::triggerUpdate(void)
