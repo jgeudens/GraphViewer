@@ -73,12 +73,24 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     connect(_pUi->spinColumn, SIGNAL(valueChanged(int)), this, SLOT(columnUpdated()));
     connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
     connect(_pUi->spinLabelRow, SIGNAL(valueChanged(int)), this, SLOT(labelRowUpdated()));
-
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+
+    // Signal to change preset to manual
+    connect(_pUi->comboFieldSeparator, SIGNAL(activated(int)), this, SLOT(setPresetToManual()));
+    connect(_pUi->lineCustomFieldSeparator, SIGNAL(textEdited(QString)), this, SLOT(setPresetToManual()));
+    connect(_pUi->comboGroupSeparator, SIGNAL(activated(int)), this, SLOT(setPresetToManual()));
+    connect(_pUi->comboDecimalSeparator, SIGNAL(activated(int)), this, SLOT(setPresetToManual()));
+    connect(_pUi->lineComment, SIGNAL(textEdited(QString)), this, SLOT(setPresetToManual()));
+    connect(_pUi->spinDataRow, SIGNAL(editingFinished()), this, SLOT(setPresetToManual()));
+    connect(_pUi->spinColumn, SIGNAL(editingFinished()), this, SLOT(setPresetToManual()));
+    connect(_pUi->checkLabelRow, SIGNAL(clicked(bool)), this, SLOT(setPresetToManual()));
+    connect(_pUi->spinLabelRow, SIGNAL(editingFinished()), this, SLOT(setPresetToManual()));
 
     // Select first preset
     _pUi->comboPreset->setCurrentIndex(-1);
     _pUi->comboPreset->setCurrentIndex(0);
+
+    _pParserModel->triggerUpdate();
 
 }
 
@@ -108,9 +120,7 @@ void LoadFileDialog::updatePath()
 {
     _pUi->lineDataFile->setText(_pParserModel->path());
 
-    setPreset(_pUi->lineDataFile->text());
-
-    // TODO: if no preset => preset to manual and auto settings
+    setPresetAccordingKeyword(_pUi->lineDataFile->text());
 }
 
 void LoadFileDialog::updateFieldSeparator()
@@ -255,16 +265,18 @@ void LoadFileDialog::labelRowUpdated()
 
 void LoadFileDialog::presetSelected(int index)
 {
-    if ((index >= 0) && (index < _presetParser.presetList().size()))
+    const qint32 presetIndex = index - cPresetListOffset;
+
+    if ((presetIndex >= 0) && (presetIndex < _presetParser.presetList().size()))
     {
-        _pParserModel->setColumn(_presetParser.presetList()[index].column -1);
-        _pParserModel->setDataRow(_presetParser.presetList()[index].dataRow - 1);
-        _pParserModel->setLabelRow(_presetParser.presetList()[index].labelRow - 1);
-        _pParserModel->setDecimalSeparator(_presetParser.presetList()[index].decimalSeparator);
-        _pParserModel->setFieldSeparator(_presetParser.presetList()[index].fieldSeparator);
-        _pParserModel->setGroupSeparator(_presetParser.presetList()[index].thousandSeparator);
-        _pParserModel->setCommentSequence(_presetParser.presetList()[index].commentSequence);
-        _pUi->checkDynamicSession->setChecked(_presetParser.presetList()[index].bDynamicSession);
+        _pParserModel->setColumn(_presetParser.presetList()[presetIndex].column -1);
+        _pParserModel->setDataRow(_presetParser.presetList()[presetIndex].dataRow - 1);
+        _pParserModel->setLabelRow(_presetParser.presetList()[presetIndex].labelRow - 1);
+        _pParserModel->setDecimalSeparator(_presetParser.presetList()[presetIndex].decimalSeparator);
+        _pParserModel->setFieldSeparator(_presetParser.presetList()[presetIndex].fieldSeparator);
+        _pParserModel->setGroupSeparator(_presetParser.presetList()[presetIndex].thousandSeparator);
+        _pParserModel->setCommentSequence(_presetParser.presetList()[presetIndex].commentSequence);
+        _pParserModel->setDynamicSession(_presetParser.presetList()[presetIndex].bDynamicSession);
     }
 }
 
@@ -287,6 +299,11 @@ void LoadFileDialog::done(int r)
     {
         QDialog::done(r);
     }
+}
+
+void LoadFileDialog::setPresetToManual()
+{
+    _pUi->comboPreset->setCurrentIndex(cPresetManualIndex);
 }
 
 bool LoadFileDialog::validateSettingsData()
@@ -335,6 +352,7 @@ void LoadFileDialog::loadPreset(void)
     _presetParser.loadPresetsFromFile();
 
     _pUi->comboPreset->clear();
+    _pUi->comboPreset->addItem("Manual");
 
     foreach(PresetParser::Preset preset, _presetParser.presetList())
     {
@@ -342,8 +360,10 @@ void LoadFileDialog::loadPreset(void)
     }
 }
 
-void LoadFileDialog::setPreset(QString filename)
+void LoadFileDialog::setPresetAccordingKeyword(QString filename)
 {
+    qint32 presetComboIndex = -1;
+
     // Loop through presets and set preset if keyword is in filename
     for (qint32 index = 0; index < _presetParser.presetList().size(); index ++)
     {
@@ -351,10 +371,20 @@ void LoadFileDialog::setPreset(QString filename)
         {
             if (QFileInfo(filename).fileName().contains(_presetParser.presetList()[index].keyword, Qt::CaseInsensitive))
             {
-                _pUi->comboPreset->setCurrentIndex(-1);
-                _pUi->comboPreset->setCurrentIndex(index);
+                presetComboIndex = index + cPresetListOffset;
                 break;
             }
         }
     }
+
+    // No preset found
+    if (presetComboIndex == -1)
+    {
+        // set to manual
+        // TODO: set to auto
+        presetComboIndex = cPresetManualIndex;
+    }
+
+    _pUi->comboPreset->setCurrentIndex(-1);
+    _pUi->comboPreset->setCurrentIndex(presetComboIndex);
 }

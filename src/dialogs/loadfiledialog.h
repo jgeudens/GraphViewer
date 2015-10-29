@@ -49,6 +49,7 @@ private slots:
     void presetSelected(int index);
 
     void done(int r);
+    void setPresetToManual();
 
 private:
 
@@ -71,6 +72,9 @@ private:
     static const QList<ComboListItem> _decimalSeparatorList;
     static const QList<ComboListItem> _groupSeparatorList;
 
+    static const quint32 cPresetManualIndex = 0;
+    static const quint32 cPresetListOffset = 1;
+
     Ui::LoadFileDialog * _pUi;
 
     ParserModel * _pParserModel;
@@ -78,7 +82,7 @@ private:
 
     qint32 findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey);
     void loadPreset(void);
-    void setPreset(QString filename);
+    void setPresetAccordingKeyword(QString filename);
 
 };
 

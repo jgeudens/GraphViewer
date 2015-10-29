@@ -46,6 +46,14 @@ ParserModel::~ParserModel()
 void ParserModel::triggerUpdate(void)
 {
     emit dynamicSessionChanged();
+    emit pathChanged();
+    emit fieldSeparatorChanged();
+    emit groupSeparatorChanged();
+    emit decimalSeparatorChanged();
+    emit commentSequenceChanged();
+    emit dataRowChanged();
+    emit columnChanged();
+    emit labelRowChanged();
 }
 
 QString ParserModel::path()
