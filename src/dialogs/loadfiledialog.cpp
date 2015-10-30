@@ -1,5 +1,6 @@
 
 #include <QFileDialog>
+#include <QColor>
 
 #include "util.h"
 
@@ -22,6 +23,9 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
                                                             << ComboListItem(" . (point)", ".")
                                                             << ComboListItem("   (space)", " ");
 
+const QColor LoadFileDialog::_cColorLabel = QColor(150, 255, 150);
+const QColor LoadFileDialog::_cColorData = QColor(200, 255, 200);
+
 LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
@@ -32,6 +36,11 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
 
     // load presets
     loadPreset();
+
+    _pUi->tablePreview->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    _pUi->tablePreview->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    _pUi->tablePreview->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _pUi->tablePreview->setFocusPolicy(Qt::NoFocus);
 
     /*-- Fill combo boxes --*/
     foreach(ComboListItem listItem, _decimalSeparatorList)
@@ -73,6 +82,7 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     connect(_pUi->spinColumn, SIGNAL(valueChanged(int)), this, SLOT(columnUpdated()));
     connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
     connect(_pUi->spinLabelRow, SIGNAL(valueChanged(int)), this, SLOT(labelRowUpdated()));
+
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
 
     // Signal to change preset to manual
@@ -91,7 +101,6 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     _pUi->comboPreset->setCurrentIndex(0);
 
     _pParserModel->triggerUpdate();
-
 }
 
 LoadFileDialog::~LoadFileDialog()
@@ -114,13 +123,18 @@ void LoadFileDialog::open(QString file)
 void LoadFileDialog::updateDynamicSession()
 {
     _pUi->checkDynamicSession->setChecked(_pParserModel->dynamicSession());
+
+    updatePreview();
 }
 
 void LoadFileDialog::updatePath()
 {
     _pUi->lineDataFile->setText(_pParserModel->path());
 
+    loadDataFileSample();
     setPresetAccordingKeyword(_pUi->lineDataFile->text());
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateFieldSeparator()
@@ -143,31 +157,43 @@ void LoadFileDialog::updateFieldSeparator()
         _pUi->comboFieldSeparator->setCurrentIndex(comboIndex);
         _pUi->lineCustomFieldSeparator->setText('\0');
     }
+
+    updatePreview();
 }
 
 void LoadFileDialog::updategroupSeparator()
 {
     _pUi->comboGroupSeparator->setCurrentIndex(findIndexInCombo(_groupSeparatorList, QString(_pParserModel->groupSeparator())));
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateDecimalSeparator()
 {
     _pUi->comboDecimalSeparator->setCurrentIndex(findIndexInCombo(_decimalSeparatorList, QString(_pParserModel->decimalSeparator())));
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateCommentSequence()
 {
     _pUi->lineComment->setText(_pParserModel->commentSequence());
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateDataRow()
 {
     _pUi->spinDataRow->setValue(_pParserModel->dataRow() + 1);  // + 1 based because 0 based internally
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateColumn()
 {
     _pUi->spinColumn->setValue(_pParserModel->column() + 1);  // + 1 based because 0 based internally
+
+    updatePreview();
 }
 
 void LoadFileDialog::updateLabelRow()
@@ -181,6 +207,8 @@ void LoadFileDialog::updateLabelRow()
         _pUi->checkLabelRow->setCheckState(Qt::Checked);
         _pUi->spinLabelRow->setValue(_pParserModel->labelRow() + 1);   // + 1 based because 0 based internally
     }
+
+    updatePreview();
 }
 
 
@@ -265,7 +293,7 @@ void LoadFileDialog::labelRowUpdated()
 
 void LoadFileDialog::presetSelected(int index)
 {
-    const qint32 presetIndex = index - cPresetListOffset;
+    const qint32 presetIndex = index - _cPresetListOffset;
 
     if ((presetIndex >= 0) && (presetIndex < _presetParser.presetList().size()))
     {
@@ -303,7 +331,7 @@ void LoadFileDialog::done(int r)
 
 void LoadFileDialog::setPresetToManual()
 {
-    _pUi->comboPreset->setCurrentIndex(cPresetManualIndex);
+    _pUi->comboPreset->setCurrentIndex(_cPresetManualIndex);
 }
 
 bool LoadFileDialog::validateSettingsData()
@@ -371,7 +399,7 @@ void LoadFileDialog::setPresetAccordingKeyword(QString filename)
         {
             if (QFileInfo(filename).fileName().contains(_presetParser.presetList()[index].keyword, Qt::CaseInsensitive))
             {
-                presetComboIndex = index + cPresetListOffset;
+                presetComboIndex = index + _cPresetListOffset;
                 break;
             }
         }
@@ -382,9 +410,146 @@ void LoadFileDialog::setPresetAccordingKeyword(QString filename)
     {
         // set to manual
         // TODO: set to auto
-        presetComboIndex = cPresetManualIndex;
+        presetComboIndex = _cPresetManualIndex;
     }
 
     _pUi->comboPreset->setCurrentIndex(-1);
     _pUi->comboPreset->setCurrentIndex(presetComboIndex);
+}
+
+void LoadFileDialog::updatePreview()
+{
+    bool bRet = false;
+    QList<QStringList> previewData;
+
+    if (
+        (_pParserModel->fieldSeparator() == _pParserModel->groupSeparator())
+        || (_pParserModel->decimalSeparator() == _pParserModel->groupSeparator())
+        || (_pParserModel->decimalSeparator() == _pParserModel->fieldSeparator())
+        )
+    {
+        previewData.append(QStringList(tr("Parser setting are not valid (field, group, decimal)!")));
+    }
+    else if (_pParserModel->labelRow() >= (qint32)_pParserModel->dataRow())
+    {
+        previewData.append(QStringList(tr("Label row is greater data row!")));
+    }
+    else if (_dataFileSample.size() < _pParserModel->labelRow())
+    {
+        previewData.append(QStringList(tr("No labels according to label row!")));
+    }
+    else if (_dataFileSample.size() == 0)
+    {
+        previewData.append(QStringList(tr("No data file loaded!")));
+    }
+    else if (_dataFileSample.size() < (qint32)(_pParserModel->dataRow() + 1))
+    {
+        previewData.append(QStringList(tr("No data according to data row!")));
+    }
+    else
+    {
+        for (qint32 idx = 0; idx < _dataFileSample.size(); idx++)
+        {
+            previewData.append(_dataFileSample[idx].trimmed().split(_pParserModel->fieldSeparator()));
+        }
+
+        bRet = true;
+    }
+
+    // Add data to table preview component
+    updatePreviewData(previewData);
+
+    if (bRet)
+    {
+        // Update layout of table preview component
+        updatePreviewLayout();
+    }
+
+}
+
+void LoadFileDialog::updatePreviewData(QList<QStringList> & previewData)
+{
+    // find maximum of columns
+    qint32 maxCol = 0;
+    foreach (QStringList col, previewData)
+    {
+        if (col.size() > maxCol)
+        {
+            maxCol = col.size();
+        }
+    }
+
+    // Clear data
+    _pUi->tablePreview->clear();
+
+    // Set size (column and row)
+    _pUi->tablePreview->setColumnCount(maxCol);
+    _pUi->tablePreview->setRowCount(previewData.size());
+
+    // Add data
+    for(qint32 rowIdx = 0; rowIdx < _pUi->tablePreview->rowCount(); rowIdx++)
+    {
+        for(qint32 columnIdx = 0; columnIdx < _pUi->tablePreview->columnCount(); columnIdx++)
+        {
+            QStringList rowData = previewData[rowIdx];
+            QString cellData = QString("");
+            if (columnIdx < rowData.size())
+            {
+                cellData = rowData[columnIdx];
+            }
+            _pUi->tablePreview->setItem(rowIdx, columnIdx, new QTableWidgetItem(cellData));
+        }
+    }
+}
+
+void LoadFileDialog::updatePreviewLayout()
+{
+    for (qint32 rowIdx = 0; rowIdx < _pUi->tablePreview->rowCount(); rowIdx++)
+    {
+        for (qint32 columnIdx = 0; columnIdx < _pUi->tablePreview->columnCount(); columnIdx++)
+        {
+            if (columnIdx >= (qint32)_pParserModel->column())
+            {
+                if (rowIdx == _pParserModel->labelRow())
+                {
+                    _pUi->tablePreview->item(rowIdx, columnIdx)->setBackgroundColor(_cColorLabel);
+                }
+                else if (rowIdx >= (qint32)_pParserModel->dataRow())
+                {
+                    _pUi->tablePreview->item(rowIdx, columnIdx)->setBackgroundColor(_cColorData);
+                }
+                else
+                {
+                    // nothing to do
+                }
+            }
+        }
+    }
+}
+
+void LoadFileDialog::loadDataFileSample()
+{
+    char buf[2048];
+    QFile file(_pParserModel->path());
+    qint32 lineLength;
+
+    _dataFileSample.clear();
+
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        _dataFileSample.clear();
+        while((!file.atEnd()) && (_dataFileSample.size() < _cSampleLineLength))
+        {
+            lineLength = file.readLine(buf, sizeof(buf));
+            if (lineLength > -1)
+            {
+                _dataFileSample.append(QString(buf));
+            }
+            else
+            {
+                _dataFileSample.clear();
+                break;
+            }
+        }
+    }
 }

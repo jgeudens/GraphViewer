@@ -2,6 +2,7 @@
 #define LoadFileDialog_H
 
 #include <QDialog>
+#include <QStringList>
 
 #include "parsermodel.h"
 #include "presetparser.h"
@@ -53,8 +54,6 @@ private slots:
 
 private:
 
-    bool validateSettingsData();
-
     typedef struct _ComboListItem
     {
         _ComboListItem(QString _name, QString _userData)
@@ -67,23 +66,30 @@ private:
         QString userData;
     } ComboListItem;
 
-
-    static const QList<ComboListItem> _fieldSeparatorList;
-    static const QList<ComboListItem> _decimalSeparatorList;
-    static const QList<ComboListItem> _groupSeparatorList;
-
-    static const quint32 cPresetManualIndex = 0;
-    static const quint32 cPresetListOffset = 1;
-
     Ui::LoadFileDialog * _pUi;
 
     ParserModel * _pParserModel;
     PresetParser _presetParser;
 
+    QStringList _dataFileSample;
+
+    bool validateSettingsData();
     qint32 findIndexInCombo(QList<ComboListItem> comboItemList, QString userDataKey);
     void loadPreset(void);
     void setPresetAccordingKeyword(QString filename);
+    void updatePreview();
+    void updatePreviewData(QList<QStringList> & previewData);
+    void updatePreviewLayout();
+    void loadDataFileSample();
 
+    static const QList<ComboListItem> _fieldSeparatorList;
+    static const QList<ComboListItem> _decimalSeparatorList;
+    static const QList<ComboListItem> _groupSeparatorList;
+    static const QColor _cColorLabel;
+    static const QColor _cColorData;
+    static const qint32 _cSampleLineLength = 50;
+    static const quint32 _cPresetManualIndex = 0;
+    static const quint32 _cPresetListOffset = 1;
 };
 
 #endif // LoadFileDialog_H
