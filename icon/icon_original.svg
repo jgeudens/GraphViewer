@@ -13,11 +13,11 @@
    height="64"
    id="svg2987"
    version="1.1"
-   inkscape:version="0.48.5 r10040"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="icon_original.svg"
-   inkscape:export-filename="/home/jens/GraphViewer/GraphViewer-master/icon/icon-16x16.png"
-   inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:export-filename="/home/jens/Projects/GraphViewer/GraphViewer-master/resources/about_images/icon_128x128.png"
+   inkscape:export-xdpi="179.99995"
+   inkscape:export-ydpi="179.99995">
   <defs
      id="defs2989" />
   <sodipodi:namedview
@@ -54,7 +54,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

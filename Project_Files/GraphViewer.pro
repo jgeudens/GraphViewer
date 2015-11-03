@@ -1,4 +1,4 @@
-QT       += core gui xml
+QT       += core gui xml network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
@@ -40,12 +40,16 @@ SOURCES +=  \
     ../src/parser/presetparser.cpp \
     ../src/watchfile.cpp \
     ../src/models/parsermodel.cpp \
-    ../src/parser/settingsauto.cpp
+    ../src/parser/settingsauto.cpp \
+    ../src/util/updatenotify.cpp \
+    ../src/util/versiondownloader.cpp \
+    ../src/dialogs/aboutdialog.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
     ../src/dialogs/loadfiledialog.ui \
-    ../src/dialogs/mainwindow.ui
+    ../src/dialogs/mainwindow.ui \
+    ../src/dialogs/aboutdialog.ui
 
 HEADERS += \
     ../libraries/qcustomplot/qcustomplot.h \
@@ -61,4 +65,10 @@ HEADERS += \
     ../src/util/util.h \
     ../src/watchfile.h \
     ../src/models/parsermodel.h \
-    ../src/parser/settingsauto.h
+    ../src/parser/settingsauto.h \
+    ../src/util/updatenotify.h \
+    ../src/util/versiondownloader.h \
+    ../src/dialogs/aboutdialog.h
+
+RESOURCES += \
+    ../resources/resource.qrc

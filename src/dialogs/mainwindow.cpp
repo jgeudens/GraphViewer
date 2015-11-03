@@ -1,6 +1,7 @@
 
 #include "datafileparser.h"
 #include "axisscaledialog.h"
+#include "aboutdialog.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -150,34 +151,9 @@ void MainWindow::prepareImageExport()
 
 void MainWindow::showAbout()
 {
-    QString lnkAuthor("<a href='mailto:jensgeudens@hotmail.com'>jgeudens</a>");
-    QString lnkGpl("<a href='http://www.gnu.org/licenses/gpl.html#content'>GPL</a>");
-    QString lnkGitHub("<a href='https://github.com/jgeudens/GraphViewer'>GitHub</a>");
+    AboutDialog aboutDialog(this);
 
-    QString lnkQt("<a href='http://qt-project.org/'>Qt</a>");
-    QString lnkQCustomPlot("<a href='http://www.qcustomplot.com/'>QCustomPlot</a>");
-
-    QString appVersion = QString(tr("v%1")).arg(APP_VERSION);
-
-#ifdef DEBUG
-    appVersion.append(QString(tr(" (git: %1:%2)")).arg(GIT_BRANCH).arg(GIT_HASH));
-#endif
-
-    QString version = QString(tr("<b>GraphViewer %1</b><br><br>")).arg(appVersion);
-
-    QString aboutTxt = tr(
-                        "%1"
-                        "GraphViewer is created and maintained by %2. This software is released under the %3 license. "
-                        "The source is freely available at %4.<br><br>"
-                        "GraphViewer uses following libraries:<br>"
-                        "%5<br>"
-                        "%6<br>").arg(version, lnkAuthor, lnkGpl, lnkGitHub, lnkQt, lnkQCustomPlot);
-
-    QMessageBox msgBox(this);
-    msgBox.setWindowTitle("About");
-    msgBox.setTextFormat(Qt::RichText);   //this is what makes the links clickable
-    msgBox.setText(aboutTxt);
-    msgBox.exec();
+    aboutDialog.exec();
 }
 
 void MainWindow::showXAxisScaleDialog()
