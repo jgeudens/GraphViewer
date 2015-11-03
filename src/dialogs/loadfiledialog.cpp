@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QColor>
 
+#include "settingsauto.h"
 #include "util.h"
 
 #include "loadfiledialog.h"
@@ -381,6 +382,7 @@ void LoadFileDialog::loadPreset(void)
 
     _pUi->comboPreset->clear();
     _pUi->comboPreset->addItem("Manual");
+    _pUi->comboPreset->addItem("Auto");
 
     foreach(PresetParser::Preset preset, _presetParser.presetList())
     {
@@ -408,9 +410,29 @@ void LoadFileDialog::setPresetAccordingKeyword(QString filename)
     // No preset found
     if (presetComboIndex == -1)
     {
-        // set to manual
-        // TODO: set to auto
-        presetComboIndex = _cPresetManualIndex;
+        SettingsAuto settingsAutoParser;
+
+        if (settingsAutoParser.updateSettings(_dataFileSample))
+        {
+            _pParserModel->setFieldSeparator(settingsAutoParser.fieldSeparator());
+            _pParserModel->setGroupSeparator(settingsAutoParser.groupSeparator());
+            _pParserModel->setDecimalSeparator(settingsAutoParser.decimalSeparator());
+            _pParserModel->setCommentSequence(settingsAutoParser.commentSequence());
+            _pParserModel->setDataRow(settingsAutoParser.dataRow());
+            _pParserModel->setColumn(settingsAutoParser.column());
+            _pParserModel->setLabelRow(settingsAutoParser.labelRow());
+
+            // set to auto
+            presetComboIndex = _cPresetAutoIndex;
+        }
+        else
+        {
+            // Reset settings to defaults
+            _pParserModel->resetSettings();
+
+            // set to manual
+            presetComboIndex = _cPresetManualIndex;
+        }
     }
 
     _pUi->comboPreset->setCurrentIndex(-1);

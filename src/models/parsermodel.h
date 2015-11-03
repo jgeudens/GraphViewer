@@ -11,6 +11,7 @@ public:
     ~ParserModel();
 
     void triggerUpdate(void);
+    void resetSettings();
 
     QString path();
     bool dynamicSession() const;

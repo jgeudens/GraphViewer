@@ -89,7 +89,8 @@ private:
     static const QColor _cColorData;
     static const qint32 _cSampleLineLength = 50;
     static const quint32 _cPresetManualIndex = 0;
-    static const quint32 _cPresetListOffset = 1;
+    static const quint32 _cPresetAutoIndex = 1;
+    static const quint32 _cPresetListOffset = 2;
 };
 
 #endif // LoadFileDialog_H

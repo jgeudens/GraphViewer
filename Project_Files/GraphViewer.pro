@@ -39,7 +39,8 @@ SOURCES +=  \
     ../src/parser/datafileparser.cpp \
     ../src/parser/presetparser.cpp \
     ../src/watchfile.cpp \
-    ../src/models/parsermodel.cpp
+    ../src/models/parsermodel.cpp \
+    ../src/parser/settingsauto.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
@@ -59,4 +60,5 @@ HEADERS += \
     ../src/parser/presetparser.h \
     ../src/util/util.h \
     ../src/watchfile.h \
-    ../src/models/parsermodel.h
+    ../src/models/parsermodel.h \
+    ../src/parser/settingsauto.h

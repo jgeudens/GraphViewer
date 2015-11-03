@@ -5,8 +5,17 @@
 ParserModel::ParserModel(QObject *parent) : QObject(parent)
 {
     _path = "";
-    _bDynamicSession = false;
 
+    resetSettings();
+}
+
+ParserModel::~ParserModel()
+{
+
+}
+
+void ParserModel::resetSettings()
+{
     /*-- Set default item --*/
     const QChar decimalPoint = QLocale::system().decimalPoint();
 
@@ -36,11 +45,6 @@ ParserModel::ParserModel(QObject *parent) : QObject(parent)
     _dataRow = 1;
     _column = 0;
     _labelRow = 0;
-}
-
-ParserModel::~ParserModel()
-{
-
 }
 
 void ParserModel::triggerUpdate(void)
