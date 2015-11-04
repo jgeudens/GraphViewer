@@ -235,17 +235,20 @@ void LoadFileDialog::dataFileSelected()
 
 void LoadFileDialog::fieldSeparatorSelected(int index)
 {
-    if (_pUi->comboFieldSeparator->itemData(index).toString().toLower() == tr("custom"))
+    if (index > -1)
     {
-        // Enable custom field box
-        _pUi->lineCustomFieldSeparator->setEnabled(true);
-    }
-    else
-    {
-        // Disable custom field box
-        _pUi->lineCustomFieldSeparator->setEnabled(false);
+        if (_pUi->comboFieldSeparator->itemData(index).toString().toLower() == tr("custom"))
+        {
+            // Enable custom field box
+            _pUi->lineCustomFieldSeparator->setEnabled(true);
+        }
+        else
+        {
+            // Disable custom field box
+            _pUi->lineCustomFieldSeparator->setEnabled(false);
 
-        _pParserModel->setFieldSeparator(_pUi->comboFieldSeparator->itemData(index).toString().at(0));
+            _pParserModel->setFieldSeparator(_pUi->comboFieldSeparator->itemData(index).toString().at(0));
+        }
     }
 }
 
@@ -259,12 +262,18 @@ void LoadFileDialog::customFieldSeparatorUpdated()
 
 void LoadFileDialog::groupSeparatorSelected(int index)
 {
-    _pParserModel->setGroupSeparator(_pUi->comboGroupSeparator->itemData(index).toString().at(0));
+    if (index > -1)
+    {
+        _pParserModel->setGroupSeparator(_pUi->comboGroupSeparator->itemData(index).toString().at(0));
+    }
 }
 
 void LoadFileDialog::decimalSeparatorSelected(int index)
 {
-    _pParserModel->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(index).toString().at(0));
+    if (index > -1)
+    {
+        _pParserModel->setDecimalSeparator(_pUi->comboDecimalSeparator->itemData(index).toString().at(0));
+    }
 }
 
 void LoadFileDialog::commentUpdated()
