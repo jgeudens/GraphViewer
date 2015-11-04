@@ -37,7 +37,7 @@
      <x>0</x>
      <y>0</y>
      <width>956</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -88,6 +88,8 @@
      <property name="title">
       <string>Show/Hide</string>
      </property>
+     <addaction name="actionHideAll"/>
+     <addaction name="separator"/>
     </widget>
     <widget class="QMenu" name="menuBringToFront">
      <property name="enabled">
@@ -276,6 +278,11 @@
    </property>
    <property name="text">
     <string>Legend To Right</string>
+   </property>
+  </action>
+  <action name="actionHideAll">
+   <property name="text">
+    <string>Hide All</string>
    </property>
   </action>
  </widget>

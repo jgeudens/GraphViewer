@@ -37,6 +37,7 @@ private slots:
     void menuBringToFrontGraphClicked(bool bState);
     void menuShowHideGraphClicked(bool bState);
     void changeLegendPosition(QAction* pAction);
+    void hideAllGraphs();
 
     /* Model change handlers */
     void showHideGraph(const quint32 index);
@@ -78,6 +79,8 @@ private:
     QActionGroup * _pLegendPositionGroup;
 
     LoadFileDialog * _pLoadDataFileDialog;
+
+    static const quint32 _cGraphShowHideIndex = 2;
 };
 
 #endif // MAINWINDOW_H

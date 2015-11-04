@@ -39,6 +39,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setWatchFile(bool)));
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pParserModel, SLOT(setDynamicSession(bool)));
     connect(_pUi->actionShowHideLegend, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setLegendVisibility(bool)));
+    connect(_pUi->actionHideAll, SIGNAL(triggered()), this, SLOT(hideAllGraphs()));
 
     /*-- connect model to view --*/
     connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
@@ -216,9 +217,17 @@ void MainWindow::changeLegendPosition(QAction* pAction)
     }
 }
 
+void MainWindow::hideAllGraphs()
+{
+    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
+    {
+        _pGuiModel->setGraphVisibility(idx, false);
+    }
+}
+
 void MainWindow::showHideGraph(const quint32 index)
 {
-    _pGraphShowHide->actions().at(index)->setChecked(_pGuiModel->graphVisibility(index));
+    _pGraphShowHide->actions().at(index + _cGraphShowHideIndex)->setChecked(_pGuiModel->graphVisibility(index));
 
     // Show/Hide corresponding "BringToFront" action
     _pGraphBringToFront->actions().at(index)->setVisible(_pGuiModel->graphVisibility((index)));
@@ -234,6 +243,7 @@ void MainWindow::showHideGraph(const quint32 index)
         }
     }
     _pGraphBringToFront->setEnabled(bVisible);
+    _pUi->actionHideAll->setEnabled(bVisible);
 }
 
 void MainWindow::updateBringToFrontGrapMenu()
@@ -258,8 +268,14 @@ void MainWindow::updateValueTooltipMenu()
 
 void MainWindow::clearGraphMenu()
 {
-    // Clear actions
-    _pGraphShowHide->clear();
+    QList<QAction *> hideActionList = _pGraphShowHide->actions();
+
+    /* Keep first and second action ("Hide all" + separator) */
+    for (qint32 idx = _cGraphShowHideIndex; idx < hideActionList.size(); idx++)
+    {
+        _pGraphShowHide->removeAction(hideActionList[idx]);
+    }
+
     _pBringToFrontGroup->actions().clear();
     _pGraphBringToFront->clear();
 }
