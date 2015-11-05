@@ -103,6 +103,11 @@ qint32 SettingsAuto::labelRow()
     return _labelRow;
 }
 
+bool SettingsAuto::timeInMilliSeconds()
+{
+    return _bTimeInMilliSeconds;
+}
+
 bool SettingsAuto::isComment(QString line)
 {
     bool bRet = false;
@@ -152,6 +157,7 @@ bool SettingsAuto::parseFields(QStringList previewData, QLocale locale, QChar fi
             if (!isComment(previewData[parseIdx]))
             {
                 QStringList fields = previewData[parseIdx].split(fieldSeparator);
+
                 foreach(QString field, fields)
                 {
                     bool bOk;
@@ -167,6 +173,21 @@ bool SettingsAuto::parseFields(QStringList previewData, QLocale locale, QChar fi
     else
     {
         return false;
+    }
+
+
+    // If first time field is between 0 and 1, then presume in seconds
+    QString firstTimeField = previewData[_dataRow].split(fieldSeparator)[0];
+    if (
+        (locale.toDouble(firstTimeField) > 0)
+        && (locale.toDouble(firstTimeField) < 1)
+        )
+    {
+        _bTimeInMilliSeconds = false;
+    }
+    else
+    {
+        _bTimeInMilliSeconds = true;
     }
 
     _fieldSeparator = fieldSeparator;

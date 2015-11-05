@@ -19,6 +19,7 @@ public:
     quint32 dataRow();
     quint32 column();
     qint32 labelRow();
+    bool timeInMilliSeconds();
 
 signals:
 
@@ -39,6 +40,7 @@ private:
     quint32 _dataRow;
     quint32 _column;
     qint32 _labelRow;
+    bool _bTimeInMilliSeconds;
 
 };
 

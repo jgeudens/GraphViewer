@@ -69,6 +69,7 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     connect(_pParserModel, SIGNAL(dataRowChanged()), this, SLOT(updateDataRow()));
     connect(_pParserModel, SIGNAL(columnChanged()), this, SLOT(updateColumn()));
     connect(_pParserModel, SIGNAL(labelRowChanged()), this, SLOT(updateLabelRow()));
+    connect(_pParserModel, SIGNAL(timeInMilliSecondsChanged()), this, SLOT(updateTimeInMilliSeconds()));
 
 
     // Handle signal from controls
@@ -83,8 +84,8 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
     connect(_pUi->spinColumn, SIGNAL(valueChanged(int)), this, SLOT(columnUpdated()));
     connect(_pUi->checkLabelRow, SIGNAL(toggled(bool)), this, SLOT(toggledLabelRow(bool)));
     connect(_pUi->spinLabelRow, SIGNAL(valueChanged(int)), this, SLOT(labelRowUpdated()));
-
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
+    connect(_pUi->checkTimeInMilliSeconds, SIGNAL(toggled(bool)), this, SLOT(timeInMilliSecondsUpdated(bool)));
 
     // Signal to change preset to manual
     connect(_pUi->comboFieldSeparator, SIGNAL(activated(int)), this, SLOT(setPresetToManual()));
@@ -212,6 +213,10 @@ void LoadFileDialog::updateLabelRow()
     updatePreview();
 }
 
+void LoadFileDialog::updateTimeInMilliSeconds()
+{
+    _pUi->checkTimeInMilliSeconds->setChecked(_pParserModel->timeInMilliSeconds());
+}
 
 void LoadFileDialog::dynamicSessionUpdated(bool bDynamic)
 {
@@ -301,6 +306,11 @@ void LoadFileDialog::labelRowUpdated()
     _pParserModel->setLabelRow(_pUi->spinLabelRow->value() - 1);   // - 1 based because 0 based internally
 }
 
+void LoadFileDialog::timeInMilliSecondsUpdated(bool bTimeInMilliSeconds)
+{
+    _pParserModel->setTimeInMilliSeconds(bTimeInMilliSeconds);
+}
+
 void LoadFileDialog::presetSelected(int index)
 {
     const qint32 presetIndex = index - _cPresetListOffset;
@@ -315,6 +325,7 @@ void LoadFileDialog::presetSelected(int index)
         _pParserModel->setGroupSeparator(_presetParser.presetList()[presetIndex].thousandSeparator);
         _pParserModel->setCommentSequence(_presetParser.presetList()[presetIndex].commentSequence);
         _pParserModel->setDynamicSession(_presetParser.presetList()[presetIndex].bDynamicSession);
+        _pParserModel->setTimeInMilliSeconds(_presetParser.presetList()[presetIndex].bTimeInMilliSeconds);
     }
 }
 
@@ -430,6 +441,7 @@ void LoadFileDialog::setPresetAccordingKeyword(QString filename)
             _pParserModel->setDataRow(settingsAutoParser.dataRow());
             _pParserModel->setColumn(settingsAutoParser.column());
             _pParserModel->setLabelRow(settingsAutoParser.labelRow());
+            _pParserModel->setTimeInMilliSeconds(settingsAutoParser.timeInMilliSeconds());
 
             // set to auto
             presetComboIndex = _cPresetAutoIndex;
@@ -465,13 +477,13 @@ void LoadFileDialog::updatePreview()
     {
         previewData.append(QStringList(tr("Label row is greater data row!")));
     }
-    else if (_dataFileSample.size() < _pParserModel->labelRow())
-    {
-        previewData.append(QStringList(tr("No labels according to label row!")));
-    }
     else if (_dataFileSample.size() == 0)
     {
         previewData.append(QStringList(tr("No data file loaded!")));
+    }
+    else if (_dataFileSample.size() < _pParserModel->labelRow())
+    {
+        previewData.append(QStringList(tr("No labels according to label row!")));
     }
     else if (_dataFileSample.size() < (qint32)(_pParserModel->dataRow() + 1))
     {

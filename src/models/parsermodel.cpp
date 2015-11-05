@@ -45,6 +45,7 @@ void ParserModel::resetSettings()
     _dataRow = 1;
     _column = 0;
     _labelRow = 0;
+    _bTimeInMilliSeconds = true;
 }
 
 void ParserModel::triggerUpdate(void)
@@ -58,6 +59,7 @@ void ParserModel::triggerUpdate(void)
     emit dataRowChanged();
     emit columnChanged();
     emit labelRowChanged();
+    emit timeInMilliSecondsChanged();
 }
 
 QString ParserModel::path()
@@ -164,6 +166,15 @@ void ParserModel::setLabelRow(qint32 labelRow)
     }
 }
 
+void ParserModel::setTimeInMilliSeconds(bool timeInMilliSeconds)
+{
+    if (_bTimeInMilliSeconds != timeInMilliSeconds)
+    {
+        _bTimeInMilliSeconds = timeInMilliSeconds;
+        emit timeInMilliSecondsChanged();
+    }
+}
+
 QChar ParserModel::fieldSeparator() const
 {
     return _fieldSeparator;
@@ -197,5 +208,10 @@ quint32 ParserModel::column() const
 qint32 ParserModel::labelRow() const
 {
     return _labelRow;
+}
+
+bool ParserModel::timeInMilliSeconds() const
+{
+    return _bTimeInMilliSeconds;
 }
 
