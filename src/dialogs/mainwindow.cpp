@@ -309,6 +309,7 @@ void MainWindow::addGraphMenu()
     }
 
     _pGraphShowHide->setEnabled(true);
+    _pUi->actionHideAll->setEnabled(true);
     _pGraphBringToFront->setEnabled(true);
 }
 
