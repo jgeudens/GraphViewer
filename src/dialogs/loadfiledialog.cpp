@@ -294,6 +294,14 @@ void LoadFileDialog::columnUpdated()
 void LoadFileDialog::toggledLabelRow(bool bLabelRow)
 {
     _pUi->spinLabelRow->setEnabled(bLabelRow);
+    if (bLabelRow)
+    {
+         _pParserModel->setLabelRow(_pUi->spinLabelRow->value() - 1);   // - 1 based because 0 based internally
+    }
+    else
+    {
+        _pParserModel->setLabelRow(-1);
+    }
 }
 
 void LoadFileDialog::labelRowUpdated()
