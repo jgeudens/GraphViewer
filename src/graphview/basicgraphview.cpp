@@ -37,7 +37,6 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObjec
    _pPlot->xAxis->setRange(0, 10000);
    _pPlot->xAxis->setAutoTicks(true);
    _pPlot->xAxis->setAutoTickLabels(false);
-   _pPlot->xAxis->setLabel("Time (s)");
    connect(_pPlot->xAxis, SIGNAL(ticksRequest()), this, SLOT(generateTickLabels()));
 
    _pPlot->yAxis->setRange(0, 65535);
@@ -198,10 +197,12 @@ void BasicGraphView::generateTickLabels()
     /* Clear ticks vector */
     tickLabels.clear();
 
+    const bool bSmallScale = smallScaleActive(ticks);
+
     /* Generate correct labels */
     for (qint32 index = 0; index < ticks.size(); index++)
     {
-        tickLabels.append(createTickLabelString(ticks[index]));
+        tickLabels.append(createTickLabelString(ticks[index], bSmallScale));
     }
 
     /* Set labels */
@@ -389,8 +390,10 @@ void BasicGraphView::paintValueToolTip(QMouseEvent *event)
                     {
                         bInRange = true;
 
+                        const bool bSmallScale = smallScaleActive(keyList.toVector());
+
                         // Add tick key string
-                        toolText = createTickLabelString(keyList[keyIndex]);
+                        toolText = createTickLabelString(keyList[keyIndex], bSmallScale);
 
                         // Check all graphs
                         for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
@@ -493,44 +496,52 @@ void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
     }
 }
 
-QString BasicGraphView::createTickLabelString(qint64 tickKey)
+QString BasicGraphView::createTickLabelString(qint64 tickKey, bool bSmallScale)
 {
     QString tickLabel;
-    bool bNegative;
-    quint64 tmp;
 
-    if (tickKey < 0)
+    if (bSmallScale)
     {
-        bNegative = true;
-        tmp = -1 * tickKey;
+        tickLabel = QString("%1").arg(tickKey);
     }
     else
     {
-        bNegative = false;
-        tmp = tickKey;
-    }
+        bool bNegative;
+        quint64 tmp;
 
-    tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
+        if (tickKey < 0)
+        {
+            bNegative = true;
+            tmp = -1 * tickKey;
+        }
+        else
+        {
+            bNegative = false;
+            tmp = tickKey;
+        }
 
-    quint32 hours = tmp / (60 * 60 * 1000);
-    tmp = tmp % (60 * 60 * 1000);
+        tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
 
-    quint32 minutes = tmp / (60 * 1000);
-    tmp = tmp % (60 * 1000);
+        quint32 hours = tmp / (60 * 60 * 1000);
+        tmp = tmp % (60 * 60 * 1000);
 
-    quint32 seconds = tmp / 1000;
-    quint32 milliseconds = tmp % 1000;
+        quint32 minutes = tmp / (60 * 1000);
+        tmp = tmp % (60 * 1000);
 
-    tickLabel = QString("%1:%2:%3%4%5").arg(hours)
-                                                .arg(minutes, 2, 10, QChar('0'))
-                                                .arg(seconds, 2, 10, QChar('0'))
-                                                .arg(QLocale::system().decimalPoint())
-                                               .arg(milliseconds, 2, 10, QChar('0'));
+        quint32 seconds = tmp / 1000;
+        quint32 milliseconds = tmp % 1000;
 
-    // Make sure minus sign is shown when tick number is negative
-    if (bNegative)
-    {
-        tickLabel = "-" + tickLabel;
+        tickLabel = QString("%1:%2:%3%4%5").arg(hours)
+                                                    .arg(minutes, 2, 10, QChar('0'))
+                                                    .arg(seconds, 2, 10, QChar('0'))
+                                                    .arg(QLocale::system().decimalPoint())
+                                                   .arg(milliseconds, 2, 10, QChar('0'));
+
+        // Make sure minus sign is shown when tick number is negative
+        if (bNegative)
+        {
+            tickLabel = "-" + tickLabel;
+        }
     }
 
     return tickLabel;
@@ -565,4 +576,27 @@ qint32 BasicGraphView::graphIndex(QCPGraph * pGraph)
     }
 
     return ret;
+}
+
+bool BasicGraphView::smallScaleActive(QVector<double> tickList)
+{
+    bool bRet = false;
+    if (
+        (tickList.last() < _cSmallScaleMax)
+        && (qAbs(tickList.last() - tickList.first()) < _cSmallScaleDiff)
+        )
+    {
+        bRet = true;
+    }
+
+    if (bRet)
+    {
+        _pPlot->xAxis->setLabel("Time (ms)");
+    }
+    else
+    {
+        _pPlot->xAxis->setLabel("Time (s)");
+    }
+
+    return bRet;
 }
