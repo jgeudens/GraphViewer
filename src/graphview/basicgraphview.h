@@ -79,14 +79,12 @@ private:
     qint32 graphIndex(QCPGraph * pGraph);
     bool smallScaleActive(QVector<double> tickList);
 
-
     QVector<QString> tickLabels;
 
     static const qint32 _cPixelNearThreshold = 20; /* in pixels */
     static const qint32 _cPixelPerPointThreshold = 5; /* in pixels */
 
     static const quint32 _cSmallScaleDiff = 2000;
-    static const quint32 _cSmallScaleMax = 100000;
 
 };
 

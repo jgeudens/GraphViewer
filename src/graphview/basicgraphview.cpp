@@ -581,10 +581,7 @@ qint32 BasicGraphView::graphIndex(QCPGraph * pGraph)
 bool BasicGraphView::smallScaleActive(QVector<double> tickList)
 {
     bool bRet = false;
-    if (
-        (tickList.last() < _cSmallScaleMax)
-        && (qAbs(tickList.last() - tickList.first()) < _cSmallScaleDiff)
-        )
+    if (qAbs(tickList.last() - tickList.first()) < _cSmallScaleDiff)
     {
         bRet = true;
     }

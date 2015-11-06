@@ -24,11 +24,29 @@ void ExtendedGraphView::updateData(QList<QList<double> > * pDataLists)
 {
     const QVector<double> timeData = pDataLists->at(0).toVector();
 
+    quint64 totalPoints = 0;
     for (qint32 i = 1; i < pDataLists->size(); i++)
     {
         //Add data to graphs
         QVector<double> graphData = pDataLists->at(i).toVector();
         _pPlot->graph(i - 1)->setData(timeData, graphData);
+
+        totalPoints += graphData.size();
+    }
+
+    // Check if optimizations are needed
+    if (totalPoints > _cOptimizeThreshold)
+    {
+        _pGuiModel->setHighlightSamples(false);
+
+        // Set width to 1
+        for (qint32 i = 0; i <  _pPlot->graphCount(); i++)
+        {
+             _pPlot->graph(i)->pen().setWidth(1);
+        }
+
+        // Disable anti aliasing
+        _pPlot->setNotAntialiasedElements(QCP::aeAll);
     }
 
     // Rescale only axis that are in auto scale mode

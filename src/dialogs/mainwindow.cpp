@@ -439,7 +439,6 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
         _pGuiModel->setFrontGraph(0);
         _pGuiModel->setLoadedFile(QFileInfo(_pParserModel->path()).fileName());
         _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
-        //TODO_pGuiModel->setDynamicSession(_pDataFileParser->getDataParseSettings()->getDynamicSession());
         _pGuiModel->setLegendVisibility(true);
         _pUi->menuLegend->setEnabled(true);
 
