@@ -228,6 +228,17 @@ bool PresetParser::parsePresetTag(const QDomElement &element, Preset *pPreset)
                 pPreset->bDynamicSession = false;
             }
         }
+        else if (child.tagName() == "timeinmilliseconds")
+        {
+            if (!child.text().toLower().compare("true"))
+            {
+                pPreset->bTimeInMilliSeconds = true;
+            }
+            else
+            {
+                pPreset->bTimeInMilliSeconds = false;
+            }
+        }
         else if (child.tagName() == "keyword")
         {
             pPreset->keyword = child.text();

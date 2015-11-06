@@ -1,13 +1,10 @@
 <graphviewer>
 	<parsepreset>
-		<name>Manual</name>
-	</parsepreset>
-	<parsepreset>
 		<name>Default (be)</name>
 		<keyword>-be</keyword>
 		<fieldseparator><![CDATA[;]]></fieldseparator>
 		<decimalseparator><![CDATA[,]]></decimalseparator>
-		<thousandseparator><![CDATA[.]]></thousandseparator>
+		<thousandseparator><![CDATA[ ]]></thousandseparator>
 		<commentSequence><![CDATA[//]]></commentSequence>
 		<column>1</column>
 		<labelrow>1</labelrow>
@@ -61,6 +58,19 @@
 		<labelrow>11</labelrow>
 		<datarow>12</datarow>
 		<dynamicsession>false</dynamicsession>
+	</parsepreset>
+	
+	<parsepreset>
+		<name>be-seconds</name>
+		<fieldseparator><![CDATA[;]]></fieldseparator>
+		<decimalseparator><![CDATA[,]]></decimalseparator>
+		<thousandseparator><![CDATA[ ]]></thousandseparator>
+		<commentSequence><![CDATA[//]]></commentSequence>
+		<column>1</column>
+		<labelrow>1</labelrow>
+		<datarow>2</datarow>
+		<dynamicsession>false</dynamicsession>
+		<timeinmilliseconds>false</timeinmilliseconds>
 	</parsepreset>
 
 </graphviewer>

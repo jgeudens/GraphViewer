@@ -142,6 +142,10 @@ bool DataFileParser::readData()
                 }
                 else
                 {
+                    if (!_pParserModel->timeInMilliSeconds())
+                    {
+                        number *= 1000;
+                    }
                     _dataRows[i - _pParserModel->column()].append(number);
                 }
             }
