@@ -7,9 +7,9 @@ TEMPLATE = app
 
 win32: RC_ICONS = ../icon/application.ico
 
-VERSION = 0.4.0
+VERSION = 1.0.0
 
-DEFINES += DEBUG
+DEFINES += NDEBUG
 
 DEFINES += GIT_HASH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --short HEAD)\\\""
 DEFINES += GIT_BRANCH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --abbrev-ref HEAD)\\\""
