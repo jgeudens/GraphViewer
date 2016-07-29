@@ -9,7 +9,7 @@ win32: RC_ICONS = ../icon/application.ico
 
 VERSION = 1.0.0
 
-DEFINES += NDEBUG
+DEFINES += DEBUG
 
 DEFINES += GIT_HASH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --short HEAD)\\\""
 DEFINES += GIT_BRANCH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse --abbrev-ref HEAD)\\\""
@@ -54,13 +54,15 @@ SOURCES +=  \
     ../src/models/graphdatamodel.cpp \
     ../src/util/util.cpp \
     ../src/graphview/myqcpgraph.cpp \
-    ../src/graphview/myqcustomplot.cpp
+    ../src/graphview/myqcustomplot.cpp \
+    ../src/dialogs/markerinfodialog.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
     ../src/dialogs/loadfiledialog.ui \
     ../src/dialogs/mainwindow.ui \
-    ../src/dialogs/aboutdialog.ui
+    ../src/dialogs/aboutdialog.ui \
+    ../src/dialogs/markerinfodialog.ui
 
 HEADERS += \
     ../libraries/qcustomplot/qcustomplot.h \
@@ -87,7 +89,8 @@ HEADERS += \
     ../src/customwidgets/verticalscrollareacontents.h \
     ../src/models/graphdatamodel.h \
     ../src/graphview/myqcpgraph.h \
-    ../src/graphview/myqcustomplot.h
+    ../src/graphview/myqcustomplot.h \
+    ../src/dialogs/markerinfodialog.h
 
 RESOURCES += \
     ../resources/resource.qrc

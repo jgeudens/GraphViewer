@@ -36,6 +36,9 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pGraphView = new ExtendedGraphView(_pGuiModel, _pGraphDataModel, _pUi->customPlot, this);
     _pWatchFile = new WatchFile(_pGuiModel, _pParserModel);
 
+    _pMarkerInfo = _pUi->markerInfo;
+    _pMarkerInfo->setModel(_pGuiModel, _pGraphDataModel);
+
     _pLoadDataFileDialog = new LoadFileDialog(_pGuiModel, _pParserModel, this);
     connect(_pLoadDataFileDialog, SIGNAL(accepted()), this, SLOT(loadDataFileAccepted()));
 
@@ -120,9 +123,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
-    _pMarkerInfo = _pUi->markerInfo;
-    _pMarkerInfo->setModel(_pGuiModel, _pGraphDataModel);
-
     /* Update interface via model */
     _pGuiModel->triggerUpdate();
     _pParserModel->triggerUpdate();
@@ -165,6 +165,7 @@ void MainWindow::exitApplication()
 
 void MainWindow::selectImageExportFile()
 {
+    QString filePath;
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -174,12 +175,36 @@ void MainWindow::selectImageExportFile()
     dialog.setNameFilter(tr("PNG files (*.png)"));
     dialog.setDirectory(_pGuiModel->lastDir());
 
-    if (dialog.exec())
+    /* Add question wether to save when legend is undocked */
+    bool bProceed = false;
+    if (_pUi->legendDock->isFloating())
     {
-        QString filePath = dialog.selectedFiles().first();
-        _pGuiModel->setLastDir(QFileInfo(filePath).dir().absolutePath());
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Save screenshot?", "The legend dock is floating, it won't be included in the screenshot. \n\nAre you sure want to proceed?", QMessageBox::Yes|QMessageBox::No);
+        if (reply == QMessageBox::Yes)
+        {
+            bProceed = true;
+        }
+        else
+        {
+            bProceed = false;
+        }
+    }
+    else
+    {
+        bProceed = true;
+    }
 
-        _pGraphView->exportGraphImage(filePath);
+    if (bProceed)
+    {
+        if (dialog.exec())
+        {
+            filePath = dialog.selectedFiles().first();
+            _pGuiModel->setLastDir(QFileInfo(filePath).dir().absolutePath());
+
+            QPixmap pixMap = this->window()->grab();
+            pixMap.save(filePath);
+        }
     }
 }
 

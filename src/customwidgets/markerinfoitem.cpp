@@ -15,10 +15,22 @@ MarkerInfoItem::MarkerInfoItem(QWidget *parent) : QFrame(parent)
     _pGraphCombo = new QComboBox(this);
     _pGraphCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
-    _pGraphDataLabel = new QLabel("", this);
+    QWidget * pInfoWidget = new QWidget(this);
+    QHBoxLayout *pInfoLayout = new QHBoxLayout(this);
+
+    _pGraphDataLabelLeft = new QLabel("", this);
+    _pGraphDataLabelRight = new QLabel("", this);
+    _pGraphDataLabelRight->setAlignment(Qt::AlignTop);
+
+    pInfoLayout->setSpacing(0);
+    pInfoLayout->setContentsMargins(0, 2, 0, 0); // This is redundant with setMargin, which is deprecated
+    pInfoLayout->addWidget(_pGraphDataLabelLeft);
+    pInfoLayout->addWidget(_pGraphDataLabelRight);
+
+    pInfoWidget->setLayout(pInfoLayout);
 
     _pLayout->addWidget(_pGraphCombo);
-    _pLayout->addWidget(_pGraphDataLabel);
+    _pLayout->addWidget(pInfoWidget);
 
     connect(_pGraphCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(graphSelected(qint32)));
 
@@ -39,6 +51,9 @@ void MarkerInfoItem::setModel(GuiModel * pGuiModel, GraphDataModel * pGraphDataM
     connect(_pGuiModel, SIGNAL(startMarkerPosChanged()), this, SLOT(updateGraphList()));
     connect(_pGuiModel, SIGNAL(endMarkerPosChanged()), this, SLOT(updateGraphList()));
 
+    connect(_pGuiModel, SIGNAL(markerExpressionMaskChanged()), this, SLOT(updateData()));
+    connect(_pGuiModel, SIGNAL(markerExpressionCustomScriptChanged()), this, SLOT(updateData()));
+
     updateGraphList();
 }
 
@@ -46,28 +61,50 @@ void MarkerInfoItem::updateData()
 {
     const qint32 graphIdx = _pGraphCombo->currentData().toInt();
 
-    QCPDataMap * dataMap = _pGraphDataModel->dataMap(graphIdx);
-
     if (graphIdx >= 0)
     {
-        /*dataMap[0].value() */
-        _pGraphDataLabel->setText(QString("%1").arg(graphIdx));
+        QCPDataMap * dataMap = _pGraphDataModel->dataMap(graphIdx);
+        QStringList expressionList;
+        const quint32 mask = _pGuiModel->markerExpressionMask();
 
+        for(qint32 idx = 0; idx < GuiModel::cMarkerExpressionBits.size(); idx++)
+        {
+            if (mask & GuiModel::cMarkerExpressionBits[idx])
+            {
+                QString expression = GuiModel::cMarkerExpressionStrings[idx];
+                const double expressionValue = calculateMarkerExpressionValue(GuiModel::cMarkerExpressionBits[idx]);
 
-        QString graphData = QString(
-                    "y1: %0\n"
-                    "y2: %1\n"
-                    "Diff: %2\n"
-                    )
-                    .arg(dataMap->value(_pGuiModel->startMarkerPos()).value)
-                    .arg(dataMap->value(_pGuiModel->endMarkerPos()).value)
-                    .arg(dataMap->value(_pGuiModel->endMarkerPos()).value - dataMap->value(_pGuiModel->startMarkerPos()).value);
+                expressionList.append(expression.arg(Util::formatDoubleForExport(expressionValue)));
+            }
+        }
 
-        _pGraphDataLabel->setText(graphData);
+        /* Add permanent items (y1, y2) */
+        expressionList.prepend(GuiModel::cMarkerExpressionEnd.arg(Util::formatDoubleForExport(dataMap->value(_pGuiModel->endMarkerPos()).value)));
+        expressionList.prepend(GuiModel::cMarkerExpressionStart.arg(Util::formatDoubleForExport(dataMap->value(_pGuiModel->startMarkerPos()).value)));
+
+        /* Construct labels data */
+        const qint32 leftRowCount = expressionList.size() - expressionList.size() / 2;
+        QString graphDataLeft;
+        QString graphDataRight;
+        for(qint32 idx = 0; idx < expressionList.size(); idx++)
+        {
+            if (idx < leftRowCount)
+            {
+                graphDataLeft.append(expressionList[idx]);
+            }
+            else
+            {
+                graphDataRight.append(expressionList[idx]);
+            }
+        }
+
+        _pGraphDataLabelLeft->setText(graphDataLeft);
+        _pGraphDataLabelRight->setText(graphDataRight);
+
     }
     else
     {
-
+        /* No graph selected */
     }
 }
 
@@ -135,7 +172,8 @@ void MarkerInfoItem::graphSelected(qint32 index)
     }
     else
     {
-         _pGraphDataLabel->setText("None");
+         _pGraphDataLabelLeft->setText("None");
+         _pGraphDataLabelRight->setText("");
     }
 }
 
@@ -166,4 +204,102 @@ void MarkerInfoItem::selectGraph(qint32 graphIndex)
             break;
         }
     }
+}
+
+double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
+{
+    double result = 0;
+    const qint32 graphIdx = _pGraphCombo->currentData().toInt();
+
+    if (graphIdx >= 0)
+    {
+
+        QCPDataMap * pDataMap = _pGraphDataModel->dataMap(graphIdx);
+        const double valueDiff = pDataMap->value(_pGuiModel->endMarkerPos()).value - pDataMap->value(_pGuiModel->startMarkerPos()).value;
+        const double timeDiff = _pGuiModel->endMarkerPos() - _pGuiModel->startMarkerPos();
+
+        QCPDataMap::iterator dataPoint;
+        QCPDataMap::iterator start;
+        QCPDataMap::iterator end;
+
+        /* make sure we go in ascending order */
+        if (_pGuiModel->endMarkerPos() > _pGuiModel->startMarkerPos())
+        {
+            start = pDataMap->lowerBound(_pGuiModel->startMarkerPos());
+            end = pDataMap->upperBound(_pGuiModel->endMarkerPos());
+        }
+        else
+        {
+            /* Change order */
+            start = pDataMap->lowerBound(_pGuiModel->endMarkerPos());
+            end = pDataMap->upperBound(_pGuiModel->startMarkerPos());
+        }
+
+
+        if (expressionMask == GuiModel::cDifferenceMask)
+        {
+            result = valueDiff;
+        }
+        else if (expressionMask == GuiModel::cSlopeMask)
+        {
+            result = valueDiff / timeDiff;
+        }
+        else if (expressionMask == GuiModel::cAverageMask)
+        {
+            double avg = 0;
+            quint32 count = 0;
+            for (dataPoint = start; dataPoint != end; dataPoint++)
+            {
+                count++;
+                avg += dataPoint.value().value;
+            }
+
+            if (count == 0)
+            {
+                result = 0;
+            }
+            else
+            {
+                result = avg / count;
+            }
+        }
+        else if (expressionMask == GuiModel::cMinimumMask)
+        {
+            double min = 0xFFFFFFFF;
+
+            for (dataPoint = start; dataPoint != end; dataPoint++)
+            {
+                if (dataPoint.value().value < min)
+                {
+                    min = dataPoint.value().value;
+                }
+            }
+
+            result = min;
+        }
+        else if (expressionMask == GuiModel::cMaximumMask)
+        {
+            double max = -1 * 0xFFFFFFFF;;
+
+            for (dataPoint = start; dataPoint != end; dataPoint++)
+            {
+                if (dataPoint.value().value > max)
+                {
+                    max = dataPoint.value().value;
+                }
+            }
+
+            result = max;
+        }
+        else if (expressionMask == GuiModel::cCustomMask)
+        {
+            /* TODO: call python script */
+        }
+        else
+        {
+            result = 0;
+        }
+    }
+
+    return result;
 }

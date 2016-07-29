@@ -1,28 +1,37 @@
 #include <QColor>
+#include <QStringList>
+#include <QList>
 #include "util.h"
 #include "guimodel.h"
 
 
 const QString GuiModel::_cWindowTitle = QString("GraphViewer");
-const QList<QColor> GuiModel::_colorlist = QList<QColor>() << QColor(0, 0, 0)
-                                                           << QColor(0, 0, 255)
-                                                           << QColor(0, 255, 255)
-                                                           << QColor(0, 255, 0)
-                                                           << QColor(220, 220, 0)
-                                                           << QColor(220, 153, 14)
-                                                           << QColor(255, 165, 0)
-                                                           << QColor(255, 0, 0)
-                                                           << QColor(255, 160, 122)
-                                                           << QColor(230, 104, 86)
-                                                           << QColor(205, 205, 180)
-                                                           << QColor(157, 153, 120)
-                                                           << QColor(139, 69, 19)
-                                                           << QColor(255, 20, 147)
-                                                           << QColor(74, 112, 139)
-                                                           << QColor(46, 139, 87)
-                                                           << QColor(128, 0, 128)
-                                                           << QColor(189, 183, 107)
-                                                           ;
+
+const quint32 GuiModel::cDifferenceMask    = 1 << 0;
+const quint32 GuiModel::cSlopeMask         = 1 << 1;
+const quint32 GuiModel::cAverageMask       = 1 << 2;
+const quint32 GuiModel::cMinimumMask       = 1 << 3;
+const quint32 GuiModel::cMaximumMask       = 1 << 4;
+const quint32 GuiModel::cCustomMask        = 1 << 5;
+
+const QStringList GuiModel::cMarkerExpressionStrings = QStringList()
+                                                        <<  "Diff: %0\n"
+                                                        <<  "Slope: %0\n"
+                                                        <<  "Avg: %0\n"
+                                                        <<  "Min: %0\n"
+                                                        <<  "Max: %0\n"
+                                                        <<  "Custom: %0\n";
+
+const QList<quint32> GuiModel::cMarkerExpressionBits = QList<quint32>()
+                        << GuiModel::cDifferenceMask
+                        << GuiModel::cSlopeMask
+                        << GuiModel::cAverageMask
+                        << GuiModel::cMinimumMask
+                        << GuiModel::cMaximumMask
+                        << GuiModel::cCustomMask
+                        ;
+const QString GuiModel::cMarkerExpressionStart = QString("y1: %0\n");
+const QString GuiModel::cMarkerExpressionEnd = QString("y2: %0\n");
 
 GuiModel::GuiModel(QObject *parent) : QObject(parent)
 {
@@ -45,6 +54,9 @@ GuiModel::GuiModel(QObject *parent) : QObject(parent)
     _endMarkerPos = 0;
 
     _bMarkerState = false;
+
+    _markerExpressionMask = cDifferenceMask;
+    _markerExpressionCustomScript = "";
 }
 
 GuiModel::~GuiModel()
@@ -65,6 +77,8 @@ void GuiModel::triggerUpdate(void)
     emit dataFilePathChanged();
 
     emit markerStateChanged();
+    emit markerExpressionMaskChanged();
+    emit markerExpressionCustomScriptChanged();
 }
 
 qint32 GuiModel::frontGraph() const
@@ -244,6 +258,36 @@ bool GuiModel::markerState()
     return _bMarkerState;
 }
 
+quint32 GuiModel::markerExpressionMask()
+{
+    return _markerExpressionMask;
+}
+
+void GuiModel::setMarkerExpressionMask(quint32 mask)
+{
+    if (_markerExpressionMask != mask)
+    {
+        qDebug() << "Marker bits changed:" << mask;
+        _markerExpressionMask = mask;
+
+        emit markerExpressionMaskChanged();
+    }
+}
+
+QString GuiModel::markerExpressionCustomScript()
+{
+    return _markerExpressionCustomScript;
+}
+
+void GuiModel::setMarkerExpressionCustomScript(QString path)
+{
+    if (_markerExpressionCustomScript != path)
+    {
+        _markerExpressionCustomScript = path;
+
+        emit markerExpressionCustomScriptChanged();
+    }
+}
 
 void GuiModel::clearMarkersState(void)
 {
