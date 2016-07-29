@@ -73,19 +73,30 @@ bool DataFileParser::processDataFile()
     if (bRet)
     {
         bRet = readData();
+
+        // Get time data from data
+        _timeRow = _dataRows[0];
+
+        // Remove time data
+        _dataLabels.removeAt(0);
     }
 
     return bRet;
 }
 
-QList<QList<double> > & DataFileParser::getDataRows()
+QList<QList<double> > & DataFileParser::dataRows()
 {
     return _dataRows;
 }
 
-QStringList & DataFileParser::getDataLabels()
+QStringList & DataFileParser::dataLabels()
 {
     return _dataLabels;
+}
+
+QList<double> DataFileParser::timeRow()
+{
+    return _timeRow;
 }
 
 bool DataFileParser::readData()

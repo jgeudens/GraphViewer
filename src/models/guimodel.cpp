@@ -1,4 +1,5 @@
 #include <QColor>
+#include "util.h"
 #include "guimodel.h"
 
 
@@ -25,14 +26,25 @@ const QList<QColor> GuiModel::_colorlist = QList<QColor>() << QColor(0, 0, 0)
 
 GuiModel::GuiModel(QObject *parent) : QObject(parent)
 {
-    _graphData.clear();
     _frontGraph = 0;
-    _loadedFile = "";
+    _dataFilePath = "";
+
+    QStringList docPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
+    if (docPath.size() > 0)
+    {
+        _lastDir = docPath[0];
+    }
+
     _bWatchFile = false;
     _bHighlightSamples = true;
     _bValueTooltip = false;
-    _bLegendVisibility = false;
-    _legendPosition = BasicGraphView::LEGEND_MIDDLE;
+    _bStartMarkerState = false;
+    _startMarkerPos = 0;
+
+    _bEndMarkerState = false;
+    _endMarkerPos = 0;
+
+    _bMarkerState = false;
 }
 
 GuiModel::~GuiModel()
@@ -42,83 +54,17 @@ GuiModel::~GuiModel()
 
 void GuiModel::triggerUpdate(void)
 {
-    if (_graphData.size() > 0)
-    {
-        for (quint8 idx = 0; idx < _graphData.size(); idx++)
-        {
-            emit graphVisibilityChanged(idx);
-        }
-    }
-
     emit frontGraphChanged();
     emit highlightSamplesChanged();
     emit valueTooltipChanged();
     emit windowTitleChanged();
     emit watchFileChanged();
-    emit legendVisibilityChanged();
-    emit legendPositionChanged();
-}
+    emit xAxisScalingChanged();
+    emit yAxisScalingChanged();
+    emit guiStateChanged();
+    emit dataFilePathChanged();
 
-void GuiModel::addGraphs(QStringList labels, QList<QList<double> > data)
-{
-
-    for (qint32 idx = 1; idx < labels.size(); idx++)
-    {
-        GraphData * pGraphData = new GraphData();
-
-        pGraphData->bVisibility = true;
-        pGraphData->label = labels[idx];
-
-        pGraphData->color = getColor(idx);
-
-
-        _graphData.append(pGraphData);
-    }
-
-    emit graphsAdded(data);
-}
-
-void GuiModel::clearGraph()
-{
-    _graphData.clear();
-    setFrontGraph(-1);
-    emit graphCleared();
-}
-
-quint32 GuiModel::graphCount()
-{
-    if (_graphData.size() > 0)
-    {
-        return _graphData.size();
-    }
-    else
-    {
-        return 0;
-    }
-}
-
-bool GuiModel::graphVisibility(quint32 index) const
-{
-    return _graphData[index]->bVisibility;
-}
-
-QColor GuiModel::graphColor(quint32 index) const
-{
-    return _graphData[index]->color;
-}
-
-QString GuiModel::graphLabel(quint32 index) const
-{
-    return _graphData[index]->label;
-}
-
-void GuiModel::setGraphVisibility(quint32 index, const bool &value)
-{
-    if (_graphData[index]->bVisibility != value)
-    {
-         _graphData[index]->bVisibility = value;
-         emit graphVisibilityChanged(index);
-    }
+    emit markerStateChanged();
 }
 
 qint32 GuiModel::frontGraph() const
@@ -136,20 +82,6 @@ void GuiModel::setFrontGraph(const qint32 &frontGraph)
         {
             emit frontGraphChanged();
         }
-    }
-}
-
-QString GuiModel::loadedFile() const
-{
-    return _loadedFile;
-}
-
-void GuiModel::setLoadedFile(const QString &loadedFile)
-{
-    if (_loadedFile != loadedFile)
-    {
-        _loadedFile = loadedFile;
-         emit loadedFileChanged();
     }
 }
 
@@ -195,12 +127,6 @@ void GuiModel::setValueTooltip(bool bValueTooltip)
     }
 }
 
-QColor GuiModel::getColor(const quint32 index)
-{
-    const quint32 colorIndex = index % _colorlist.size();
-    return _colorlist[colorIndex];
-}
-
 QString GuiModel::windowTitle()
 {
     return _windowTitle;
@@ -225,31 +151,36 @@ void GuiModel::setWindowTitleDetail(QString detail)
     }
 }
 
-bool GuiModel::legendVisibility()
+QString GuiModel::dataFilePath()
 {
-    return _bLegendVisibility;
+    return _dataFilePath;
 }
 
-void GuiModel::setLegendVisibility(bool bLegendVisibility)
+void GuiModel::setDataFilePath(QString path)
 {
-    if (_bLegendVisibility != bLegendVisibility)
-    {
-        _bLegendVisibility = bLegendVisibility;
-         emit legendVisibilityChanged();
+    if (_dataFilePath != path)
+    {   
+        _dataFilePath = path;
+        emit dataFilePathChanged();
     }
 }
 
-BasicGraphView::LegendsPositionOptions GuiModel::legendPosition()
+void GuiModel::setLastDir(QString dir)
 {
-    return _legendPosition;
+    _lastDir = dir;
 }
 
-void GuiModel::setLegendPosition(BasicGraphView::LegendsPositionOptions pos)
+QString GuiModel::lastDir()
 {
-    if (_legendPosition != pos)
+    return _lastDir;
+}
+
+void GuiModel::setxAxisScale(BasicGraphView::AxisScaleOptions scaleMode)
+{
+    if (_guiSettings.xScaleMode != scaleMode)
     {
-        _legendPosition = pos;
-         emit legendPositionChanged();
+        _guiSettings.xScaleMode = scaleMode;
+        emit xAxisScalingChanged();
     }
 }
 
@@ -258,24 +189,6 @@ BasicGraphView::AxisScaleOptions GuiModel::xAxisScalingMode()
     return _guiSettings.xScaleMode;
 }
 
-void GuiModel::setxAxisScale(BasicGraphView::AxisScaleOptions scaleMode)
-{
-    // We only allow manual or auto
-    if (
-            (scaleMode != BasicGraphView::SCALE_MANUAL)
-            && (scaleMode != BasicGraphView::SCALE_AUTO)
-        )
-    {
-        scaleMode = BasicGraphView::SCALE_AUTO;
-        qDebug() << "Unsupported x axis scaling selected";
-    }
-
-    if (_guiSettings.xScaleMode != scaleMode)
-    {
-        _guiSettings.xScaleMode = scaleMode;
-        emit xAxisScalingChanged();
-    }
-}
 
 BasicGraphView::AxisScaleOptions GuiModel::yAxisScalingMode()
 {
@@ -300,3 +213,128 @@ void GuiModel::setyAxisScale(BasicGraphView::AxisScaleOptions scaleMode)
         emit yAxisScalingChanged();
     }
 }
+
+void GuiModel::setGuiState(quint32 state)
+{
+    if (_guiState != state)
+    {
+        _guiState = state;
+        emit guiStateChanged();
+    }
+}
+
+quint32 GuiModel::guiState()
+{
+    return _guiState;
+}
+
+
+double GuiModel::startMarkerPos()
+{
+    return _startMarkerPos;
+}
+
+double GuiModel::endMarkerPos()
+{
+    return _endMarkerPos;
+}
+
+bool GuiModel::markerState()
+{
+    return _bMarkerState;
+}
+
+
+void GuiModel::clearMarkersState(void)
+{
+    setStartMarkerState(false);
+    setEndMarkerState(false);
+}
+
+void GuiModel::setStartMarkerPos(double pos)
+{
+    if (
+            (_startMarkerPos != pos)
+            || (!_bStartMarkerState)
+        )
+    {
+        if (
+            (!_bEndMarkerState)
+            || (pos != _endMarkerPos)
+        )
+        {
+            setStartMarkerState(true);
+            _startMarkerPos = pos;
+
+            emit startMarkerPosChanged();
+        }
+    }
+}
+
+void GuiModel::setEndMarkerPos(double pos)
+{
+    if (
+            (_endMarkerPos != pos)
+            || (!_bEndMarkerState)
+        )
+    {
+        if (
+            (!_bStartMarkerState)
+            || (pos != _startMarkerPos)
+        )
+        {
+            setEndMarkerState(true);
+            _endMarkerPos = pos;
+
+            emit endMarkerPosChanged();
+        }
+    }
+}
+
+
+void GuiModel::setStartMarkerState(bool bState)
+{
+    if (_bStartMarkerState != bState)
+    {
+        _bStartMarkerState = bState;
+
+        if (_bStartMarkerState && _bEndMarkerState)
+        {
+            setMarkerState(true);
+        }
+
+        if (!_bStartMarkerState && !_bEndMarkerState)
+        {
+             setMarkerState(false);
+        }
+    }
+}
+
+void GuiModel::setEndMarkerState(bool bState)
+{
+    if (_bEndMarkerState != bState)
+    {
+        _bEndMarkerState = bState;
+
+        if (_bStartMarkerState && _bEndMarkerState)
+        {
+            setMarkerState(true);
+        }
+
+        if (!_bStartMarkerState && !_bEndMarkerState)
+        {
+            setMarkerState(false);
+        }
+    }
+}
+
+void GuiModel::setMarkerState(bool bState)
+{
+    if (_bMarkerState != bState)
+    {
+        _bMarkerState = bState;
+
+        emit markerStateChanged();
+    }
+}
+

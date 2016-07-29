@@ -21,6 +21,7 @@ DEFINES += QT_DEBUG_OUTPUT
 INCLUDEPATH += \
     ../libraries/qcustomplot \
     ../src    \
+    ../src/customwidgets \
     ../src/dialogs \
     ../src/graphview \
     ../src/models \
@@ -43,7 +44,17 @@ SOURCES +=  \
     ../src/parser/settingsauto.cpp \
     ../src/util/updatenotify.cpp \
     ../src/util/versiondownloader.cpp \
-    ../src/dialogs/aboutdialog.cpp
+    ../src/dialogs/aboutdialog.cpp \
+    ../src/customwidgets/legend.cpp \
+    ../src/customwidgets/legenditem.cpp \
+    ../src/customwidgets/markerinfo.cpp \
+    ../src/customwidgets/markerinfoitem.cpp \
+    ../src/customwidgets/verticalscrollareacontents.cpp \
+    ../src/models/graphdata.cpp \
+    ../src/models/graphdatamodel.cpp \
+    ../src/util/util.cpp \
+    ../src/graphview/myqcpgraph.cpp \
+    ../src/graphview/myqcustomplot.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
@@ -68,7 +79,15 @@ HEADERS += \
     ../src/parser/settingsauto.h \
     ../src/util/updatenotify.h \
     ../src/util/versiondownloader.h \
-    ../src/dialogs/aboutdialog.h
+    ../src/dialogs/aboutdialog.h \
+    ../src/customwidgets/legend.h \
+    ../src/customwidgets/legenditem.h \
+    ../src/customwidgets/markerinfo.h \
+    ../src/customwidgets/markerinfoitem.h \
+    ../src/customwidgets/verticalscrollareacontents.h \
+    ../src/models/graphdatamodel.h \
+    ../src/graphview/myqcpgraph.h \
+    ../src/graphview/myqcustomplot.h
 
 RESOURCES += \
     ../resources/resource.qrc

@@ -2,11 +2,12 @@
 #define BASICGRAPHVIEW_H
 
 #include <QObject>
-#include "qcustomplot.h"
+#include "myqcustomplot.h"
 
 
 /* forward declaration */
 class GuiModel;
+class GraphDataModel;
 
 class BasicGraphView : public QObject
 {
@@ -21,14 +22,7 @@ public:
         SCALE_MANUAL
     } AxisScaleOptions;
 
-    typedef enum
-    {
-        LEGEND_LEFT = 0,
-        LEGEND_MIDDLE,
-        LEGEND_RIGHT,
-    } LegendsPositionOptions;
-
-    explicit BasicGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent = 0);
+    explicit BasicGraphView(GuiModel *pGuiModel, GraphDataModel * pGraphDataModel, MyQCustomPlot *pPlot, QObject *parent = 0);
     virtual ~BasicGraphView();
 
     void exportGraphImage(QString imageFile);
@@ -43,12 +37,15 @@ public slots:
 
     virtual void enableValueTooltip();
     virtual void enableSamplePoints();
-    virtual void clearGraphs();
-    virtual void addGraphs();
-    virtual void showHideLegend();
-    virtual void showGraph(quint32 index);
+    virtual void clearGraph(const quint32 graphIdx);
+    virtual void updateGraphs();
+    virtual void showGraph(quint32 graphIdx);
+    virtual void changeGraphColor(const quint32 graphIdx);
+    virtual void changeGraphLabel(const quint32 graphIdx);
     virtual void bringToFront();
-    virtual void updateLegendPosition();
+    virtual void updateMarkersVisibility();
+    virtual void setStartMarker();
+    virtual void setEndMarker();
 
 signals:
 
@@ -56,10 +53,9 @@ private slots:
     void generateTickLabels();
     void selectionChanged();
 
-    void mousePress();
+    void mousePress(QMouseEvent *event);
+    void mouseRelease();
     void mouseWheel();
-    void legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
-    void legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event);
     void mouseMove(QMouseEvent *event);
     void paintValueToolTip(QMouseEvent *event);
 
@@ -69,17 +65,20 @@ protected slots:
 
 protected:
     GuiModel * _pGuiModel;
-    QCustomPlot * _pPlot;
+    GraphDataModel * _pGraphDataModel;
+    MyQCustomPlot * _pPlot;
     bool _bEnableTooltip;
     bool _bEnableSampleHighlight;
 
 private:
-    QString createTickLabelString(qint64 tickKey, bool bSmallScale);
     void highlightSamples(bool bState);
     qint32 graphIndex(QCPGraph * pGraph);
     bool smallScaleActive(QVector<double> tickList);
 
     QVector<QString> tickLabels;
+
+    QCPItemStraightLine * _pStartMarker;
+    QCPItemStraightLine * _pEndMarker;
 
     static const qint32 _cPixelNearThreshold = 20; /* in pixels */
     static const qint32 _cPixelPerPointThreshold = 5; /* in pixels */

@@ -5,6 +5,7 @@
 #include <QStringList>
 
 #include "parsermodel.h"
+#include "guimodel.h"
 #include "presetparser.h"
 
 namespace Ui {
@@ -17,7 +18,7 @@ class LoadFileDialog : public QDialog
 
 public:
 
-    explicit LoadFileDialog(ParserModel * pParserModel, QWidget *parent = 0);
+    explicit LoadFileDialog(GuiModel * pGuiModel, ParserModel * pParserModel, QWidget *parent = 0);
     ~LoadFileDialog();
 
     void open();
@@ -37,7 +38,7 @@ private slots:
     void updateTimeInMilliSeconds();
 
     void dynamicSessionUpdated(bool bDynamic);
-    void dataFileSelected();
+    void selectDataFile();
     void fieldSeparatorSelected(int index);
     void customFieldSeparatorUpdated();
     void groupSeparatorSelected(int  index);
@@ -71,6 +72,7 @@ private:
     Ui::LoadFileDialog * _pUi;
 
     ParserModel * _pParserModel;
+    GuiModel *_pGuiModel;
     PresetParser _presetParser;
 
     QStringList _dataFileSample;

@@ -17,8 +17,10 @@ public:
 
     bool forceProcessDataFile();
     bool processDataFile();
-    QList<QList<double> > & getDataRows();
-    QStringList & getDataLabels();
+
+    QList<QList<double> > & dataRows();
+    QStringList & dataLabels();
+    QList<double> timeRow();
 
 private:
 
@@ -37,6 +39,7 @@ private:
 
     QList<QList<double> > _dataRows;
     QStringList _dataLabels;
+    QList<double> _timeRow;
 };
 
 #endif // DATAFILEPARSER_H

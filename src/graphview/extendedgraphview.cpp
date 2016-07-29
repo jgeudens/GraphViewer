@@ -1,11 +1,15 @@
-#include "extendedgraphview.h"
+
+#include "util.h"
 #include "guimodel.h"
+#include "graphdatamodel.h"
+#include "extendedgraphview.h"
 
-
-ExtendedGraphView::ExtendedGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent):
-    BasicGraphView(pGuiModel, pPlot)
+ExtendedGraphView::ExtendedGraphView(GuiModel * pGuiModel, GraphDataModel * pRegisterDataModel, MyQCustomPlot *pPlot, QObject *parent):
+    BasicGraphView(pGuiModel, pRegisterDataModel, pPlot)
 {
     Q_UNUSED(parent);
+
+    connect(_pPlot->xAxis, SIGNAL(rangeChanged(QCPRange, QCPRange)), this, SLOT(xAxisRangeChanged(QCPRange, QCPRange)));
 }
 
 ExtendedGraphView::~ExtendedGraphView()
@@ -13,18 +17,78 @@ ExtendedGraphView::~ExtendedGraphView()
 
 }
 
-void ExtendedGraphView::addGraphs(QList<QList<double> > data)
+QList<double> ExtendedGraphView::graphTimeData()
 {
-    BasicGraphView::addGraphs();
-
-    updateData(&data);
+    return _pPlot->graph(0)->data()->keys();
 }
 
-void ExtendedGraphView::updateData(QList<QList<double> > * pDataLists)
+QList<QCPData> ExtendedGraphView::graphData(qint32 index)
 {
-    const QVector<double> timeData = pDataLists->at(0).toVector();
+    return _pPlot->graph(index)->data()->values();
+}
 
+void ExtendedGraphView::addData(QList<double> timeData, QList<QList<double> > data)
+{
+    updateData(&timeData, &data);
+}
+
+
+void ExtendedGraphView::clearResults()
+{
+    for (qint32 i = 0; i < _pPlot->graphCount(); i++)
+    {
+        _pPlot->graph(i)->clearData();
+        _pPlot->graph(i)->setName(QString("(-) %1").arg(_pGraphDataModel->label(i)));
+    }
+
+   rescalePlot();
+}
+
+void ExtendedGraphView::rescalePlot()
+{
+
+    // scale x-axis
+    if (_pGuiModel->xAxisScalingMode() == SCALE_AUTO)
+    {
+        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        {
+            _pPlot->xAxis->rescale();
+        }
+        else
+        {
+            _pPlot->xAxis->setRange(0, 10000);
+        }
+    }
+    else // Manual
+    {
+
+    }
+
+    // scale y-axis
+    if (_pGuiModel->yAxisScalingMode() == SCALE_AUTO)
+    {
+        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        {
+            _pPlot->yAxis->rescale(true);
+        }
+        else
+        {
+            _pPlot->yAxis->setRange(0, 10);
+        }
+    }
+    else // Manual
+    {
+
+    }
+
+    _pPlot->replot();
+}
+
+void ExtendedGraphView::updateData(QList<double> *pTimeData, QList<QList<double> > * pDataLists)
+{
     quint64 totalPoints = 0;
+    const QVector<double> timeData = pTimeData->toVector();
+
     for (qint32 i = 1; i < pDataLists->size(); i++)
     {
         //Add data to graphs
@@ -69,42 +133,19 @@ void ExtendedGraphView::updateData(QList<QList<double> > * pDataLists)
     _pPlot->replot();
 }
 
-void ExtendedGraphView::rescalePlot()
+void ExtendedGraphView::xAxisRangeChanged(const QCPRange &newRange, const QCPRange &oldRange)
 {
+    QCPRange range = newRange;
 
-    // scale x-axis
-    if (_pGuiModel->xAxisScalingMode() == SCALE_AUTO)
+    if (newRange.upper <= 0)
     {
-        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
-        {
-            _pPlot->xAxis->rescale();
-        }
-        else
-        {
-            _pPlot->xAxis->setRange(0, 10000);
-        }
-    }
-    else // Manual
-    {
-
+        range.upper = oldRange.upper;
     }
 
-    // scale y-axis
-    if (_pGuiModel->yAxisScalingMode() == SCALE_AUTO)
+    if (newRange.lower <= 0)
     {
-        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
-        {
-            _pPlot->yAxis->rescale(true);
-        }
-        else
-        {
-            _pPlot->yAxis->setRange(0, 10);
-        }
-    }
-    else // Manual
-    {
-
+        range.lower = 0;
     }
 
-    _pPlot->replot();
+    _pPlot->xAxis->setRange(range);
 }

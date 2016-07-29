@@ -9,41 +9,48 @@ class GuiModel : public QObject
 {
     Q_OBJECT
 public:
+
     explicit GuiModel(QObject *parent = 0);
     ~GuiModel();
 
+    enum
+    {
+        INIT,
+        DATA_LOADED,
+    };
+
     void triggerUpdate(void);
 
-    bool graphVisibility(quint32 index) const;
-    QColor graphColor(quint32 index) const;
-    QString graphLabel(quint32 index) const;
-
     qint32 frontGraph() const;
-    QString loadedFile() const;
-    void setLoadedFile(const QString &loadedFile);
     bool watchFile() const;
     bool highlightSamples() const;
     bool valueTooltip() const;
-    void addGraphs(QStringList labels, QList<QList<double> > data);
-    void clearGraph();
-    quint32 graphCount();
     QString windowTitle();
-    bool legendVisibility();
-    BasicGraphView::LegendsPositionOptions legendPosition();
+    QString dataFilePath();
+    QString lastDir();
     BasicGraphView::AxisScaleOptions xAxisScalingMode();
     BasicGraphView::AxisScaleOptions  yAxisScalingMode();
     void setxAxisScale(BasicGraphView::AxisScaleOptions scaleMode);
     void setyAxisScale(BasicGraphView::AxisScaleOptions scaleMode);
+    quint32 guiState();
+    double startMarkerPos();
+    double endMarkerPos();
+    bool markerState();
+
+    void setDataFilePath(QString path);
+    void setLastDir(QString dir);
 
 public slots:
     void setValueTooltip(bool bValueTooltip);
     void setHighlightSamples(bool bHighlightSamples);
     void setWatchFile(bool bWatchFile);
     void setFrontGraph(const qint32 &frontGraph);
-    void setGraphVisibility(quint32 index, const bool &value);
+
     void setWindowTitleDetail(QString detail);
-    void setLegendVisibility(bool bLegendVisibility);
-    void setLegendPosition(BasicGraphView::LegendsPositionOptions pos);
+    void setGuiState(quint32 state);
+    void clearMarkersState(void);
+    void setStartMarkerPos(double pos);
+    void setEndMarkerPos(double pos);
 
 signals:
 
@@ -51,20 +58,25 @@ signals:
     void graphCleared();
     void graphsAdded(QList<QList<double> > data);
     void frontGraphChanged();
-    void loadedFileChanged();
     void highlightSamplesChanged();
     void valueTooltipChanged();
     void windowTitleChanged();
     void watchFileChanged();
-    void legendVisibilityChanged();
-    void legendPositionChanged();
     void xAxisScalingChanged();
     void yAxisScalingChanged();
+    void guiStateChanged();
+    void dataFilePathChanged();
+    void markerStateChanged();
+    void startMarkerPosChanged();
+    void endMarkerPosChanged();
 
-public slots:
-
+private slots:
 
 private:
+
+    void setStartMarkerState(bool bState);
+    void setEndMarkerState(bool bState);
+    void setMarkerState(bool bState);
 
     typedef struct
     {
@@ -73,22 +85,25 @@ private:
 
     } GuiSettings;
 
-    QColor getColor(const quint32 index);
-
-    QList<GraphData * > _graphData;
-
     qint32 _frontGraph;
     GuiSettings _guiSettings;
 
-    QString _loadedFile;
     QString _windowTitle;
 
     bool _bWatchFile;
+    QString _dataFilePath;
+    QString _lastDir; // Last directory opened for import/export/load project
 
     bool _bHighlightSamples;
     bool _bValueTooltip;
-    bool _bLegendVisibility;
-    BasicGraphView::LegendsPositionOptions _legendPosition;
+    quint32 _guiState;
+
+    bool _bMarkerState;
+    bool _bStartMarkerState;
+    double _startMarkerPos;
+
+    bool _bEndMarkerState;
+    double _endMarkerPos;
 
     static const QString _cWindowTitle;
     static const QList<QColor> _colorlist;

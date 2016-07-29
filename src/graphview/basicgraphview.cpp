@@ -6,15 +6,19 @@
 #include <algorithm> // std::upperbound, std::lowerbound
 
 #include "guimodel.h"
+#include "util.h"
+#include "graphdatamodel.h"
 #include "basicgraphview.h"
 
-BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObject *parent) :
+BasicGraphView::BasicGraphView(GuiModel * pGuiModel, GraphDataModel * pGraphDataModel, MyQCustomPlot * pPlot, QObject *parent) :
     QObject(parent)
 {
     _pGuiModel = pGuiModel;
+    _pGraphDataModel = pGraphDataModel;
 
    _pPlot = pPlot;
 
+   /* Range drag is also enabled/disabled on mousePress and mouseRelease event */
    _pPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
 
    // disable anti aliasing while dragging
@@ -37,14 +41,10 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObjec
    _pPlot->xAxis->setRange(0, 10000);
    _pPlot->xAxis->setAutoTicks(true);
    _pPlot->xAxis->setAutoTickLabels(false);
+   _pPlot->xAxis->setLabel("Time (s)");
    connect(_pPlot->xAxis, SIGNAL(ticksRequest()), this, SLOT(generateTickLabels()));
 
    _pPlot->yAxis->setRange(0, 65535);
-
-   _pPlot->legend->setVisible(false);
-   QFont legendFont = QApplication::font();
-   legendFont.setPointSize(10);
-   _pPlot->legend->setFont(legendFont);
 
    // Tooltip is enabled
    _bEnableTooltip = true;
@@ -59,13 +59,30 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, QCustomPlot * pPlot, QObjec
    connect(_pPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
 
    // connect slots that takes care that when an axis is selected, only that direction can be dragged and zoomed:
-   connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
+   connect(_pPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress(QMouseEvent*)));
+   connect(_pPlot, SIGNAL(mouseRelease(QMouseEvent*)), this, SLOT(mouserRelease()));
    connect(_pPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
    connect(_pPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisDoubleClicked(QCPAxis*)));
-   connect(_pPlot, SIGNAL(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
-   connect(_pPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)));
    connect(_pPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(mouseMove(QMouseEvent*)));
    connect(_pPlot, SIGNAL(beforeReplot()), this, SLOT(handleSamplePoints()));
+
+   QPen markerPen;
+   markerPen.setWidth(2);
+
+   markerPen.setColor(QColor(Qt::green));
+   _pStartMarker = new QCPItemStraightLine(_pPlot);
+   _pPlot->addItem(_pStartMarker);
+   _pStartMarker->setVisible(false);
+   _pStartMarker->setPen(markerPen);
+
+   markerPen.setColor(QColor(Qt::red));
+   _pEndMarker = new QCPItemStraightLine(_pPlot);
+   _pPlot->addItem(_pEndMarker);
+   _pEndMarker->setVisible(false);
+   _pEndMarker->setPen(markerPen);
+
+   _pPlot->replot();
+
 }
 
 BasicGraphView::~BasicGraphView()
@@ -99,7 +116,7 @@ void BasicGraphView::manualScaleYAxis(qint64 min, qint64 max)
 
 void BasicGraphView::autoScaleXAxis()
 {
-    _pPlot->rescaleAxes(true);
+    _pPlot->xAxis->rescale(true);
     _pPlot->replot();
 }
 
@@ -120,48 +137,151 @@ void BasicGraphView::enableSamplePoints()
     _pPlot->replot();
 }
 
-void BasicGraphView::clearGraphs()
+void BasicGraphView::clearGraph(const quint32 graphIdx)
 {
-    _pPlot->clearGraphs();
-    _pPlot->replot();
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+
+        QList<quint16> activeGraphList;
+        _pGraphDataModel->activeGraphIndexList(&activeGraphList);
+
+        if (activeGraphList.size() <= 0)
+        {
+            // No active graph: not possible
+        }
+        else if (activeGraphList.size() == 1)
+        {
+            /* Only one graph active: clear all data */
+            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
+            pMap->clear();
+
+            _pPlot->replot();
+        }
+        else
+        {
+            /* Several active graph, keep time data but clear data */
+
+            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
+
+            /* Clear all values, keep keys */
+            QMutableMapIterator<double, QCPData> i(*pMap);
+            while (i.hasNext())
+            {
+                i.next();
+
+                i.setValue(QCPData(i.key(), 0));
+            }
+
+            _pPlot->replot();
+        }
+    }
 }
 
-void BasicGraphView::addGraphs()
+void BasicGraphView::updateGraphs()
 {
-    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
+    /* Clear graphs and add current active graphs */
+    _pPlot->clearGraphs();
+
+    QList<quint16> activeGraphList;
+    _pGraphDataModel->activeGraphIndexList(&activeGraphList);
+
+    if (activeGraphList.size() > 0)
     {
-        QCPGraph * pGraph = _pPlot->addGraph();
+        // All graphs should have the same amount of points.
+        // Loop over graphs and get maximum count of samples
+        qint32 maxSampleCount = 0;
+        quint32 maxSampleIdx = 0;
 
-        pGraph->setName(_pGuiModel->graphLabel(idx));
+        foreach(quint16 graphIdx, activeGraphList)
+        {
+            const qint32 sampleCount = _pGraphDataModel->dataMap(graphIdx)->keys().size();
+            if (sampleCount > maxSampleCount)
+            {
+                maxSampleCount = sampleCount;
+                maxSampleIdx = graphIdx;
+            }
+        }
 
-        QPen pen;
-        pen.setColor(_pGuiModel->graphColor(idx));
-        pen.setWidth(2);
-        pen.setCosmetic(true);
+        // Graph that have less points will be zeroed with that amount of points
+        foreach(quint16 graphIdx, activeGraphList)
+        {
+            // Add graph
+            MyQCPGraph * pGraph = _pPlot->addCustomGraph();
 
-        pGraph->setPen(pen);
+            pGraph->setName(_pGraphDataModel->label(graphIdx));
+
+            QPen pen;
+            pen.setColor(_pGraphDataModel->color(graphIdx));
+            pen.setWidth(2);
+            pen.setCosmetic(true);
+
+            pGraph->setPen(pen);
+
+
+            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
+
+            // Set data to zero when needed
+            if (_pGraphDataModel->dataMap(graphIdx)->keys().size() != maxSampleCount)
+            {
+                const QCPDataMap * pReferenceMap = _pGraphDataModel->dataMap(maxSampleIdx);
+                pMap->clear();
+
+                // Add zero value for every key (x-coordinate)
+                foreach(double key, pReferenceMap->keys())
+                {
+                    pMap->insert(key, QCPData(key, 0));
+                }
+            }
+
+            // Set graph datamap
+            pGraph->setData(pMap, false);
+        }
     }
 
     _pPlot->replot();
 }
 
-void BasicGraphView::showHideLegend()
-{
-    _pPlot->legend->setVisible(_pGuiModel->legendVisibility());
-    _pPlot->replot();
+void BasicGraphView::showGraph(quint32 graphIdx)
+{    
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const bool bShow = _pGraphDataModel->isVisible(graphIdx);
+
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        _pPlot->graph(activeIdx)->setVisible(bShow);
+
+        _pPlot->replot();
+    }
 }
 
-void BasicGraphView::showGraph(quint32 index)
+void BasicGraphView::changeGraphColor(const quint32 graphIdx)
 {
-    const bool bShow = _pGuiModel->graphVisibility(index);
-    _pPlot->graph(index)->setVisible(bShow);
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
 
-    QFont itemFont = _pPlot->legend->item(index)->font();
-    itemFont.setStrikeOut(!bShow);
+        QPen pen;
+        pen.setColor(_pGraphDataModel->color(graphIdx));
+        pen.setWidth(2);
+        pen.setCosmetic(true);
 
-    _pPlot->legend->item(index)->setFont(itemFont);
+        _pPlot->graph(activeIdx)->setPen(pen);
 
-    _pPlot->replot();
+        _pPlot->replot();
+    }
+}
+
+void BasicGraphView::changeGraphLabel(const quint32 graphIdx)
+{
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        _pPlot->graph(activeIdx)->setName(_pGraphDataModel->label(graphIdx));
+
+        _pPlot->replot();
+    }
 }
 
 void BasicGraphView::bringToFront()
@@ -173,20 +293,32 @@ void BasicGraphView::bringToFront()
     }
 }
 
-void BasicGraphView::updateLegendPosition()
+void BasicGraphView::updateMarkersVisibility()
 {
-    if (_pGuiModel->legendPosition() == LEGEND_LEFT)
+    if (_pGuiModel->markerState() == false)
     {
-         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignLeft|Qt::AlignTop);
+        _pStartMarker->setVisible(false);
+        _pEndMarker->setVisible(false);
+
+        _pPlot->replot();
     }
-    else if (_pGuiModel->legendPosition() == LEGEND_MIDDLE)
-    {
-         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignCenter|Qt::AlignTop);
-    }
-    else if (_pGuiModel->legendPosition() == LEGEND_RIGHT)
-    {
-         _pPlot ->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignRight|Qt::AlignTop);
-    }
+}
+
+void BasicGraphView::setStartMarker()
+{
+    _pStartMarker->setVisible(true);
+    _pStartMarker->point1->setCoords(_pGuiModel->startMarkerPos(), 0);
+    _pStartMarker->point2->setCoords(_pGuiModel->startMarkerPos(), 1);
+
+    _pPlot->replot();
+}
+
+void BasicGraphView::setEndMarker()
+{
+    _pEndMarker->setVisible(true);
+    _pEndMarker->point1->setCoords(_pGuiModel->endMarkerPos(), 0);
+    _pEndMarker->point2->setCoords(_pGuiModel->endMarkerPos(), 1);
+
     _pPlot->replot();
 }
 
@@ -202,7 +334,7 @@ void BasicGraphView::generateTickLabels()
     /* Generate correct labels */
     for (qint32 index = 0; index < ticks.size(); index++)
     {
-        tickLabels.append(createTickLabelString(ticks[index], bSmallScale));
+        tickLabels.append(Util::formatTime(ticks[index], bSmallScale));
     }
 
     /* Set labels */
@@ -230,23 +362,87 @@ void BasicGraphView::selectionChanged()
 
 }
 
-void BasicGraphView::mousePress()
+void BasicGraphView::mousePress(QMouseEvent *event)
 {
-   // if an axis is selected, only allow the direction of that axis to be dragged
-   // if no axis is selected, both directions may be dragged
+   if (event->modifiers() & Qt::ControlModifier)
+   {
+       /* Disable range drag when control key is pressed */
+       _pPlot->setInteraction(QCP::iRangeDrag, false);
+       _pPlot->setInteraction(QCP::iRangeZoom, false);
 
-   if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeDrag(_pPlot->xAxis->orientation());
-   }
-   else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-   {
-       _pPlot->axisRect()->setRangeDrag(_pPlot->yAxis->orientation());
+       const double xPos = _pPlot->xAxis->pixelToCoord(event->pos().x());
+
+       double correctXPos = 0;
+       if (_pPlot->graphCount() > 0)
+       {
+           const QList<double> keyList = _pPlot->graph(0)->data()->keys();
+
+           // find the nearest point
+           for (qint32 i = 1; i < keyList.size(); i++)
+           {
+               const double leftPoint = keyList[i - 1];
+               const double rightPoint = keyList[i];
+
+               if (
+                   (xPos > leftPoint)
+                   && (xPos <= rightPoint)
+                   )
+               {
+                   const double xCoordPxl = xPos - leftPoint;
+                   const double diff = rightPoint - leftPoint;
+
+                   if (xCoordPxl > diff / 2)
+                   {
+                       correctXPos = rightPoint;
+                   }
+                   else
+                   {
+                       correctXPos = leftPoint;
+                   }
+
+                   break;
+               }
+           }
+       }
+
+       if (event->button() & Qt::LeftButton)
+       {
+            _pGuiModel->setStartMarkerPos(correctXPos);
+       }
+       else if (event->button() & Qt::RightButton)
+       {
+            _pGuiModel->setEndMarkerPos(correctXPos);
+       }
+       else
+       {
+           // No function
+       }
    }
    else
    {
-       _pPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+       // if an axis is selected, only allow the direction of that axis to be dragged
+       // if no axis is selected, both directions may be dragged
+
+       if (_pPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+       {
+           _pPlot->axisRect()->setRangeDrag(_pPlot->xAxis->orientation());
+       }
+       else if (_pPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+       {
+           _pPlot->axisRect()->setRangeDrag(_pPlot->yAxis->orientation());
+       }
+       else
+       {
+           _pPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+       }
    }
+}
+
+void BasicGraphView::mouseRelease()
+{
+    /* Always re-enable range drag */
+    _pPlot->setInteraction(QCP::iRangeDrag, true);
+    _pPlot->setInteraction(QCP::iRangeZoom, true);
 }
 
 void BasicGraphView::mouseWheel()
@@ -272,50 +468,12 @@ void BasicGraphView::mouseWheel()
    }
 }
 
-void BasicGraphView::legendClick(QCPLegend * legend, QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
-{
-    Q_UNUSED(event);
-
-    if ((NULL != legend) && (NULL != abstractLegendItem))
-    {
-        // Check for selection
-        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
-        if (legendItem != 0)
-        {
-            const qint32 graphIndex = this->graphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
-            if (graphIndex >= 0)
-            {
-                _pGuiModel->setFrontGraph(graphIndex);
-            }
-        }
-    }
-}
-
-void BasicGraphView::legendDoubleClick(QCPLegend * legend,QCPAbstractLegendItem * abstractLegendItem, QMouseEvent * event)
-{
-    Q_UNUSED(event);
-
-    if ((NULL != legend) && (NULL != abstractLegendItem))
-    {
-        // Check for selection
-        QCPPlottableLegendItem *legendItem = qobject_cast<QCPPlottableLegendItem*>(abstractLegendItem);
-        if (legendItem != 0)
-        {
-            const qint32 graphIndex = this->graphIndex(qobject_cast<QCPGraph*>(legendItem->plottable()));
-            if (graphIndex >= 0)
-            {
-                _pGuiModel->setGraphVisibility(graphIndex, !_pGuiModel->graphVisibility(graphIndex));
-            }
-        }
-    }
-}
-
 void BasicGraphView::mouseMove(QMouseEvent *event)
 {
     // Check for graph drag
     if(event->buttons() & Qt::LeftButton)
     {
-        if (_pPlot->legend->selectTest(event->pos(), false) <= 0)
+        if (!(event->modifiers() & Qt::ControlModifier))
         {
             if (_pPlot->axisRect()->rangeDrag() == Qt::Horizontal)
             {
@@ -393,15 +551,17 @@ void BasicGraphView::paintValueToolTip(QMouseEvent *event)
                         const bool bSmallScale = smallScaleActive(keyList.toVector());
 
                         // Add tick key string
-                        toolText = createTickLabelString(keyList[keyIndex], bSmallScale);
+                        toolText = Util::formatTime(keyList[keyIndex], bSmallScale);
 
                         // Check all graphs
-                        for (qint32 graphIndex = 0; graphIndex < _pPlot->graphCount(); graphIndex++)
+                        for (qint32 activeGraphIndex = 0; activeGraphIndex < _pPlot->graphCount(); activeGraphIndex++)
                         {
-                            if (_pPlot->graph(graphIndex)->visible())
+                            if (_pPlot->graph(activeGraphIndex)->visible())
                             {
-                                const double value = _pPlot->graph(graphIndex)->data()->values()[keyIndex].value;
-                                toolText += QString("\n%1: %2").arg(_pGuiModel->graphLabel(graphIndex)).arg(value);
+                                const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(activeGraphIndex);
+                                const double value = _pGraphDataModel->dataMap(graphIdx)->values()[keyIndex].value;
+
+                                toolText += QString("\n%1: %2").arg(_pGraphDataModel->label(graphIdx)).arg(value);
                             }
                         }
                         break;
@@ -494,57 +654,6 @@ void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
     {
         // do nothing
     }
-}
-
-QString BasicGraphView::createTickLabelString(qint64 tickKey, bool bSmallScale)
-{
-    QString tickLabel;
-
-    if (bSmallScale)
-    {
-        tickLabel = QString("%1").arg(tickKey);
-    }
-    else
-    {
-        bool bNegative;
-        quint64 tmp;
-
-        if (tickKey < 0)
-        {
-            bNegative = true;
-            tmp = -1 * tickKey;
-        }
-        else
-        {
-            bNegative = false;
-            tmp = tickKey;
-        }
-
-        tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
-
-        quint32 hours = tmp / (60 * 60 * 1000);
-        tmp = tmp % (60 * 60 * 1000);
-
-        quint32 minutes = tmp / (60 * 1000);
-        tmp = tmp % (60 * 1000);
-
-        quint32 seconds = tmp / 1000;
-        quint32 milliseconds = tmp % 1000;
-
-        tickLabel = QString("%1:%2:%3%4%5").arg(hours)
-                                                    .arg(minutes, 2, 10, QChar('0'))
-                                                    .arg(seconds, 2, 10, QChar('0'))
-                                                    .arg(QLocale::system().decimalPoint())
-                                                   .arg(milliseconds, 2, 10, QChar('0'));
-
-        // Make sure minus sign is shown when tick number is negative
-        if (bNegative)
-        {
-            tickLabel = "-" + tickLabel;
-        }
-    }
-
-    return tickLabel;
 }
 
 void BasicGraphView::highlightSamples(bool bState)

@@ -9,17 +9,28 @@ class ExtendedGraphView : public BasicGraphView
     Q_OBJECT
 
 public:
-    ExtendedGraphView(GuiModel *pGuiModel, QCustomPlot *pPlot, QObject *parent);
+    ExtendedGraphView(GuiModel *pGuiModel, GraphDataModel * pRegisterDataModel, MyQCustomPlot *pPlot, QObject *parent);
     virtual ~ExtendedGraphView();
 
-    void updateData(QList<QList<double> > * pDataLists);
+    QList<double> graphTimeData();
+    QList<QCPData> graphData(qint32 index);
 
 public slots:
-    void addGraphs(QList<QList<double> > data);
+    void addData(QList<double> timeData, QList<QList<double> > data);
+    void clearResults();
     void rescalePlot();
+
+signals:
+    void dataAddedToPlot(double timeData, QList<double> dataList);
+
+private slots:
+    void updateData(QList<double> *pTimeData, QList<QList<double> > * pDataLists);
+    void xAxisRangeChanged(const QCPRange &newRange, const QCPRange &oldRange);
 
 private:
     static const quint64 _cOptimizeThreshold = 1000000uL;
+
+    qint32 _diffWithUtc;
 
 };
 

@@ -1,9 +1,26 @@
 
 #include "datafileparser.h"
 #include "axisscaledialog.h"
-#include "aboutdialog.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "qcustomplot.h"
+#include "graphdatamodel.h"
+#include "graphdata.h"
+#include "aboutdialog.h"
+#include "markerinfo.h"
+#include "guimodel.h"
+#include "extendedgraphview.h"
+#include "util.h"
+
+#include "parsermodel.h"
+#include "watchfile.h"
+#include "legend.h"
+#include "datafileparser.h"
+#include "loadfiledialog.h"
+
+
+#include <QDebug>
+#include <QDateTime>
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     QMainWindow(parent),
@@ -15,20 +32,24 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     
     _pGuiModel = new GuiModel();
     _pParserModel = new ParserModel();
-    _pGraphView = new ExtendedGraphView(_pGuiModel, _pUi->customPlot, this);
+    _pGraphDataModel = new GraphDataModel();
+    _pGraphView = new ExtendedGraphView(_pGuiModel, _pGraphDataModel, _pUi->customPlot, this);
     _pWatchFile = new WatchFile(_pGuiModel, _pParserModel);
 
-    _pLoadDataFileDialog = new LoadFileDialog(_pParserModel, this);
+    _pLoadDataFileDialog = new LoadFileDialog(_pGuiModel, _pParserModel, this);
     connect(_pLoadDataFileDialog, SIGNAL(accepted()), this, SLOT(loadDataFileAccepted()));
 
     /* Add slot for file watcher */
-    connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(handleFileChange()));
+    connect(_pWatchFile, SIGNAL(fileDataChanged()), this, SLOT(updateData()));
+
+    _pLegend = _pUi->legend;
+    _pLegend->setModels(_pGuiModel, _pGraphDataModel);
 
     /*-- Connect menu actions --*/
     connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
     connect(_pUi->actionReloadDataFile, SIGNAL(triggered()), this, SLOT(reloadDataFile()));
     connect(_pUi->actionExit, SIGNAL(triggered()), this, SLOT(exitApplication()));
-    connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(prepareImageExport()));
+    connect(_pUi->actionExportImage, SIGNAL(triggered()), this, SLOT(selectImageExportFile()));
     connect(_pUi->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
     connect(_pUi->actionSetManualScaleXAxis, SIGNAL(triggered()), this, SLOT(showXAxisScaleDialog()));
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
@@ -36,44 +57,55 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleYAxis()));
     connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setHighlightSamples(bool)));
+    connect(_pUi->actionClearMarkers, SIGNAL(triggered()), _pGuiModel, SLOT(clearMarkersState()));
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setWatchFile(bool)));
     connect(_pUi->actionDynamicSession, SIGNAL(toggled(bool)), _pParserModel, SLOT(setDynamicSession(bool)));
-    connect(_pUi->actionShowHideLegend, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setLegendVisibility(bool)));
+
     connect(_pUi->actionHideAll, SIGNAL(triggered()), this, SLOT(hideAllGraphs()));
 
     /*-- connect model to view --*/
-    connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), this, SLOT(showHideGraph(const quint32)));
-    connect(_pGuiModel, SIGNAL(graphVisibilityChanged(const quint32)), _pGraphView, SLOT(showGraph(const quint32)));
     connect(_pGuiModel, SIGNAL(frontGraphChanged()), this, SLOT(updateBringToFrontGrapMenu()));
     connect(_pGuiModel, SIGNAL(frontGraphChanged()), _pGraphView, SLOT(bringToFront()));
     connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), this, SLOT(updateHighlightSampleMenu()));
     connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), _pGraphView, SLOT(enableSamplePoints()));
     connect(_pGuiModel, SIGNAL(valueTooltipChanged()), this, SLOT(updateValueTooltipMenu()));
     connect(_pGuiModel, SIGNAL(valueTooltipChanged()), _pGraphView, SLOT(enableValueTooltip()));
-    connect(_pGuiModel, SIGNAL(graphCleared()), _pGraphView, SLOT(clearGraphs()));
-    connect(_pGuiModel, SIGNAL(graphCleared()), this, SLOT(clearGraphMenu()));
-    connect(_pGuiModel, SIGNAL(graphsAdded(QList<QList<double> >)), _pGraphView, SLOT(addGraphs(QList<QList<double> >)));
-    connect(_pGuiModel, SIGNAL(graphsAdded(QList<QList<double> >)), this, SLOT(addGraphMenu()));
     connect(_pGuiModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
-    connect(_pGuiModel, SIGNAL(loadedFileChanged()), this, SLOT(enableGlobalMenu()));
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
-    connect(_pGuiModel, SIGNAL(legendVisibilityChanged()), _pGraphView, SLOT(showHideLegend()));
-    connect(_pGuiModel, SIGNAL(legendPositionChanged()), this, SLOT(updateLegendPositionMenu()));
-    connect(_pGuiModel, SIGNAL(legendPositionChanged()), _pGraphView, SLOT(updateLegendPosition()));
+    connect(_pGuiModel, SIGNAL(dataFilePathChanged()), this, SLOT(dataFileLoaded()));
+    connect(_pGuiModel, SIGNAL(guiStateChanged()), this, SLOT(updateGuiState()));
 
     connect(_pGuiModel, SIGNAL(xAxisScalingChanged()), _pGraphView, SLOT(rescalePlot()));
     connect(_pGuiModel, SIGNAL(yAxisScalingChanged()), _pGraphView, SLOT(rescalePlot()));
+
+    connect(_pGuiModel, SIGNAL(markerStateChanged()), _pGraphView, SLOT(updateMarkersVisibility()));
+    connect(_pGuiModel, SIGNAL(markerStateChanged()), this, SLOT(updateMarkerDockVisibility()));
+    connect(_pGuiModel, SIGNAL(startMarkerPosChanged()), _pGraphView, SLOT(setStartMarker()));
+    connect(_pGuiModel, SIGNAL(endMarkerPosChanged()), _pGraphView, SLOT(setEndMarker()));
+
+    connect(_pGraphDataModel, SIGNAL(visibilityChanged(quint32)), this, SLOT(handleGraphVisibilityChange(const quint32)));
+    connect(_pGraphDataModel, SIGNAL(visibilityChanged(quint32)), _pGraphView, SLOT(showGraph(const quint32)));
+    connect(_pGraphDataModel, SIGNAL(graphsAddData(QList<double>, QList<QList<double> >)), _pGraphView, SLOT(addData(QList<double>, QList<QList<double> >)));
+    connect(_pGraphDataModel, SIGNAL(activeChanged(quint32)), this, SLOT(rebuildGraphMenu()));
+    connect(_pGraphDataModel, SIGNAL(activeChanged(quint32)), _pGraphView, SLOT(updateGraphs()));
+    connect(_pGraphDataModel, SIGNAL(colorChanged(quint32)), this, SLOT(handleGraphColorChange(quint32)));
+    connect(_pGraphDataModel, SIGNAL(colorChanged(quint32)), _pGraphView, SLOT(changeGraphColor(quint32)));
+    connect(_pGraphDataModel, SIGNAL(labelChanged(quint32)), this, SLOT(handleGraphLabelChange(quint32)));
+    connect(_pGraphDataModel, SIGNAL(labelChanged(quint32)), _pGraphView, SLOT(changeGraphLabel(quint32)));
+    connect(_pGraphDataModel, SIGNAL(added(quint32)), this, SLOT(rebuildGraphMenu()));
+    connect(_pGraphDataModel, SIGNAL(added(quint32)), _pGraphView, SLOT(updateGraphs()));
+
+    connect(_pGraphDataModel, SIGNAL(removed(quint32)), this, SLOT(rebuildGraphMenu()));
+    connect(_pGraphDataModel, SIGNAL(removed(quint32)), _pGraphView, SLOT(updateGraphs()));
+
+    connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
+    connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
     _pBringToFrontGroup = new QActionGroup(this);
 
-    _pLegendPositionGroup = new QActionGroup(this);
-    _pUi->actionLegendLeft->setActionGroup(_pLegendPositionGroup);
-    _pUi->actionLegendMiddle->setActionGroup(_pLegendPositionGroup);
-    _pUi->actionLegendRight->setActionGroup(_pLegendPositionGroup);
-    connect(_pLegendPositionGroup, SIGNAL(triggered(QAction*)), this, SLOT(changeLegendPosition(QAction*)));
 
     // Default to full auto scaling
     _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
@@ -81,10 +113,15 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     this->setAcceptDrops(true);
 
+    // For dock undock
+    connect(_pUi->legendDock, SIGNAL(topLevelChanged(bool)), this, SLOT(legendWidgetUndocked(bool)));
+
+    // For rightclick menu
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
-    _pGuiModel->setWindowTitleDetail("");
+    _pMarkerInfo = _pUi->markerInfo;
+    _pMarkerInfo->setModel(_pGuiModel, _pGraphDataModel);
 
     /* Update interface via model */
     _pGuiModel->triggerUpdate();
@@ -126,9 +163,8 @@ void MainWindow::exitApplication()
     QApplication::quit();
 }
 
-void MainWindow::prepareImageExport()
+void MainWindow::selectImageExportFile()
 {
-    QString filePath;
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
@@ -136,16 +172,13 @@ void MainWindow::prepareImageExport()
     dialog.setDefaultSuffix("png");
     dialog.setWindowTitle(tr("Select png file"));
     dialog.setNameFilter(tr("PNG files (*.png)"));
-
-    QStringList docPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
-    if (docPath.size() > 0)
-    {
-        dialog.setDirectory(docPath[0]);
-    }
+    dialog.setDirectory(_pGuiModel->lastDir());
 
     if (dialog.exec())
     {
-        filePath = dialog.selectedFiles().first();
+        QString filePath = dialog.selectedFiles().first();
+        _pGuiModel->setLastDir(QFileInfo(filePath).dir().absolutePath());
+
         _pGraphView->exportGraphImage(filePath);
     }
 }
@@ -197,53 +230,59 @@ void MainWindow::menuShowHideGraphClicked(bool bState)
 {
     QAction * pAction = qobject_cast<QAction *>(QObject::sender());
 
-    _pGuiModel->setGraphVisibility(pAction->data().toInt(), bState);
-
+    const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(pAction->data().toInt());
+    _pGraphDataModel->setVisible(graphIdx, bState);
 }
 
-void MainWindow::changeLegendPosition(QAction* pAction)
+void MainWindow::handleGraphVisibilityChange(const quint32 graphIdx)
 {
-    if (pAction == _pUi->actionLegendLeft)
+    if (_pGraphDataModel->isActive(graphIdx))
     {
-        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_LEFT);
-    }
-    else if (pAction == _pUi->actionLegendMiddle)
-    {
-        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_MIDDLE);
-    }
-    else if (pAction == _pUi->actionLegendRight)
-    {
-        _pGuiModel->setLegendPosition(BasicGraphView::LEGEND_RIGHT);
-    }
-}
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
 
-void MainWindow::hideAllGraphs()
-{
-    for(quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
-    {
-        _pGuiModel->setGraphVisibility(idx, false);
-    }
-}
+        _pGraphShowHide->actions().at(activeIdx)->setChecked(_pGraphDataModel->isVisible(graphIdx));
 
-void MainWindow::showHideGraph(const quint32 index)
-{
-    _pGraphShowHide->actions().at(index + _cGraphShowHideIndex)->setChecked(_pGuiModel->graphVisibility(index));
+        // Show/Hide corresponding "BringToFront" action
+        _pGraphBringToFront->actions().at(activeIdx)->setVisible(_pGraphDataModel->isVisible((graphIdx)));
 
-    // Show/Hide corresponding "BringToFront" action
-    _pGraphBringToFront->actions().at(index)->setVisible(_pGuiModel->graphVisibility((index)));
-
-    // Enable/Disable global BringToFront menu
-    bool bVisible = false;
-    foreach(QAction * pAction, _pGraphBringToFront->actions())
-    {
-        if (pAction->isVisible())
+        // Enable/Disable global BringToFront menu
+        bool bVisible = false;
+        foreach(QAction * pAction, _pGraphBringToFront->actions())
         {
-            bVisible = true;
-            break;
+            if (pAction->isVisible())
+            {
+                bVisible = true;
+                break;
+            }
         }
+        _pGraphBringToFront->setEnabled(bVisible);
     }
-    _pGraphBringToFront->setEnabled(bVisible);
-    _pUi->actionHideAll->setEnabled(bVisible);
+}
+
+void MainWindow::handleGraphColorChange(const quint32 graphIdx)
+{
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        QPixmap pixmap(20,5);
+        pixmap.fill(_pGraphDataModel->color(graphIdx));
+
+        QIcon showHideIcon = QIcon(pixmap);
+
+        _pGraphShowHide->actions().at(activeIdx)->setIcon(showHideIcon);
+        _pGraphBringToFront->actions().at(activeIdx)->setIcon(showHideIcon);
+    }
+}
+
+void MainWindow::handleGraphLabelChange(const quint32 graphIdx)
+{
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        _pGraphShowHide->actions().at(activeIdx)->setText(_pGraphDataModel->label(graphIdx));
+    }
 }
 
 void MainWindow::updateBringToFrontGrapMenu()
@@ -266,41 +305,30 @@ void MainWindow::updateValueTooltipMenu()
     _pUi->actionShowValueTooltip->setChecked(_pGuiModel->valueTooltip());
 }
 
-void MainWindow::clearGraphMenu()
+void MainWindow::rebuildGraphMenu()
 {
-    QList<QAction *> hideActionList = _pGraphShowHide->actions();
-
-    /* Keep first and second action ("Hide all" + separator) */
-    for (qint32 idx = _cGraphShowHideIndex; idx < hideActionList.size(); idx++)
-    {
-        _pGraphShowHide->removeAction(hideActionList[idx]);
-    }
-
-    _pBringToFrontGroup->actions().clear();
+    // Regenerate graph menu
+    _pGraphShowHide->clear();
     _pGraphBringToFront->clear();
-}
 
-void MainWindow::addGraphMenu()
-{
-
-    for (quint32 idx = 0; idx < _pGuiModel->graphCount(); idx++)
+    for(qint32 graphIdx = 0; graphIdx < _pGraphDataModel->size(); graphIdx++)
     {
-        QString label = _pGuiModel->graphLabel(idx);
+
+        QString label = _pGraphDataModel->label(graphIdx);
         QAction * pShowHideAction = _pGraphShowHide->addAction(label);
         QAction * pBringToFront = _pGraphBringToFront->addAction(label);
 
         QPixmap pixmap(20,5);
-        pixmap.fill(_pGuiModel->graphColor(idx));
-        QIcon * pBringToFrontIcon = new QIcon(pixmap);
-        QIcon * pShowHideIcon = new QIcon(pixmap);
+        pixmap.fill(_pGraphDataModel->color(graphIdx));
+        QIcon icon = QIcon(pixmap);
 
-        pShowHideAction->setData(idx);
-        pShowHideAction->setIcon(*pBringToFrontIcon);
+        pShowHideAction->setData(graphIdx);
+        pShowHideAction->setIcon(icon);
         pShowHideAction->setCheckable(true);
-        pShowHideAction->setChecked(_pGuiModel->graphVisibility(idx));
+        pShowHideAction->setChecked(_pGraphDataModel->isVisible(graphIdx));
 
-        pBringToFront->setData(idx);
-        pBringToFront->setIcon(*pShowHideIcon);
+        pBringToFront->setData(graphIdx);
+        pBringToFront->setIcon(icon);
         pBringToFront->setCheckable(true);
         pBringToFront->setActionGroup(_pBringToFrontGroup);
 
@@ -308,29 +336,21 @@ void MainWindow::addGraphMenu()
         QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(menuBringToFrontGraphClicked(bool)));
     }
 
-    _pGraphShowHide->setEnabled(true);
-    _pUi->actionHideAll->setEnabled(true);
-    _pGraphBringToFront->setEnabled(true);
+    if (_pGraphDataModel->size() > 0)
+    {
+        _pGraphShowHide->setEnabled(true);
+        _pGraphBringToFront->setEnabled(true);
+    }
+    else
+    {
+        _pGraphShowHide->setEnabled(false);
+        _pGraphBringToFront->setEnabled(false);
+    }
 }
 
 void MainWindow::updateWindowTitle()
 {
     setWindowTitle(_pGuiModel->windowTitle());
-}
-
-void MainWindow::enableGlobalMenu()
-{
-    _pUi->actionReloadDataFile->setEnabled(true);
-    _pUi->actionExportImage->setEnabled(true);
-    _pUi->actionAutoScaleXAxis->setEnabled(true);
-    _pUi->actionAutoScaleYAxis->setEnabled(true);
-    _pUi->actionSetManualScaleXAxis->setEnabled(true);
-    _pUi->actionSetManualScaleYAxis->setEnabled(true);
-    _pUi->actionShowValueTooltip->setEnabled(true);
-    _pUi->actionHighlightSamplePoints->setEnabled(true);
-    _pUi->menuScale->setEnabled(true);
-    _pUi->actionWatchFile->setEnabled(true);
-    _pUi->actionShowHideLegend->setEnabled(true);
 }
 
 void MainWindow::enableWatchFile()
@@ -354,30 +374,81 @@ void MainWindow::enableDynamicSession()
     _pUi->actionDynamicSession->setChecked(_pParserModel->dynamicSession());
 }
 
-void MainWindow::updateLegendPositionMenu()
+void MainWindow::updateGuiState()
 {
-    if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_LEFT)
+
+    if (_pGuiModel->guiState() == GuiModel::INIT)
     {
-        _pUi->actionLegendLeft->setChecked(true);
+
+        _pUi->actionLoadDataFile->setEnabled(true);
+        _pUi->actionExportImage->setEnabled(false);
+        _pUi->actionReloadDataFile->setEnabled(false);
+
+        _pUi->actionWatchFile->setEnabled(false);
+        _pUi->actionDynamicSession->setEnabled(false);
+
+        _pUi->actionAutoScaleXAxis->setEnabled(false);
+        _pUi->actionAutoScaleYAxis->setEnabled(false);
+        _pUi->actionSetManualScaleXAxis->setEnabled(false);
+        _pUi->actionSetManualScaleYAxis->setEnabled(false);
+        _pUi->menuScale->setEnabled(false);
+
     }
-    else if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_MIDDLE)
+    else if (_pGuiModel->guiState() == GuiModel::DATA_LOADED)
     {
-        _pUi->actionLegendMiddle->setChecked(true);
-    }
-    else if (_pGuiModel->legendPosition() == BasicGraphView::LEGEND_RIGHT)
-    {
-        _pUi->actionLegendRight->setChecked(true);
+        _pUi->actionLoadDataFile->setEnabled(true);
+        _pUi->actionExportImage->setEnabled(true);
+        _pUi->actionReloadDataFile->setEnabled(true);
+
+        _pUi->actionWatchFile->setEnabled(true);
+
+        _pUi->actionAutoScaleXAxis->setEnabled(true);
+        _pUi->actionAutoScaleYAxis->setEnabled(true);
+        _pUi->actionSetManualScaleXAxis->setEnabled(true);
+        _pUi->actionSetManualScaleYAxis->setEnabled(true);
+        _pUi->menuScale->setEnabled(true);
+
     }
 }
 
 void MainWindow::showContextMenu(const QPoint& pos)
 {
-    _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+    /* Don't show context menu when control key is pressed */
+    if (!(QApplication::keyboardModifiers() & Qt::ControlModifier))
+    {
+        _pUi->menuView->popup(_pUi->customPlot->mapToGlobal(pos));
+    }
 }
 
-void MainWindow::handleFileChange()
+void MainWindow::dataFileLoaded()
 {
-    updateGraph(_pParser);
+    if (_pGuiModel->dataFilePath().isEmpty())
+    {
+        _pGuiModel->setWindowTitleDetail("");
+    }
+    else
+    {
+        _pGuiModel->setWindowTitleDetail(QFileInfo(_pGuiModel->dataFilePath()).fileName());
+    }
+}
+
+void MainWindow::updateMarkerDockVisibility()
+{
+    if (_pGuiModel->markerState())
+    {
+        splitDockWidget(_pUi->legendDock, _pUi->markerInfoDock, Qt::Vertical);
+    }
+
+    _pUi->markerInfoDock->setVisible(_pGuiModel->markerState());
+}
+
+void MainWindow::legendWidgetUndocked(bool bFloat)
+{
+    if (bFloat)
+    {
+        // TODO: fix scaling to minimum
+        //_pUi->legendDock->adjustSize();
+    }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *e)
@@ -434,16 +505,20 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
     bool bSucceeded = false;
     if (_pDataFileParser->forceProcessDataFile())
     {
-        _pGuiModel->clearGraph();
-        _pGuiModel->addGraphs(_pDataFileParser->getDataLabels(), _pDataFileParser->getDataRows());
+        _pGraphDataModel->clear();
+        _pGuiModel->setFrontGraph(-1);
+
+        _pGraphDataModel->add(_pDataFileParser->dataLabels(), _pDataFileParser->timeRow(), _pDataFileParser->dataRows());
         _pGuiModel->setFrontGraph(0);
-        _pGuiModel->setLoadedFile(QFileInfo(_pParserModel->path()).fileName());
-        _pGuiModel->setWindowTitleDetail(_pGuiModel->loadedFile());
-        _pGuiModel->setLegendVisibility(true);
-        _pUi->menuLegend->setEnabled(true);
+
+        _pGuiModel->setDataFilePath(QFileInfo(_pParserModel->path()).fileName());
 
         _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
         _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
+
+        _pGuiModel->clearMarkersState();
+
+        _pGuiModel->setGuiState(GuiModel::DATA_LOADED);
 
         bSucceeded = true;
     }
@@ -451,11 +526,11 @@ bool MainWindow::resetGraph(DataFileParser * _pDataFileParser)
     return bSucceeded;
 }
 
-void MainWindow::updateGraph(DataFileParser *_pDataFileParser)
+void MainWindow::updateData(void)
 {
-    if (_pDataFileParser->processDataFile())
+    if (_pParser->processDataFile())
     {
-        _pGraphView->updateData(&_pDataFileParser->getDataRows());
+        _pGraphView->addData(_pParser->timeRow(), _pParser->dataRows());
     }
     else
     {

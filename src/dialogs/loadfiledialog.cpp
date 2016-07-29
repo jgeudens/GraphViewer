@@ -27,13 +27,14 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
 const QColor LoadFileDialog::_cColorLabel = QColor(150, 255, 150);
 const QColor LoadFileDialog::_cColorData = QColor(200, 255, 200);
 
-LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
+LoadFileDialog::LoadFileDialog(GuiModel *pGuiModel, ParserModel * pParserModel, QWidget *parent) :
     QDialog(parent),
     _pUi(new Ui::LoadFileDialog)
 {
     _pUi->setupUi(this);
 
     _pParserModel = pParserModel;
+    _pGuiModel = pGuiModel;
 
     // load presets
     loadPreset();
@@ -74,7 +75,7 @@ LoadFileDialog::LoadFileDialog(ParserModel * pParserModel, QWidget *parent) :
 
     // Handle signal from controls
     connect(_pUi->checkDynamicSession, SIGNAL(toggled(bool)), this, SLOT(dynamicSessionUpdated(bool)));
-    connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(dataFileSelected()));
+    connect(_pUi->btnDataFile, SIGNAL(released()), this, SLOT(selectDataFile()));
     connect(_pUi->comboFieldSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(fieldSeparatorSelected(int)));
     connect(_pUi->lineCustomFieldSeparator, SIGNAL(editingFinished()), this, SLOT(customFieldSeparatorUpdated()));
     connect(_pUi->comboGroupSeparator, SIGNAL(currentIndexChanged(int)), this, SLOT(groupSeparatorSelected(int)));
@@ -223,7 +224,7 @@ void LoadFileDialog::dynamicSessionUpdated(bool bDynamic)
     _pParserModel->setDynamicSession(bDynamic);
 }
 
-void LoadFileDialog::dataFileSelected()
+void LoadFileDialog::selectDataFile()
 {
     QFileDialog fileDialog(this);
     fileDialog.setFileMode(QFileDialog::ExistingFile);
@@ -231,10 +232,13 @@ void LoadFileDialog::dataFileSelected()
     fileDialog.setOption(QFileDialog::HideNameFilterDetails, false);
     fileDialog.setWindowTitle(tr("Select data file"));
     fileDialog.setNameFilter(tr("*.* (*.*)"));
+    fileDialog.setDirectory(_pGuiModel->lastDir());
 
     if (fileDialog.exec() == QDialog::Accepted)
     {
-        _pParserModel->setPath(fileDialog.selectedFiles().first());
+        QString filePath = fileDialog.selectedFiles().first();
+        _pGuiModel->setLastDir(QFileInfo(filePath).dir().absolutePath());
+        _pParserModel->setPath(filePath);
     }
 }
 
