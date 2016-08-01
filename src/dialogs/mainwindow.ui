@@ -84,7 +84,6 @@
      <property name="title">
       <string>Show/Hide</string>
      </property>
-     <addaction name="actionHideAll"/>
      <addaction name="separator"/>
     </widget>
     <widget class="QMenu" name="menuBringToFront">
@@ -337,52 +336,6 @@
    </property>
    <property name="text">
     <string>Highlight Sample Points</string>
-   </property>
-  </action>
-  <action name="actionShowHideLegend">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Show/Hide Legend</string>
-   </property>
-  </action>
-  <action name="actionLegendLeft">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Legend To Left</string>
-   </property>
-  </action>
-  <action name="actionLegendMiddle">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Legend To Middle</string>
-   </property>
-  </action>
-  <action name="actionLegendRight">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Legend To Right</string>
-   </property>
-  </action>
-  <action name="actionHideAll">
-   <property name="text">
-    <string>Hide All</string>
    </property>
   </action>
   <action name="actionClearMarkers">

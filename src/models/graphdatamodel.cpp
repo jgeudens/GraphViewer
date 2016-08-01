@@ -14,6 +14,7 @@ GraphDataModel::GraphDataModel(QObject *parent) : QAbstractTableModel(parent)
     connect(this, SIGNAL(visibilityChanged(quint32)), this, SLOT(modelDataChanged(quint32)));
     connect(this, SIGNAL(labelChanged(quint32)), this, SLOT(modelDataChanged(quint32)));
     connect(this, SIGNAL(colorChanged(quint32)), this, SLOT(modelDataChanged(quint32)));
+    connect(this, SIGNAL(activeChanged(quint32)), this, SLOT(modelDataChanged(quint32)));
 
     connect(this, SIGNAL(added(quint32)), this, SLOT(modelDataChanged()));
     connect(this, SIGNAL(removed(quint32)), this, SLOT(modelDataChanged()));
@@ -28,9 +29,10 @@ int GraphDataModel::columnCount(const QModelIndex & /*parent*/) const
 {
     /*
     * color
+    * bActive
     * Text
     * */
-    return 2; // Number of visible members of struct
+    return 3; // Number of visible members of struct
 }
 
 QVariant GraphDataModel::data(const QModelIndex &index, int role) const
@@ -45,6 +47,19 @@ QVariant GraphDataModel::data(const QModelIndex &index, int role) const
         }
         break;
     case 1:
+        if (role == Qt::CheckStateRole)
+        {
+            if (isActive(index.row()))
+            {
+                return Qt::Checked;
+            }
+            else
+            {
+                return Qt::Unchecked;
+            }
+        }
+        break;
+    case 2:
         if ((role == Qt::DisplayRole) || (role == Qt::EditRole))
         {
             return label(index.row());
@@ -70,6 +85,8 @@ QVariant GraphDataModel::headerData(int section, Qt::Orientation orientation, in
             case 0:
                 return QString("Color");
             case 1:
+                return QString("Active");
+            case 2:
                 return QString("Text");
             default:
                 return QVariant();
@@ -106,6 +123,19 @@ bool GraphDataModel::setData(const QModelIndex & index, const QVariant & value, 
         }
         break;
     case 1:
+        if (role == Qt::CheckStateRole)
+        {
+            if (value == Qt::Checked)
+            {
+                setActive(index.row(), true);
+            }
+            else
+            {
+                setActive(index.row(), false);
+            }
+        }
+        break;
+    case 2:
         if (role == Qt::EditRole)
         {
             setLabel(index.row(), value.toString());
