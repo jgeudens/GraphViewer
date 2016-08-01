@@ -336,23 +336,26 @@ void MainWindow::rebuildGraphMenu()
     _pGraphShowHide->clear();
     _pGraphBringToFront->clear();
 
-    for(qint32 graphIdx = 0; graphIdx < _pGraphDataModel->size(); graphIdx++)
+    QList<quint16> activeGraphList;
+    _pGraphDataModel->activeGraphIndexList(&activeGraphList);
+
+    for(qint32 activeIdx = 0; activeIdx < activeGraphList.size(); activeIdx++)
     {
 
-        QString label = _pGraphDataModel->label(graphIdx);
+        QString label = _pGraphDataModel->label(activeGraphList[activeIdx]);
         QAction * pShowHideAction = _pGraphShowHide->addAction(label);
         QAction * pBringToFront = _pGraphBringToFront->addAction(label);
 
         QPixmap pixmap(20,5);
-        pixmap.fill(_pGraphDataModel->color(graphIdx));
+        pixmap.fill(_pGraphDataModel->color(activeGraphList[activeIdx]));
         QIcon icon = QIcon(pixmap);
 
-        pShowHideAction->setData(graphIdx);
+        pShowHideAction->setData(activeIdx);
         pShowHideAction->setIcon(icon);
         pShowHideAction->setCheckable(true);
-        pShowHideAction->setChecked(_pGraphDataModel->isVisible(graphIdx));
+        pShowHideAction->setChecked(_pGraphDataModel->isVisible(activeGraphList[activeIdx]));
 
-        pBringToFront->setData(graphIdx);
+        pBringToFront->setData(activeIdx);
         pBringToFront->setIcon(icon);
         pBringToFront->setCheckable(true);
         pBringToFront->setActionGroup(_pBringToFrontGroup);
@@ -361,7 +364,7 @@ void MainWindow::rebuildGraphMenu()
         QObject::connect(pBringToFront, SIGNAL(toggled(bool)), this, SLOT(menuBringToFrontGraphClicked(bool)));
     }
 
-    if (_pGraphDataModel->size() > 0)
+    if (activeGraphList.size() > 0)
     {
         _pGraphShowHide->setEnabled(true);
         _pGraphBringToFront->setEnabled(true);

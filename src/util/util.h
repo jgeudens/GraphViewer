@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QLocale>
+#include <QColor>
 
 class Util : public QObject
 {

@@ -5,6 +5,7 @@ GraphData::GraphData()
     _bVisible = true;
     _label = QString("Unknown register");
     _color = "-1"; // Invalid color
+    _bActive = true;
 
     _dataMap.clear();
 }
@@ -39,11 +40,6 @@ void GraphData::setColor(const QColor &color)
     _color = color;
 }
 
-QCPDataMap * GraphData::dataMap()
-{
-    return &_dataMap;
-}
-
 bool GraphData::isActive() const
 {
     return _bActive;
@@ -52,4 +48,9 @@ bool GraphData::isActive() const
 void GraphData::setActive(bool bActive)
 {
     _bActive = bActive;
+}
+
+QCPDataMap * GraphData::dataMap()
+{
+    return &_dataMap;
 }
