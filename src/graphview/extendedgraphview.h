@@ -25,7 +25,6 @@ signals:
 
 private slots:
     void updateData(QList<double> *pTimeData, QList<QList<double> > * pDataLists);
-    void xAxisRangeChanged(const QCPRange &newRange, const QCPRange &oldRange);
 
 private:
     static const quint64 _cOptimizeThreshold = 1000000uL;

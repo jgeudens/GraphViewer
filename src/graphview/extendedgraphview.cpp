@@ -8,8 +8,6 @@ ExtendedGraphView::ExtendedGraphView(GuiModel * pGuiModel, GraphDataModel * pReg
     BasicGraphView(pGuiModel, pRegisterDataModel, pPlot)
 {
     Q_UNUSED(parent);
-
-    connect(_pPlot->xAxis, SIGNAL(rangeChanged(QCPRange, QCPRange)), this, SLOT(xAxisRangeChanged(QCPRange, QCPRange)));
 }
 
 ExtendedGraphView::~ExtendedGraphView()
@@ -131,21 +129,4 @@ void ExtendedGraphView::updateData(QList<double> *pTimeData, QList<QList<double>
     }
 
     _pPlot->replot();
-}
-
-void ExtendedGraphView::xAxisRangeChanged(const QCPRange &newRange, const QCPRange &oldRange)
-{
-    QCPRange range = newRange;
-
-    if (newRange.upper <= 0)
-    {
-        range.upper = oldRange.upper;
-    }
-
-    if (newRange.lower <= 0)
-    {
-        range.lower = 0;
-    }
-
-    _pPlot->xAxis->setRange(range);
 }
