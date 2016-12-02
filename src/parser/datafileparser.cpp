@@ -153,7 +153,11 @@ bool DataFileParser::readData()
                 }
                 else
                 {
-                    if (!_pParserModel->timeInMilliSeconds())
+                    /* Only multiply for first column (time data) */
+                    if (
+                        ((quint32)i == _pParserModel->column())
+                        && (!_pParserModel->timeInMilliSeconds())
+                        )
                     {
                         number *= 1000;
                     }
