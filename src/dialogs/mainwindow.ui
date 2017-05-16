@@ -33,7 +33,7 @@
      <x>0</x>
      <y>0</y>
      <width>956</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -99,7 +99,6 @@
     <addaction name="menuShowHide"/>
     <addaction name="menuBringToFront"/>
     <addaction name="separator"/>
-    <addaction name="actionShowValueTooltip"/>
     <addaction name="actionHighlightSamplePoints"/>
     <addaction name="separator"/>
     <addaction name="actionClearMarkers"/>
@@ -184,7 +183,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>76</width>
+          <width>69</width>
           <height>77</height>
          </rect>
         </property>
@@ -308,20 +307,6 @@
    </property>
    <property name="text">
     <string>Dynamic Session</string>
-   </property>
-  </action>
-  <action name="actionShowValueTooltip">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show Value Tooltip</string>
    </property>
   </action>
   <action name="actionHighlightSamplePoints">

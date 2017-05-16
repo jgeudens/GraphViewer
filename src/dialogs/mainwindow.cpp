@@ -47,6 +47,7 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     _pLegend = _pUi->legend;
     _pLegend->setModels(_pGuiModel, _pGraphDataModel);
+    _pLegend->setGraphview(_pGraphView);
 
     /*-- Connect menu actions --*/
     connect(_pUi->actionLoadDataFile, SIGNAL(triggered()), this, SLOT(loadDataFile()));
@@ -58,7 +59,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pUi->actionSetManualScaleYAxis, SIGNAL(triggered()), this, SLOT(showYAxisScaleDialog()));
     connect(_pUi->actionAutoScaleXAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleXAxis()));
     connect(_pUi->actionAutoScaleYAxis, SIGNAL(triggered()), _pGraphView, SLOT(autoScaleYAxis()));
-    connect(_pUi->actionShowValueTooltip, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setValueTooltip(bool)));
     connect(_pUi->actionHighlightSamplePoints, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setHighlightSamples(bool)));
     connect(_pUi->actionClearMarkers, SIGNAL(triggered()), _pGuiModel, SLOT(clearMarkersState()));
     connect(_pUi->actionWatchFile, SIGNAL(toggled(bool)), _pGuiModel, SLOT(setWatchFile(bool)));
@@ -69,8 +69,9 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     connect(_pGuiModel, SIGNAL(frontGraphChanged()), _pGraphView, SLOT(bringToFront()));
     connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), this, SLOT(updateHighlightSampleMenu()));
     connect(_pGuiModel, SIGNAL(highlightSamplesChanged()), _pGraphView, SLOT(enableSamplePoints()));
-    connect(_pGuiModel, SIGNAL(valueTooltipChanged()), this, SLOT(updateValueTooltipMenu()));
-    connect(_pGuiModel, SIGNAL(valueTooltipChanged()), _pGraphView, SLOT(enableValueTooltip()));
+    connect(_pGuiModel, SIGNAL(cursorValuesChanged()), _pGraphView, SLOT(updateTooltip()));
+    connect(_pGuiModel, SIGNAL(cursorValuesChanged()), _pLegend, SLOT(updateDataInLegend()));
+
     connect(_pGuiModel, SIGNAL(windowTitleChanged()), this, SLOT(updateWindowTitle()));
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
@@ -102,6 +103,9 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
 
     connect(_pGuiModel, SIGNAL(watchFileChanged()), this, SLOT(enableWatchFile()));
     connect(_pParserModel, SIGNAL(dynamicSessionChanged()), this, SLOT(enableDynamicSession()));
+
+    // Update cursor values in legend
+    connect(_pGraphView, SIGNAL(cursorValueUpdate()), _pLegend, SLOT(updateDataInLegend()));
 
     _pGraphShowHide = _pUi->menuShowHide;
     _pGraphBringToFront = _pUi->menuBringToFront;
@@ -143,6 +147,26 @@ MainWindow::~MainWindow()
     delete _pParserModel;
     delete _pGuiModel;
     delete _pUi;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent* event)
+{
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        _pGuiModel->setCursorValues(true);
+    }
+
+    QMainWindow::keyPressEvent(event);
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent* event)
+{
+    if (!(event->modifiers() & Qt::ControlModifier))
+    {
+        _pGuiModel->setCursorValues(false);
+    }
+
+    QMainWindow::keyReleaseEvent(event);
 }
 
 void MainWindow::loadDataFile()
@@ -208,7 +232,7 @@ void MainWindow::selectImageExportFile()
 
 void MainWindow::showAbout()
 {
-    AboutDialog aboutDialog(this);
+    AboutDialog aboutDialog(_pGraphView,this);
 
     aboutDialog.exec();
 }
@@ -321,12 +345,6 @@ void MainWindow::updateHighlightSampleMenu()
 {
     /* set menu to checked */
     _pUi->actionHighlightSamplePoints->setChecked(_pGuiModel->highlightSamples());
-}
-
-void MainWindow::updateValueTooltipMenu()
-{
-    /* set menu to checked */
-    _pUi->actionShowValueTooltip->setChecked(_pGuiModel->valueTooltip());
 }
 
 void MainWindow::rebuildGraphMenu()
@@ -579,8 +597,15 @@ void MainWindow::handleCommandLineArguments(QStringList cmdArguments)
     // datafile option
     argumentParser.addPositionalArgument("datafile", QCoreApplication::translate("main", "Specify datafile to parse (optionally)"));
 
+	// OpenGL argument
+    QCommandLineOption openGlOption("opengl", QCoreApplication::translate("main", "Use openGL to render plot"));
+    argumentParser.addOption(openGlOption);
+
     // Process arguments
     argumentParser.process(cmdArguments);
+
+    bool bOpenGl = argumentParser.isSet(openGlOption);
+    _pGraphView->setOpenGl(bOpenGl);
 
     if (!argumentParser.positionalArguments().isEmpty())
     {

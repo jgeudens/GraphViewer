@@ -5,6 +5,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 TARGET = GraphViewer
 TEMPLATE = app
 
+CONFIG += c++11
+
 win32: RC_ICONS = ../icon/application.ico
 
 VERSION = 1.0.0
@@ -17,6 +19,7 @@ DEFINES += GIT_BRANCH="\\\"$(shell git --git-dir \""$$PWD/../.git"\" rev-parse -
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
 DEFINES += QT_DEBUG_OUTPUT
+DEFINES += QCUSTOMPLOT_USE_OPENGL
 
 INCLUDEPATH += \
     ../libraries/qcustomplot \
@@ -53,9 +56,10 @@ SOURCES +=  \
     ../src/models/graphdata.cpp \
     ../src/models/graphdatamodel.cpp \
     ../src/util/util.cpp \
-    ../src/graphview/myqcpgraph.cpp \
     ../src/graphview/myqcustomplot.cpp \
-    ../src/dialogs/markerinfodialog.cpp
+    ../src/dialogs/markerinfodialog.cpp \
+    ../src/graphview/myqcpaxis.cpp \
+    ../src/graphview/myqcpaxistickertime.cpp
 
 FORMS    += \
     ../src/dialogs/axisscaledialog.ui \
@@ -88,9 +92,10 @@ HEADERS += \
     ../src/customwidgets/markerinfoitem.h \
     ../src/customwidgets/verticalscrollareacontents.h \
     ../src/models/graphdatamodel.h \
-    ../src/graphview/myqcpgraph.h \
     ../src/graphview/myqcustomplot.h \
-    ../src/dialogs/markerinfodialog.h
+    ../src/dialogs/markerinfodialog.h \
+    ../src/graphview/myqcpaxis.h \
+    ../src/graphview/myqcpaxistickertime.h
 
 RESOURCES += \
     ../resources/resource.qrc

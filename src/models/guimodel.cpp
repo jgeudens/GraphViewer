@@ -37,6 +37,10 @@ GuiModel::GuiModel(QObject *parent) : QObject(parent)
 {
     _frontGraph = 0;
     _dataFilePath = "";
+    _bHighlightSamples = true;
+    _bCursorValues = false;
+    _guiState = INIT;
+    _windowTitle = _cWindowTitle;
 
     QStringList docPath = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     if (docPath.size() > 0)
@@ -44,9 +48,10 @@ GuiModel::GuiModel(QObject *parent) : QObject(parent)
         _lastDir = docPath[0];
     }
 
+    _guiSettings.xScaleMode = BasicGraphView::SCALE_AUTO;
+    _guiSettings.yScaleMode = BasicGraphView::SCALE_AUTO;
+
     _bWatchFile = false;
-    _bHighlightSamples = true;
-    _bValueTooltip = false;
     _bStartMarkerState = false;
     _startMarkerPos = 0;
 
@@ -68,7 +73,7 @@ void GuiModel::triggerUpdate(void)
 {
     emit frontGraphChanged();
     emit highlightSamplesChanged();
-    emit valueTooltipChanged();
+    emit cursorValuesChanged();
     emit windowTitleChanged();
     emit watchFileChanged();
     emit xAxisScalingChanged();
@@ -81,6 +86,8 @@ void GuiModel::triggerUpdate(void)
     emit markerExpressionCustomScriptChanged();
 }
 
+/*
+ Return index of activeGraphList */
 qint32 GuiModel::frontGraph() const
 {
     return _frontGraph;
@@ -127,17 +134,17 @@ void GuiModel::setHighlightSamples(bool bHighlightSamples)
     }
 }
 
-bool GuiModel::valueTooltip() const
+bool GuiModel::cursorValues() const
 {
-    return _bValueTooltip;
+    return _bCursorValues;
 }
 
-void GuiModel::setValueTooltip(bool bValueTooltip)
+void GuiModel::setCursorValues(bool bCursorValues)
 {
-    if (_bValueTooltip != bValueTooltip)
+    if (_bCursorValues != bCursorValues)
     {
-        _bValueTooltip = bValueTooltip;
-         emit valueTooltipChanged();
+        _bCursorValues = bCursorValues;
+         emit cursorValuesChanged();
     }
 }
 
@@ -374,11 +381,9 @@ void GuiModel::setEndMarkerState(bool bState)
 
 void GuiModel::setMarkerState(bool bState)
 {
-    if (_bMarkerState != bState)
-    {
-        _bMarkerState = bState;
+    // Always send signal, because we also need to clear markers when only one is visible */
+    _bMarkerState = bState;
 
-        emit markerStateChanged();
-    }
+    emit markerStateChanged();
 }
 

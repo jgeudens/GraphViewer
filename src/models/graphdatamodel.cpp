@@ -233,7 +233,7 @@ bool GraphDataModel::isActive(quint32 index) const
     return _graphData[index].isActive();
 }
 
-QCPDataMap * GraphDataModel::dataMap(quint32 index)
+QSharedPointer<QCPGraphDataContainer> GraphDataModel::dataMap(quint32 index)
 {
     return _graphData[index].dataMap();
 }

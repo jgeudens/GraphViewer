@@ -15,16 +15,6 @@ ExtendedGraphView::~ExtendedGraphView()
 
 }
 
-QList<double> ExtendedGraphView::graphTimeData()
-{
-    return _pPlot->graph(0)->data()->keys();
-}
-
-QList<QCPData> ExtendedGraphView::graphData(qint32 index)
-{
-    return _pPlot->graph(index)->data()->values();
-}
-
 void ExtendedGraphView::addData(QList<double> timeData, QList<QList<double> > data)
 {
     updateData(&timeData, &data);
@@ -35,7 +25,7 @@ void ExtendedGraphView::clearResults()
 {
     for (qint32 i = 0; i < _pPlot->graphCount(); i++)
     {
-        _pPlot->graph(i)->clearData();
+        _pPlot->graph(i)->data()->clear();
         _pPlot->graph(i)->setName(QString("(-) %1").arg(_pGraphDataModel->label(i)));
     }
 
@@ -48,14 +38,18 @@ void ExtendedGraphView::rescalePlot()
     // scale x-axis
     if (_pGuiModel->xAxisScalingMode() == SCALE_AUTO)
     {
-        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        if ((_pPlot->graphCount() != 0) && (graphDataSize() != 0))
         {
-            _pPlot->xAxis->rescale();
+            _pPlot->xAxis->rescale(true);
         }
         else
         {
             _pPlot->xAxis->setRange(0, 10000);
         }
+    }
+    else if (_pGuiModel->xAxisScalingMode() == SCALE_SLIDING)
+    {
+        _pPlot->xAxis->rescale(true);
     }
     else // Manual
     {
@@ -65,7 +59,7 @@ void ExtendedGraphView::rescalePlot()
     // scale y-axis
     if (_pGuiModel->yAxisScalingMode() == SCALE_AUTO)
     {
-        if ((_pPlot->graphCount() != 0) && (_pPlot->graph(0)->data()->keys().size()))
+        if ((_pPlot->graphCount() != 0) && (graphDataSize()))
         {
             _pPlot->yAxis->rescale(true);
         }
@@ -74,12 +68,34 @@ void ExtendedGraphView::rescalePlot()
             _pPlot->yAxis->setRange(0, 10);
         }
     }
+    else if (_pGuiModel->yAxisScalingMode() == SCALE_MINMAX)
+    {
+        _pPlot->yAxis->rescale(true);
+    }
+    else if (_pGuiModel->yAxisScalingMode() == SCALE_WINDOW_AUTO)
+    {
+        _pPlot->yAxis->rescale(true);
+    }
     else // Manual
     {
 
     }
 
     _pPlot->replot();
+}
+
+void ExtendedGraphView::showGraph(quint32 graphIdx)
+{
+    if (_pGraphDataModel->isActive(graphIdx))
+    {
+        const bool bShow = _pGraphDataModel->isVisible(graphIdx);
+
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        _pPlot->graph(activeIdx)->setVisible(bShow);
+
+        rescalePlot();
+    }
 }
 
 void ExtendedGraphView::updateData(QList<double> *pTimeData, QList<QList<double> > * pDataLists)

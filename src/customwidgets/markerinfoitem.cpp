@@ -1,4 +1,6 @@
 
+#include <limits>
+
 #include "guimodel.h"
 #include "graphdatamodel.h"
 
@@ -63,7 +65,7 @@ void MarkerInfoItem::updateData()
 
     if (graphIdx >= 0)
     {
-        QCPDataMap * dataMap = _pGraphDataModel->dataMap(graphIdx);
+        QSharedPointer<QCPGraphDataContainer> dataMap = _pGraphDataModel->dataMap(graphIdx);
         QStringList expressionList;
         const quint32 mask = _pGuiModel->markerExpressionMask();
 
@@ -79,8 +81,8 @@ void MarkerInfoItem::updateData()
         }
 
         /* Add permanent items (y1, y2) */
-        expressionList.prepend(GuiModel::cMarkerExpressionEnd.arg(Util::formatDoubleForExport(dataMap->value(_pGuiModel->endMarkerPos()).value)));
-        expressionList.prepend(GuiModel::cMarkerExpressionStart.arg(Util::formatDoubleForExport(dataMap->value(_pGuiModel->startMarkerPos()).value)));
+        expressionList.prepend(GuiModel::cMarkerExpressionEnd.arg(Util::formatDoubleForExport(dataMap->findBegin(_pGuiModel->endMarkerPos(), false)->value)));
+        expressionList.prepend(GuiModel::cMarkerExpressionStart.arg(Util::formatDoubleForExport(dataMap->findBegin(_pGuiModel->startMarkerPos(), false)->value)));
 
         /* Construct labels data */
         const qint32 leftRowCount = expressionList.size() - expressionList.size() / 2;
@@ -214,25 +216,26 @@ double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
     if (graphIdx >= 0)
     {
 
-        QCPDataMap * pDataMap = _pGraphDataModel->dataMap(graphIdx);
-        const double valueDiff = pDataMap->value(_pGuiModel->endMarkerPos()).value - pDataMap->value(_pGuiModel->startMarkerPos()).value;
+        QSharedPointer<QCPGraphDataContainer> pDataMap = _pGraphDataModel->dataMap(graphIdx);
+
+        const double valueDiff = pDataMap->findBegin(_pGuiModel->endMarkerPos(), false)->value - pDataMap->findBegin(_pGuiModel->startMarkerPos(), false)->value;
         const double timeDiff = _pGuiModel->endMarkerPos() - _pGuiModel->startMarkerPos();
 
-        QCPDataMap::iterator dataPoint;
-        QCPDataMap::iterator start;
-        QCPDataMap::iterator end;
+        QCPGraphDataContainer::const_iterator dataPoint;
+        QCPGraphDataContainer::const_iterator start;
+        QCPGraphDataContainer::const_iterator end;
 
         /* make sure we go in ascending order */
         if (_pGuiModel->endMarkerPos() > _pGuiModel->startMarkerPos())
         {
-            start = pDataMap->lowerBound(_pGuiModel->startMarkerPos());
-            end = pDataMap->upperBound(_pGuiModel->endMarkerPos());
+            start = pDataMap->findBegin(_pGuiModel->startMarkerPos(), false);
+            end = pDataMap->findEnd(_pGuiModel->endMarkerPos(), false);
         }
         else
         {
             /* Change order */
-            start = pDataMap->lowerBound(_pGuiModel->endMarkerPos());
-            end = pDataMap->upperBound(_pGuiModel->startMarkerPos());
+            start = pDataMap->findBegin(_pGuiModel->endMarkerPos());
+            end = pDataMap->findEnd(_pGuiModel->startMarkerPos());
         }
 
 
@@ -242,7 +245,7 @@ double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
         }
         else if (expressionMask == GuiModel::cSlopeMask)
         {
-            result = valueDiff / timeDiff;
+            result = valueDiff / (timeDiff / 1000); // per second, TODO: round?
         }
         else if (expressionMask == GuiModel::cAverageMask)
         {
@@ -251,7 +254,7 @@ double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
             for (dataPoint = start; dataPoint != end; dataPoint++)
             {
                 count++;
-                avg += dataPoint.value().value;
+                avg += dataPoint->value;
             }
 
             if (count == 0)
@@ -265,13 +268,13 @@ double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
         }
         else if (expressionMask == GuiModel::cMinimumMask)
         {
-            double min = 0xFFFFFFFF;
+            double min = std::numeric_limits<double>::max();
 
             for (dataPoint = start; dataPoint != end; dataPoint++)
             {
-                if (dataPoint.value().value < min)
+                if (dataPoint->value < min)
                 {
-                    min = dataPoint.value().value;
+                    min = dataPoint->value;
                 }
             }
 
@@ -279,13 +282,13 @@ double MarkerInfoItem::calculateMarkerExpressionValue(quint32 expressionMask)
         }
         else if (expressionMask == GuiModel::cMaximumMask)
         {
-            double max = -1 * 0xFFFFFFFF;;
+            double max = std::numeric_limits<double>::lowest();
 
             for (dataPoint = start; dataPoint != end; dataPoint++)
             {
-                if (dataPoint.value().value > max)
+                if (dataPoint->value > max)
                 {
-                    max = dataPoint.value().value;
+                    max = dataPoint->value;
                 }
             }
 

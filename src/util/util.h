@@ -14,6 +14,18 @@ public:
 
     static const quint32 cCurrentDataLevel = 1;
 
+    static QChar separatorCharacter()
+    {
+        if (QLocale::system().decimalPoint() == ',')
+        {
+            return ';';
+        }
+        else
+        {
+            return ',';
+        }
+    }
+
     static void showError(QString text)
     {
         QMessageBox msgBox;

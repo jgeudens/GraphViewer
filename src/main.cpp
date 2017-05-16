@@ -4,9 +4,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w(a.arguments());
-
     QCoreApplication::setApplicationName("GraphViewer");
+
+    MainWindow w(a.arguments());
 
     w.show();
 

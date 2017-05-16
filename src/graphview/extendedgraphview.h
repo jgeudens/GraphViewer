@@ -12,13 +12,11 @@ public:
     ExtendedGraphView(GuiModel *pGuiModel, GraphDataModel * pRegisterDataModel, MyQCustomPlot *pPlot, QObject *parent);
     virtual ~ExtendedGraphView();
 
-    QList<double> graphTimeData();
-    QList<QCPData> graphData(qint32 index);
-
 public slots:
     void addData(QList<double> timeData, QList<QList<double> > data);
     void clearResults();
     void rescalePlot();
+    void showGraph(quint32 graphIdx);
 
 signals:
     void dataAddedToPlot(double timeData, QList<double> dataList);

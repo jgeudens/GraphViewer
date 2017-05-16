@@ -7,7 +7,12 @@ GraphData::GraphData()
     _color = "-1"; // Invalid color
     _bActive = true;
 
-    _dataMap.clear();
+    _pDataMap = QSharedPointer<QCPGraphDataContainer>(new QCPGraphDataContainer);
+}
+
+GraphData::~GraphData()
+{
+    _pDataMap.clear();
 }
 
 bool GraphData::isVisible() const
@@ -50,7 +55,7 @@ void GraphData::setActive(bool bActive)
     _bActive = bActive;
 }
 
-QCPDataMap * GraphData::dataMap()
+QSharedPointer<QCPGraphDataContainer> GraphData::dataMap()
 {
-    return &_dataMap;
+    return _pDataMap;
 }

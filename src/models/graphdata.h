@@ -9,6 +9,7 @@ class GraphData
 
 public:
     explicit GraphData();
+    ~GraphData();
 
     bool isVisible() const;
     void setVisible(bool bVisible);
@@ -22,7 +23,7 @@ public:
     bool isActive() const;
     void setActive(bool bActive);
 
-    QCPDataMap * dataMap();
+    QSharedPointer<QCPGraphDataContainer> dataMap();
 
 private:
 
@@ -31,7 +32,7 @@ private:
     QColor _color;
     bool _bActive;
 
-    QCPDataMap _dataMap;
+    QSharedPointer<QCPGraphDataContainer> _pDataMap;
 
 };
 

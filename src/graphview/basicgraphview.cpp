@@ -8,6 +8,8 @@
 #include "guimodel.h"
 #include "util.h"
 #include "graphdatamodel.h"
+#include "myqcpaxistickertime.h"
+#include "myqcpaxis.h"
 #include "basicgraphview.h"
 
 BasicGraphView::BasicGraphView(GuiModel * pGuiModel, GraphDataModel * pGraphDataModel, MyQCustomPlot * pPlot, QObject *parent) :
@@ -29,25 +31,30 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, GraphDataModel * pGraphData
     *
     * phFastPolylines	Graph/Curve lines are drawn with a faster method. This reduces the quality especially
     *                   of the line segment joins. (Only relevant for solid line pens.)
-    * phForceRepaint	causes an immediate repaint() instead of a soft update() when QCustomPlot::replot()
-    *                   is called with parameter QCustomPlot::rpHint. This is set by default to prevent the
-    *                   plot from freezing on fast consecutive replots (e.g. user drags ranges with mouse).
     * phCacheLabels		axis (tick) labels will be cached as pixmaps, increasing replot performance.
     * */
-   _pPlot->setPlottingHints(QCP::phCacheLabels | QCP::phFastPolylines | QCP::phForceRepaint);
+   _pPlot->setPlottingHints(QCP::phCacheLabels | QCP::phFastPolylines);
 
-   _pPlot->xAxis->setTickLabelType(QCPAxis::ltNumber);
-   _pPlot->xAxis->setNumberFormat("gb");
+    // Replace y-axis with custom axis
+   _pPlot->axisRect()->removeAxis(_pPlot->axisRect()->axes(QCPAxis::atLeft)[0]);
+   _pPlot->axisRect()->addAxis(QCPAxis::atLeft, new MyQCPAxis(_pPlot->axisRect(), QCPAxis::atLeft));
+
+    // Fix axis settings
+    QCPAxis * pXAxis = _pPlot->axisRect()->axes(QCPAxis::atBottom)[0];
+    QCPAxis * pYAxis = _pPlot->axisRect()->axes(QCPAxis::atLeft)[0];
+    pYAxis->grid()->setVisible(true);
+    _pPlot->axisRect()->setRangeDragAxes(pXAxis, pYAxis);
+    _pPlot->axisRect()->setRangeZoomAxes(pXAxis, pYAxis);
+
+    // Add custom axis ticker
+   QSharedPointer<QCPAxisTickerTime> timeTicker(new MyQCPAxisTickerTime(_pPlot));
+   _pPlot->xAxis->setTicker(timeTicker);
+   _pPlot->xAxis->setLabel("Time");
    _pPlot->xAxis->setRange(0, 10000);
-   _pPlot->xAxis->setAutoTicks(true);
-   _pPlot->xAxis->setAutoTickLabels(false);
-   _pPlot->xAxis->setLabel("Time (s)");
-   connect(_pPlot->xAxis, SIGNAL(ticksRequest()), this, SLOT(generateTickLabels()));
 
    _pPlot->yAxis->setRange(0, 65535);
 
-   // Tooltip is enabled
-   _bEnableTooltip = true;
+   connect(_pPlot->xAxis, SIGNAL(rangeChanged(QCPRange, QCPRange)), this, SLOT(updateTooltip()));
 
    // Samples are enabled
    _bEnableSampleHighlight = true;
@@ -71,13 +78,11 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, GraphDataModel * pGraphData
 
    markerPen.setColor(QColor(Qt::green));
    _pStartMarker = new QCPItemStraightLine(_pPlot);
-   _pPlot->addItem(_pStartMarker);
    _pStartMarker->setVisible(false);
    _pStartMarker->setPen(markerPen);
 
    markerPen.setColor(QColor(Qt::red));
    _pEndMarker = new QCPItemStraightLine(_pPlot);
-   _pPlot->addItem(_pEndMarker);
    _pEndMarker->setVisible(false);
    _pEndMarker->setPen(markerPen);
 
@@ -87,6 +92,54 @@ BasicGraphView::BasicGraphView(GuiModel * pGuiModel, GraphDataModel * pGraphData
 
 BasicGraphView::~BasicGraphView()
 {
+
+}
+
+qint32 BasicGraphView::graphDataSize()
+{
+    return _pPlot->graph(0)->data()->size();
+}
+
+bool BasicGraphView::valuesUnderCursor(QList<double> &valueList)
+{
+    bool bRet = true;
+
+    const double xPos = _pPlot->xAxis->pixelToCoord(_pPlot->mapFromGlobal(QCursor::pos()).x());
+
+    if (_pPlot->graphCount() > 0)
+    {
+        QCPGraphDataContainer::const_iterator tooltipIt = getClosestPoint(xPos);
+
+        bool bValid;
+        const QCPRange keyRange = _pPlot->graph(0)->data()->keyRange(bValid);
+
+        // Check all graphs
+        for (qint32 activeGraphIndex = 0; activeGraphIndex < _pPlot->graphCount(); activeGraphIndex++)
+        {
+            if (
+                    _pPlot->underMouse()
+                    && bValid
+                    && keyRange.contains(xPos)
+                )
+            {
+                const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(activeGraphIndex);
+                QCPGraphDataContainer::const_iterator graphDataIt = _pGraphDataModel->dataMap(graphIdx).data()->findBegin(tooltipIt->key, false);
+                valueList.append(graphDataIt->value);
+            }
+            else
+            {
+                valueList.append(0);
+                bRet = false;
+            }
+        }
+    }
+    else
+    {
+        valueList.append(0);
+        bRet = false;
+    }
+
+    return bRet;
 
 }
 
@@ -114,9 +167,9 @@ void BasicGraphView::autoScaleYAxis()
     _pPlot->replot();
 }
 
-void BasicGraphView::enableValueTooltip()
+void BasicGraphView::updateTooltip()
 {
-    _bEnableTooltip = _pGuiModel->valueTooltip();
+    paintTimeStampToolTip(_pPlot->mapFromGlobal(QCursor::pos()));
 }
 
 void BasicGraphView::enableSamplePoints()
@@ -140,24 +193,20 @@ void BasicGraphView::clearGraph(const quint32 graphIdx)
         else if (activeGraphList.size() == 1)
         {
             /* Only one graph active: clear all data */
-            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
-            pMap->clear();
+            _pGraphDataModel->dataMap(graphIdx)->clear();
 
             _pPlot->replot();
         }
         else
         {
             /* Several active graph, keep time data but clear data */
-
-            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
+            QCPGraphDataContainer::iterator it = _pGraphDataModel->dataMap(graphIdx)->begin();
 
             /* Clear all values, keep keys */
-            QMutableMapIterator<double, QCPData> i(*pMap);
-            while (i.hasNext())
+            while(it != _pGraphDataModel->dataMap(graphIdx)->end())
             {
-                i.next();
-
-                i.setValue(QCPData(i.key(), 0));
+                it->value = 0u;
+                it++;
             }
 
             _pPlot->replot();
@@ -182,7 +231,7 @@ void BasicGraphView::updateGraphs()
 
         foreach(quint16 graphIdx, activeGraphList)
         {
-            const qint32 sampleCount = _pGraphDataModel->dataMap(graphIdx)->keys().size();
+            const qint32 sampleCount = _pGraphDataModel->dataMap(graphIdx)->size();
             if (sampleCount > maxSampleCount)
             {
                 maxSampleCount = sampleCount;
@@ -194,7 +243,7 @@ void BasicGraphView::updateGraphs()
         foreach(quint16 graphIdx, activeGraphList)
         {
             // Add graph
-            MyQCPGraph * pGraph = _pPlot->addCustomGraph();
+            QCPGraph * pGraph = _pPlot->addGraph();
 
             pGraph->setName(_pGraphDataModel->label(graphIdx));
 
@@ -206,41 +255,29 @@ void BasicGraphView::updateGraphs()
             pGraph->setPen(pen);
 
 
-            QCPDataMap * pMap = _pGraphDataModel->dataMap(graphIdx);
+            QSharedPointer<QCPGraphDataContainer> pMap = _pGraphDataModel->dataMap(graphIdx);
 
             // Set data to zero when needed
-            if (_pGraphDataModel->dataMap(graphIdx)->keys().size() != maxSampleCount)
+            if (pMap->size() != maxSampleCount)
             {
-                const QCPDataMap * pReferenceMap = _pGraphDataModel->dataMap(maxSampleIdx);
+                const QSharedPointer<QCPGraphDataContainer> pReferenceMap = _pGraphDataModel->dataMap(maxSampleIdx);
                 pMap->clear();
 
                 // Add zero value for every key (x-coordinate)
-                foreach(double key, pReferenceMap->keys())
+                QCPGraphDataContainer::const_iterator refIt = pReferenceMap->constBegin();
+                while(refIt != pReferenceMap->constEnd())
                 {
-                    pMap->insert(key, QCPData(key, 0));
+                    pMap->add(QCPGraphData(refIt->key, 0));
+                    refIt++;
                 }
             }
 
             // Set graph datamap
-            pGraph->setData(pMap, false);
+            pGraph->setData(pMap);
         }
     }
 
     _pPlot->replot();
-}
-
-void BasicGraphView::showGraph(quint32 graphIdx)
-{    
-    if (_pGraphDataModel->isActive(graphIdx))
-    {
-        const bool bShow = _pGraphDataModel->isVisible(graphIdx);
-
-        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
-
-        _pPlot->graph(activeIdx)->setVisible(bShow);
-
-        _pPlot->replot();
-    }
 }
 
 void BasicGraphView::changeGraphColor(const quint32 graphIdx)
@@ -310,24 +347,17 @@ void BasicGraphView::setEndMarker()
     _pPlot->replot();
 }
 
-void BasicGraphView::generateTickLabels()
+void BasicGraphView::setOpenGl(bool bState)
 {
-    QVector<double> ticks = _pPlot->xAxis->tickVector();
-
-    /* Clear ticks vector */
-    tickLabels.clear();
-
-    const bool bSmallScale = smallScaleActive(ticks);
-
-    /* Generate correct labels */
-    for (qint32 index = 0; index < ticks.size(); index++)
-    {
-        tickLabels.append(Util::formatTime(ticks[index], bSmallScale));
-    }
-
-    /* Set labels */
-    _pPlot->xAxis->setTickVectorLabels(tickLabels);
+    _pPlot->setOpenGl(bState);
 }
+
+bool BasicGraphView::openGl(void)
+{
+    return _pPlot->openGl();
+}
+
+
 
 void BasicGraphView::selectionChanged()
 {
@@ -358,52 +388,23 @@ void BasicGraphView::mousePress(QMouseEvent *event)
        _pPlot->setInteraction(QCP::iRangeDrag, false);
        _pPlot->setInteraction(QCP::iRangeZoom, false);
 
-       const double xPos = _pPlot->xAxis->pixelToCoord(event->pos().x());
-
-       double correctXPos = 0;
        if (_pPlot->graphCount() > 0)
        {
-           const QList<double> keyList = _pPlot->graph(0)->data()->keys();
+           const double xPos = _pPlot->xAxis->pixelToCoord(event->pos().x());
+           QCPGraphDataContainer::const_iterator markerPosIt = getClosestPoint(xPos);
 
-           // find the nearest point
-           for (qint32 i = 1; i < keyList.size(); i++)
+           if (event->button() & Qt::LeftButton)
            {
-               const double leftPoint = keyList[i - 1];
-               const double rightPoint = keyList[i];
-
-               if (
-                   (xPos > leftPoint)
-                   && (xPos <= rightPoint)
-                   )
-               {
-                   const double xCoordPxl = xPos - leftPoint;
-                   const double diff = rightPoint - leftPoint;
-
-                   if (xCoordPxl > diff / 2)
-                   {
-                       correctXPos = rightPoint;
-                   }
-                   else
-                   {
-                       correctXPos = leftPoint;
-                   }
-
-                   break;
-               }
+                _pGuiModel->setStartMarkerPos(markerPosIt->key);
            }
-       }
-
-       if (event->button() & Qt::LeftButton)
-       {
-            _pGuiModel->setStartMarkerPos(correctXPos);
-       }
-       else if (event->button() & Qt::RightButton)
-       {
-            _pGuiModel->setEndMarkerPos(correctXPos);
-       }
-       else
-       {
-           // No function
+           else if (event->button() & Qt::RightButton)
+           {
+                _pGuiModel->setEndMarkerPos(markerPosIt->key);
+           }
+           else
+           {
+               // No function
+           }
        }
    }
    else
@@ -481,91 +482,39 @@ void BasicGraphView::mouseMove(QMouseEvent *event)
     }
     else
     {
-        paintValueToolTip(event);
+        paintTimeStampToolTip(event->pos());
+
+        if (_pGuiModel->cursorValues())
+        {
+            emit cursorValueUpdate();
+        }
     }
 }
 
-void BasicGraphView::paintValueToolTip(QMouseEvent *event)
+void BasicGraphView::paintTimeStampToolTip(QPoint pos)
 {
-    if  (_bEnableTooltip)
+
+    if  (_pGuiModel->cursorValues() && (_pPlot->graphCount() > 0))
     {
-        const double xPos = _pPlot->xAxis->pixelToCoord(event->pos().x());
 
-        if (_pPlot->graphCount() > 0)
+        const double xPos = _pPlot->xAxis->pixelToCoord(pos.x());
+        QCPGraphDataContainer::const_iterator tooltipIt = getClosestPoint(xPos);
+
+        bool bValid;
+        const QCPRange keyRange = _pPlot->graph(0)->data()->keyRange(bValid);
+
+        if (bValid && keyRange.contains(xPos))
         {
-            QString toolText;
-            const QList<double> keyList = _pPlot->graph(0)->data()->keys();
+            // Add tick key string
+            QString toolText = Util::formatTime(tooltipIt->key, false);
 
-            // Find if cursor is in range to show tooltip
-            qint32 i = 0;
-            bool bInRange = false;
-            for (i = 1; i < keyList.size(); i++)
-            {
-                // find the two nearest points
-                if (
-                    (xPos > keyList[i - 1])
-                    && (xPos <= keyList[i])
-                    )
-                {
-                    const double leftPointPxl = _pPlot->xAxis->coordToPixel(keyList[i - 1]);
-                    const double rightPointPxl = _pPlot->xAxis->coordToPixel(keyList[i]);
-                    const double xCoordPxl = event->pos().x();
-                    double keyIndex = -1;
+            QToolTip::showText(_pPlot->mapToGlobal(pos), toolText, _pPlot);
 
-                    if (
-                        (xCoordPxl >= leftPointPxl)
-                        && (xCoordPxl <= (leftPointPxl + _cPixelNearThreshold))
-                        )
-                    {
-                        keyIndex = i - 1;
-                    }
-                    else if (
-                         (xCoordPxl >= (rightPointPxl - _cPixelNearThreshold))
-                         && (xCoordPxl <= rightPointPxl)
-                        )
-                    {
-                        keyIndex = i;
-                    }
-                    else
-                    {
-                        // no point near enough
-                        keyIndex = -1;
-                    }
-
-                    if (keyIndex != -1)
-                    {
-                        bInRange = true;
-
-                        const bool bSmallScale = smallScaleActive(keyList.toVector());
-
-                        // Add tick key string
-                        toolText = Util::formatTime(keyList[keyIndex], bSmallScale);
-
-                        // Check all graphs
-                        for (qint32 activeGraphIndex = 0; activeGraphIndex < _pPlot->graphCount(); activeGraphIndex++)
-                        {
-                            if (_pPlot->graph(activeGraphIndex)->visible())
-                            {
-                                const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(activeGraphIndex);
-                                const double value = _pGraphDataModel->dataMap(graphIdx)->values()[keyIndex].value;
-
-                                toolText += QString("\n%1: %2").arg(_pGraphDataModel->label(graphIdx)).arg(value);
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (!bInRange)
-            {
-                // Hide tooltip
-                QToolTip::hideText();
-            }
-            else
-            {
-                QToolTip::showText(_pPlot->mapToGlobal(event->pos()), toolText, _pPlot);
-            }
+        }
+        else
+        {
+            // Hide tooltip
+            QToolTip::hideText();
         }
     }
     else
@@ -583,49 +532,40 @@ void BasicGraphView::handleSamplePoints()
 
     if (_bEnableSampleHighlight)
     {
-        if (_pPlot->graphCount() > 0 && _pPlot->graph(0)->data()->size() > 0)
+        if (_pPlot->graphCount() > 0 && (graphDataSize() > 0))
         {
-            /* Get key from visible lower bound */
-            double lowerBoundKey;
-            if (_pPlot->xAxis->range().lower <= _pPlot->graph(0)->data()->keys().first())
-            {
-                lowerBoundKey = _pPlot->graph(0)->data()->keys().first();
-            }
-            else
-            {
-                lowerBoundKey = _pPlot->graph(0)->data()->lowerBound(_pPlot->xAxis->range().lower).key();
-            }
+            QCPRange axisRange = _pPlot->xAxis->range();
 
-            /* Get key from visible upper bound */
-            double upperBoundKey;
-            if (_pPlot->xAxis->range().upper >= _pPlot->graph(0)->data()->keys().last())
-            {
-                upperBoundKey = _pPlot->graph(0)->data()->keys().last();
-            }
-            else
-            {
-                upperBoundKey = _pPlot->graph(0)->data()->upperBound(_pPlot->xAxis->range().upper).key();
-            }
+            auto lowerBoundIt = _pPlot->graph(0)->data()->findBegin(axisRange.lower, false);
+            auto upperBoundIt = _pPlot->graph(0)->data()->findBegin(axisRange.upper);
 
-            /* get indexes of keys */
-            const quint32 lowerBoundIndex = _pPlot->graph(0)->data()->keys().indexOf(lowerBoundKey);
-            const quint32 upperBoundIndex = _pPlot->graph(0)->data()->keys().lastIndexOf(upperBoundKey);
+            const int pointCount = upperBoundIt - lowerBoundIt;
 
             /* Get size in pixels */
-            const double sizePx = _pPlot->xAxis->coordToPixel(upperBoundKey) - _pPlot->xAxis->coordToPixel(lowerBoundKey);
+            const double sizePx = _pPlot->xAxis->coordToPixel(upperBoundIt->key) - _pPlot->xAxis->coordToPixel(lowerBoundIt->key);
 
             /* Calculate number of pixels per point */
-            const double nrOfPixelsPerPoint = sizePx / qAbs(upperBoundIndex - lowerBoundIndex);
+            double nrOfPixelsPerPoint;
+
+            if (lowerBoundIt != upperBoundIt)
+            {
+                nrOfPixelsPerPoint = sizePx / qAbs(pointCount);
+            }
+            else
+            {
+                nrOfPixelsPerPoint = sizePx;
+            }
 
             if (nrOfPixelsPerPoint > _cPixelPerPointThreshold)
             {
                 bHighlight = true;
             }
+
         }
     }
 
+    /* TODO: add hysteresis to highlight sample points */
     highlightSamples(bHighlight);
-
 }
 
 void BasicGraphView::axisDoubleClicked(QCPAxis * axis)
@@ -675,22 +615,31 @@ qint32 BasicGraphView::graphIndex(QCPGraph * pGraph)
     return ret;
 }
 
-bool BasicGraphView::smallScaleActive(QVector<double> tickList)
+QCPGraphDataContainer::const_iterator BasicGraphView::getClosestPoint(double xPos)
 {
-    bool bRet = false;
-    if (qAbs(tickList.last() - tickList.first()) < _cSmallScaleDiff)
-    {
-        bRet = true;
-    }
+    QCPGraphDataContainer::const_iterator closestIt = _pPlot->graph(0)->data()->constBegin();
+    QCPGraphDataContainer::const_iterator leftIt = _pPlot->graph(0)->data()->findBegin(xPos);
 
-    if (bRet)
+    auto rightIt = leftIt + 1;
+    if (rightIt !=  _pPlot->graph(0)->data()->constEnd())
     {
-        _pPlot->xAxis->setLabel("Time (ms)");
+
+        const double diffReference = rightIt->key - leftIt->key;
+        const double diffPos = xPos - leftIt->key;
+
+        if (diffPos > (diffReference / 2))
+        {
+            closestIt = rightIt;
+        }
+        else
+        {
+            closestIt = leftIt;
+        }
     }
     else
     {
-        _pPlot->xAxis->setLabel("Time (s)");
+        closestIt = leftIt;
     }
 
-    return bRet;
+    return closestIt;
 }
