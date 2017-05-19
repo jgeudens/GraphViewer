@@ -67,27 +67,6 @@ void Legend::mouseDoubleClickEvent(QMouseEvent * event)
     }
 }
 
-void Legend::addLastReceivedDataToLegend(QList<bool> successList, QList<double> valueList)
-{
-    _lastReceivedValueList.clear();
-
-    for (qint32 i = 0; i < valueList.size(); i++)
-    {
-        if (successList[i])
-        {
-            // No error
-            _lastReceivedValueList.append(QString("(%1)").arg(Util::formatDoubleForExport(valueList[i])));
-        }
-        else
-        {
-            /* Show error */
-            _lastReceivedValueList.append("(-)");
-        }
-    }
-
-    updateDataInLegend();
-}
-
 void Legend::updateDataInLegend()
 {
     QStringList legendDataValues;
@@ -99,7 +78,10 @@ void Legend::updateDataInLegend()
     }
     else
     {
-        legendDataValues = _lastReceivedValueList;
+        for (qint32 i = 0; i < _items.size(); i++)
+        {
+            legendDataValues.append(QString(""));
+        }
     }
 
 
@@ -108,7 +90,7 @@ void Legend::updateDataInLegend()
         for (qint32 i = 0; i < _items.size(); i++)
         {
             const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(i);
-            _items[i]->setText(QString("%1 %2").arg(legendDataValues[i]).arg(_pGraphDataModel->label(graphIdx)));
+            _items[i]->setText(QString("%1%2").arg(legendDataValues[i]).arg(_pGraphDataModel->label(graphIdx)));
         }
     }
 }
@@ -198,12 +180,12 @@ void Legend::updateCursorDataInLegend(QStringList &cursorValueList)
         if (bInRange)
         {
             // No error
-            cursorValueList.append(QString("[%1]").arg(Util::formatDoubleForExport(valueList[i])));
+            cursorValueList.append(QString("[%1] ").arg(Util::formatDoubleForExport(valueList[i])));
         }
         else
         {
             /* Show error */
-            cursorValueList.append("[?]");
+            cursorValueList.append("[?] ");
         }
     }
 }

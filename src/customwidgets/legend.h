@@ -26,7 +26,6 @@ public:
 signals:
 
 public slots:
-    void addLastReceivedDataToLegend(QList<bool> successList, QList<double> valueList);
     void updateDataInLegend();
 
 private slots:
@@ -39,9 +38,6 @@ private:
     void updateCursorDataInLegend(QStringList &cursorValueList);
     void addItem(quint32 graphIdx);
     qint32 itemUnderCursor();
-
-    // Last data
-    QStringList _lastReceivedValueList;
 
     // Models
     GuiModel * _pGuiModel;
