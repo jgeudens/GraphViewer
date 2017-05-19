@@ -357,8 +357,6 @@ bool BasicGraphView::openGl(void)
     return _pPlot->openGl();
 }
 
-
-
 void BasicGraphView::selectionChanged()
 {
    /*

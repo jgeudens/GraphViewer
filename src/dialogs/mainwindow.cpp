@@ -111,11 +111,6 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pGraphBringToFront = _pUi->menuBringToFront;
     _pBringToFrontGroup = new QActionGroup(this);
 
-
-    // Default to full auto scaling
-    _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
-    _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
-
     this->setAcceptDrops(true);
 
     // For dock undock
@@ -124,6 +119,10 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     // For rightclick menu
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    // Default to full auto scaling
+    _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
+    _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
 
     /* Update interface via model */
     _pGuiModel->triggerUpdate();

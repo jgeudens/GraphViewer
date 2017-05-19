@@ -14,9 +14,9 @@ public:
 
 public slots:
     void addData(QList<double> timeData, QList<QList<double> > data);
-    void clearResults();
-    void rescalePlot();
     void showGraph(quint32 graphIdx);
+    void rescalePlot();
+    void clearResults();
 
 signals:
     void dataAddedToPlot(double timeData, QList<double> dataList);

@@ -20,16 +20,18 @@ void ExtendedGraphView::addData(QList<double> timeData, QList<QList<double> > da
     updateData(&timeData, &data);
 }
 
-
-void ExtendedGraphView::clearResults()
+void ExtendedGraphView::showGraph(quint32 graphIdx)
 {
-    for (qint32 i = 0; i < _pPlot->graphCount(); i++)
+    if (_pGraphDataModel->isActive(graphIdx))
     {
-        _pPlot->graph(i)->data()->clear();
-        _pPlot->graph(i)->setName(QString("(-) %1").arg(_pGraphDataModel->label(i)));
-    }
+        const bool bShow = _pGraphDataModel->isVisible(graphIdx);
 
-   rescalePlot();
+        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
+
+        _pPlot->graph(activeIdx)->setVisible(bShow);
+
+        rescalePlot();
+    }
 }
 
 void ExtendedGraphView::rescalePlot()
@@ -84,18 +86,15 @@ void ExtendedGraphView::rescalePlot()
     _pPlot->replot();
 }
 
-void ExtendedGraphView::showGraph(quint32 graphIdx)
+void ExtendedGraphView::clearResults()
 {
-    if (_pGraphDataModel->isActive(graphIdx))
+    for (qint32 i = 0; i < _pPlot->graphCount(); i++)
     {
-        const bool bShow = _pGraphDataModel->isVisible(graphIdx);
-
-        const quint32 activeIdx = _pGraphDataModel->convertToActiveGraphIndex(graphIdx);
-
-        _pPlot->graph(activeIdx)->setVisible(bShow);
-
-        rescalePlot();
+        _pPlot->graph(i)->data()->clear();
+        _pPlot->graph(i)->setName(QString("(-) %1").arg(_pGraphDataModel->label(i)));
     }
+
+   rescalePlot();
 }
 
 void ExtendedGraphView::updateData(QList<double> *pTimeData, QList<QList<double> > * pDataLists)
