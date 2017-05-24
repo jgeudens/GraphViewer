@@ -17,6 +17,9 @@ ExtendedGraphView::~ExtendedGraphView()
 
 void ExtendedGraphView::addData(QList<double> timeData, QList<QList<double> > data)
 {
+    _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
+    _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
+
     updateData(&timeData, &data);
 }
 
