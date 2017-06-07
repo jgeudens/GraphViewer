@@ -116,19 +116,31 @@ bool SettingsAuto::isComment(QString line)
         // Check first character for comment char
         if (!line.at(0).isLetterOrNumber())
         {
-            // Check second character
-            if (
-                (!line.at(1).isLetterOrNumber())
-                && (!line.at(1).isSpace())
-                )
+            if (line.at(0) == QChar('-'))
             {
-                _commentSequence = line.left(2);
-                bRet = true;
+                // Minus sign can only be a comment sign when there are 2
+                if (line.at(1) == QChar('-'))
+                {
+                    _commentSequence = line.left(2);
+                    bRet = true;
+                }
             }
             else
             {
-                _commentSequence = line.left(1);
-                bRet = true;
+                // Check second character
+                if (
+                    (!line.at(1).isLetterOrNumber())
+                    && (!line.at(1).isSpace())
+                    )
+                {
+                    _commentSequence = line.left(2);
+                    bRet = true;
+                }
+                else
+                {
+                    _commentSequence = line.left(1);
+                    bRet = true;
+                }
             }
         }
     }
