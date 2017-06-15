@@ -23,6 +23,7 @@ public:
     quint32 column() const;
     qint32 labelRow() const;
     bool timeInMilliSeconds() const;
+    bool stmStudioCorrection() const;
     
     void setPath(QString path);
     void setFieldSeparator(QChar fieldSeparator);
@@ -33,6 +34,7 @@ public:
     void setColumn(quint32 column);
     void setLabelRow(qint32 labelRow);
     void setTimeInMilliSeconds(bool timeInMilliSeconds);
+    void setStmStudioCorrection(bool stmStudioCorrection);
 
 signals:
     void dynamicSessionChanged();
@@ -45,6 +47,7 @@ signals:
     void columnChanged();
     void labelRowChanged();
     void timeInMilliSecondsChanged();
+    void stmStudioCorrectionChanged();
 
 public slots:
     void setDynamicSession(bool bDynamicSession);
@@ -61,6 +64,7 @@ private:
     quint32 _column;
     qint32 _labelRow;
     bool _bTimeInMilliSeconds;
+    bool _bStmStudioCorrection;
 
 };
 

@@ -71,6 +71,7 @@ LoadFileDialog::LoadFileDialog(GuiModel *pGuiModel, ParserModel * pParserModel, 
     connect(_pParserModel, SIGNAL(columnChanged()), this, SLOT(updateColumn()));
     connect(_pParserModel, SIGNAL(labelRowChanged()), this, SLOT(updateLabelRow()));
     connect(_pParserModel, SIGNAL(timeInMilliSecondsChanged()), this, SLOT(updateTimeInMilliSeconds()));
+    connect(_pParserModel, SIGNAL(stmStudioCorrectionChanged()), this, SLOT(updateStmStudioCorrection()));
 
 
     // Handle signal from controls
@@ -87,6 +88,7 @@ LoadFileDialog::LoadFileDialog(GuiModel *pGuiModel, ParserModel * pParserModel, 
     connect(_pUi->spinLabelRow, SIGNAL(valueChanged(int)), this, SLOT(labelRowUpdated()));
     connect(_pUi->comboPreset, SIGNAL(currentIndexChanged(int)), this, SLOT(presetSelected(int)));
     connect(_pUi->checkTimeInMilliSeconds, SIGNAL(toggled(bool)), this, SLOT(timeInMilliSecondsUpdated(bool)));
+    connect(_pUi->checkStmStudioCorrection, SIGNAL(toggled(bool)), this, SLOT(stmStudioCorrectionUpdated(bool)));
 
     // Signal to change preset to manual
     connect(_pUi->comboFieldSeparator, SIGNAL(activated(int)), this, SLOT(setPresetToManual()));
@@ -219,6 +221,11 @@ void LoadFileDialog::updateTimeInMilliSeconds()
     _pUi->checkTimeInMilliSeconds->setChecked(_pParserModel->timeInMilliSeconds());
 }
 
+void LoadFileDialog::updateStmStudioCorrection()
+{
+    _pUi->checkStmStudioCorrection->setChecked(_pParserModel->stmStudioCorrection());
+}
+
 void LoadFileDialog::dynamicSessionUpdated(bool bDynamic)
 {
     _pParserModel->setDynamicSession(bDynamic);
@@ -323,6 +330,11 @@ void LoadFileDialog::timeInMilliSecondsUpdated(bool bTimeInMilliSeconds)
     _pParserModel->setTimeInMilliSeconds(bTimeInMilliSeconds);
 }
 
+void LoadFileDialog::stmStudioCorrectionUpdated(bool bCorrectData)
+{
+    _pParserModel->setStmStudioCorrection(bCorrectData);
+}
+
 void LoadFileDialog::presetSelected(int index)
 {
     const qint32 presetIndex = index - _cPresetListOffset;
@@ -338,6 +350,7 @@ void LoadFileDialog::presetSelected(int index)
         _pParserModel->setCommentSequence(_presetParser.presetList()[presetIndex].commentSequence);
         _pParserModel->setDynamicSession(_presetParser.presetList()[presetIndex].bDynamicSession);
         _pParserModel->setTimeInMilliSeconds(_presetParser.presetList()[presetIndex].bTimeInMilliSeconds);
+        _pParserModel->setStmStudioCorrection(_presetParser.presetList()[presetIndex].bStmStudioCorrection);
     }
 }
 

@@ -14,7 +14,7 @@ public:
     typedef struct _Preset
     {
         _Preset() : commentSequence(QString("")), column(1), labelRow(1),
-                    dataRow(1),bDynamicSession(false), bTimeInMilliSeconds(true), keyword(QString("")) {}
+                    dataRow(1),bDynamicSession(false), bTimeInMilliSeconds(true), keyword(QString("")), bStmStudioCorrection(false) {}
 
         QString name;
         QChar fieldSeparator;
@@ -29,6 +29,8 @@ public:
         bool bTimeInMilliSeconds;
 
         QString keyword;
+
+        bool bStmStudioCorrection;
         
     } Preset;
 

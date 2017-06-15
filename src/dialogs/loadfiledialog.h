@@ -36,6 +36,7 @@ private slots:
     void updateColumn();
     void updateLabelRow();
     void updateTimeInMilliSeconds();
+    void updateStmStudioCorrection();
 
     void dynamicSessionUpdated(bool bDynamic);
     void selectDataFile();
@@ -49,6 +50,7 @@ private slots:
     void toggledLabelRow(bool bLabelRow);
     void labelRowUpdated();
     void timeInMilliSecondsUpdated(bool bTimeInMilliSeconds);
+    void stmStudioCorrectionUpdated(bool bCorrectData);
 
     void presetSelected(int index);
 

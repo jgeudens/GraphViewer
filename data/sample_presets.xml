@@ -34,6 +34,7 @@
 		<labelrow>7</labelrow>
 		<datarow>9</datarow>
 		<dynamicsession>false</dynamicsession>
+		<stmstudiocorrection>true</stmstudiocorrection>
 	</parsepreset>
 
 	<parsepreset>

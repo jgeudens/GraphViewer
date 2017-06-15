@@ -81,6 +81,15 @@ bool DataFileParser::processDataFile()
         _dataLabels.removeAt(0);
     }
 
+    if (bRet)
+    {
+        if (_pParserModel->stmStudioCorrection())
+        {
+            qDebug() << "Start correction";
+            correctStmStudioData();
+        }
+    }
+
     return bRet;
 }
 
@@ -108,7 +117,7 @@ bool DataFileParser::readData()
         // ignore empty lines and comment lines
         if(
             (!_fileContents[index].simplified().isEmpty())
-            && (!IsCommentLine(_fileContents[index]))
+            && (!isCommentLine(_fileContents[index]))
           )
         {
             QStringList paramList = _fileContents[index].split(_pParserModel->fieldSeparator());
@@ -294,7 +303,7 @@ bool DataFileParser::readLineFromFile(QFile * file, QString *pLine)
     return bRet;
 }
 
-bool DataFileParser::IsCommentLine(QString line)
+bool DataFileParser::isCommentLine(QString line)
 {
     bool bRet = false;
 
@@ -310,4 +319,78 @@ bool DataFileParser::IsCommentLine(QString line)
     return bRet;
 }
 
+void DataFileParser::correctStmStudioData(void)
+{
+    for (qint32 idx = 0; idx < _dataRows.size(); idx++)
+    {
+        /* We need at least 3 points */
+        if (_dataRows[idx].size() > 3)
+        {
+            /* Skip first and last point */
+            for (int32_t pointIdx = 1; pointIdx < _dataRows[idx].size() - 1; pointIdx++)
+            {
+                const int32_t leftPoint = _dataRows[idx][pointIdx - 1];
+                const int32_t refPoint = _dataRows[idx][pointIdx];
+                const int32_t rightPoint = _dataRows[idx][pointIdx + 1];
 
+                /* Only correct 16 bit variables */
+                if (
+                    (refPoint < 65535)
+                    && (refPoint > 0)
+                    )
+                {
+                    const uint32_t leftDiff = qAbs(leftPoint - refPoint);
+                    const uint32_t rightDiff = qAbs(refPoint - rightPoint);
+                    const uint32_t outerDiff = qAbs(leftPoint - rightPoint);
+
+                    /* difference between samples should be large enough */
+                    if (
+                        (leftDiff > _cCorrectionMinimumDiff)
+                        && (rightDiff > _cCorrectionMinimumDiff)
+                        && (outerDiff < _cCorrectionMaximumOuterDiff)
+                    )
+                    {
+                        if (isNibbleCorrupt((quint16)refPoint, leftPoint))
+                        {
+                            //qDebug() << "left compare: " <<  _dataLabels[idx] << ", ref: " << refPoint << ", compare: " << leftPoint;
+                            qDebug() << "left compare: ref: " << refPoint << ", compare: " << leftPoint;
+
+                            _dataRows[idx][pointIdx] = leftPoint;
+                        }
+                        else if (isNibbleCorrupt((quint16)refPoint, rightPoint))
+                        {
+                            //qDebug() << "right compare: " <<  _dataLabels[idx] << ", ref: " << refPoint << ", compare: " << rightPoint;
+                            qDebug() << "right compare: ref: " << refPoint << ", compare: " << rightPoint;
+
+                            _dataRows[idx][pointIdx] = rightPoint;
+                        }
+                        else
+                        {
+                            /* No change needed */
+                        }
+
+                    }
+
+                }
+            }
+
+        }
+    }
+}
+
+bool DataFileParser::isNibbleCorrupt(quint16 ref, quint16 compare)
+{
+    if (
+            /* Zeroed nibbles */
+            (ref == (compare & 0xFF00))
+            || (ref == (compare & 0x00FF))
+            /* Nibbles set to ones */
+            || (ref == (compare | 0xFF00))
+            || (ref == (compare | 0x00FF))
+            || (ref == 0)
+        )
+    {
+        return true;
+    }
+    return false;
+}

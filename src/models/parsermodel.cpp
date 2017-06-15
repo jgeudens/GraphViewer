@@ -46,6 +46,7 @@ void ParserModel::resetSettings()
     _column = 0;
     _labelRow = 0;
     _bTimeInMilliSeconds = true;
+    _bStmStudioCorrection = false;
 }
 
 void ParserModel::triggerUpdate(void)
@@ -60,6 +61,7 @@ void ParserModel::triggerUpdate(void)
     emit columnChanged();
     emit labelRowChanged();
     emit timeInMilliSecondsChanged();
+    emit stmStudioCorrectionChanged();
 }
 
 QString ParserModel::path()
@@ -175,6 +177,15 @@ void ParserModel::setTimeInMilliSeconds(bool timeInMilliSeconds)
     }
 }
 
+void ParserModel::setStmStudioCorrection(bool stmStudioCorrection)
+{
+    if (_bStmStudioCorrection != stmStudioCorrection)
+    {
+        _bStmStudioCorrection = stmStudioCorrection;
+        emit stmStudioCorrectionChanged();
+    }
+}
+
 QChar ParserModel::fieldSeparator() const
 {
     return _fieldSeparator;
@@ -213,5 +224,10 @@ qint32 ParserModel::labelRow() const
 bool ParserModel::timeInMilliSeconds() const
 {
     return _bTimeInMilliSeconds;
+}
+
+bool ParserModel::stmStudioCorrection() const
+{
+    return _bStmStudioCorrection;
 }
 

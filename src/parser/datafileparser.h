@@ -28,7 +28,9 @@ private:
     bool loadDataFile();
     bool readLabels();
     bool readLineFromFile(QFile *file, QString *pLine);
-    bool IsCommentLine(QString line);
+    bool isCommentLine(QString line);
+    void correctStmStudioData(void);
+    bool isNibbleCorrupt(quint16 ref, quint16 compare);
 
     ParserModel * _pParserModel;
 
@@ -40,6 +42,9 @@ private:
     QList<QList<double> > _dataRows;
     QStringList _dataLabels;
     QList<double> _timeRow;
+
+    const double _cCorrectionMinimumDiff = 20;
+    const double _cCorrectionMaximumOuterDiff = 10;
 };
 
 #endif // DATAFILEPARSER_H
