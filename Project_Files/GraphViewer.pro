@@ -9,7 +9,7 @@ CONFIG += c++11
 
 win32: RC_ICONS = ../icon/application.ico
 
-VERSION = 1.0.0
+VERSION = 1.1.0
 
 DEFINES += DEBUG
 
