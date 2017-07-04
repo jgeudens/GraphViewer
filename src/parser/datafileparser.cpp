@@ -345,21 +345,18 @@ void DataFileParser::correctStmStudioData(void)
 
                     /* difference between samples should be large enough */
                     if (
-                        (leftDiff > _cCorrectionMinimumDiff)
-                        && (rightDiff > _cCorrectionMinimumDiff)
-                        && (outerDiff < _cCorrectionMaximumOuterDiff)
+                        (leftDiff > (2 * outerDiff))
+                        && (rightDiff > (2 * outerDiff))
                     )
                     {
                         if (isNibbleCorrupt((quint16)refPoint, leftPoint))
                         {
-                            //qDebug() << "left compare: " <<  _dataLabels[idx] << ", ref: " << refPoint << ", compare: " << leftPoint;
                             qDebug() << "left compare: ref: " << refPoint << ", compare: " << leftPoint;
 
                             _dataRows[idx][pointIdx] = leftPoint;
                         }
                         else if (isNibbleCorrupt((quint16)refPoint, rightPoint))
                         {
-                            //qDebug() << "right compare: " <<  _dataLabels[idx] << ", ref: " << refPoint << ", compare: " << rightPoint;
                             qDebug() << "right compare: ref: " << refPoint << ", compare: " << rightPoint;
 
                             _dataRows[idx][pointIdx] = rightPoint;

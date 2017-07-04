@@ -43,8 +43,6 @@ private:
     QStringList _dataLabels;
     QList<double> _timeRow;
 
-    const double _cCorrectionMinimumDiff = 20;
-    const double _cCorrectionMaximumOuterDiff = 10;
 };
 
 #endif // DATAFILEPARSER_H
