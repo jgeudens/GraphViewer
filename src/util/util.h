@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QLocale>
+#include <QDateTime>
+#include <QTime>
 #include <QColor>
 
 class Util : public QObject
@@ -13,6 +15,7 @@ class Util : public QObject
 public:
 
     static const quint32 cCurrentDataLevel = 1;
+    static const quint32 cSecondsInADay = 24 * 60 * 60 * 1000;
 
     static QChar separatorCharacter()
     {
@@ -63,52 +66,46 @@ public:
         return tmp;
     }
 
+    static QString timeStringFormat()
+    {
+        return QString("HH:mm:ss%1zzz").arg(QLocale::system().decimalPoint());
+    }
+
     static QString formatTime(qint64 tickKey, bool bSmallScale)
     {
         QString tickLabel;
+        bool bNegative;
+        quint64 absoluteTime;
 
-        if (bSmallScale)
+        if (tickKey < 0)
         {
-            tickLabel = QString("%1").arg(tickKey);
+            bNegative = true;
+            absoluteTime = -1 * tickKey;
         }
         else
         {
-            bool bNegative;
-            quint64 tmp;
+            bNegative = false;
+            absoluteTime = tickKey;
+        }
 
-            if (tickKey < 0)
-            {
-                bNegative = true;
-                tmp = -1 * tickKey;
-            }
-            else
-            {
-                bNegative = false;
-                tmp = tickKey;
-            }
+        if (bSmallScale)
+        {
+            tickLabel = QString("%1").arg(absoluteTime);
+        }
+        else
+        {
+            /* Round number to a day */
+            absoluteTime %= Util::cSecondsInADay;
 
-            tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
+            QTime time = QTime::fromMSecsSinceStartOfDay(absoluteTime);
 
-            quint32 hours = tmp / (60 * 60 * 1000);
-            tmp = tmp % (60 * 60 * 1000);
+            tickLabel = time.toString(Util::timeStringFormat());
+        }
 
-            quint32 minutes = tmp / (60 * 1000);
-            tmp = tmp % (60 * 1000);
-
-            quint32 seconds = tmp / 1000;
-            quint32 milliseconds = tmp % 1000;
-
-            tickLabel = QString("%1:%2:%3%4%5").arg(hours)
-                                                        .arg(minutes, 2, 10, QChar('0'))
-                                                        .arg(seconds, 2, 10, QChar('0'))
-                                                        .arg(QLocale::system().decimalPoint())
-                                                       .arg(milliseconds, 3, 10, QChar('0'));
-
-            // Make sure minus sign is shown when tick number is negative
-            if (bNegative)
-            {
-                tickLabel = "-" + tickLabel;
-            }
+        // Make sure minus sign is shown when tick number is negative
+        if (bNegative)
+        {
+            tickLabel = "-" + tickLabel;
         }
 
         return tickLabel;
@@ -118,54 +115,46 @@ public:
     {
         QString tickLabel;
         bool bNegative;
-        quint64 tmp;
+        quint64 absoluteDiff;
 
         if (tickKeyDiff < 0)
         {
             bNegative = true;
-            tmp = -1 * tickKeyDiff;
+            absoluteDiff = -1 * tickKeyDiff;
         }
         else
         {
             bNegative = false;
-            tmp = tickKeyDiff;
+            absoluteDiff = tickKeyDiff;
         }
 
-        tmp %= 24 * 60 * 60 * 1000; // Number of seconds in a day
-
-        quint32 hours = tmp / (60 * 60 * 1000);
-        tmp = tmp % (60 * 60 * 1000);
-
-        quint32 minutes = tmp / (60 * 1000);
-        tmp = tmp % (60 * 1000);
-
-        quint32 seconds = tmp / 1000;
-        quint32 milliseconds = tmp % 1000;
-
-        if (
-            (hours == 0)
-            && (minutes == 0)
-            )
+        if (tickKeyDiff < Util::cSecondsInADay)
         {
-            tickLabel = QString("%1%2%3").arg(seconds, 1, 10, QChar('0'))
-                                                       .arg(QLocale::system().decimalPoint())
-                                                       .arg(milliseconds, 3, 10, QChar('0'));
+            QTime timeDiff = QTime::fromMSecsSinceStartOfDay(absoluteDiff);
+            if (absoluteDiff < 60000) /* Under a minute */
+            {
+                /* Use short time diff notation: seconds and milliseconds */
+                QString secondStringFormat = QString("ss%1zzz").arg(QLocale::system().decimalPoint());
+                tickLabel = timeDiff.toString(secondStringFormat);
+            }
+            else
+            {
+                /* Use full time diff notation: hour,seconds and milliseconds */
+                tickLabel = timeDiff.toString(Util::timeStringFormat());
+            }
+
+            // Make sure minus sign is shown when tick number is negative
+            if (bNegative)
+            {
+                tickLabel = "-" + tickLabel;
+            }
         }
         else
         {
-            tickLabel = QString("%1:%2:%3%4%5").arg(hours)
-                                                        .arg(minutes, 2, 10, QChar('0'))
-                                                        .arg(seconds, 2, 10, QChar('0'))
-                                                        .arg(QLocale::system().decimalPoint())
-                                                        .arg(milliseconds, 3, 10, QChar('0'));
+            tickLabel = QString("Difference is too large!");
         }
 
 
-        // Make sure minus sign is shown when tick number is negative
-        if (bNegative)
-        {
-            tickLabel = "-" + tickLabel;
-        }
 
         return tickLabel;
     }
