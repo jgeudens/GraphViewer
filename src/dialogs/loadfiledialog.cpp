@@ -24,8 +24,10 @@ const QList<LoadFileDialog::ComboListItem> LoadFileDialog::_groupSeparatorList
                                                             << ComboListItem(" . (point)", ".")
                                                             << ComboListItem("   (space)", " ");
 
-const QColor LoadFileDialog::_cColorLabel = QColor(150, 255, 150);
-const QColor LoadFileDialog::_cColorData = QColor(200, 255, 200);
+const QColor LoadFileDialog::_cColorLabel = QColor(150, 255, 150); // darker screen
+const QColor LoadFileDialog::_cColorData = QColor(200, 255, 200); // lighter green
+const QColor LoadFileDialog::_cColorIgnored = QColor(175, 175, 175); // grey
+
 
 LoadFileDialog::LoadFileDialog(GuiModel *pGuiModel, ParserModel * pParserModel, QWidget *parent) :
     QDialog(parent),
@@ -588,7 +590,7 @@ void LoadFileDialog::updatePreviewLayout()
                 }
                 else
                 {
-                    // nothing to do
+                    _pUi->tablePreview->item(rowIdx, columnIdx)->setTextColor(_cColorIgnored);
                 }
             }
         }

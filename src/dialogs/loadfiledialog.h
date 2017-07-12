@@ -93,6 +93,7 @@ private:
     static const QList<ComboListItem> _groupSeparatorList;
     static const QColor _cColorLabel;
     static const QColor _cColorData;
+    static const QColor _cColorIgnored;
     static const qint32 _cSampleLineLength = 50;
     static const quint32 _cPresetManualIndex = 0;
     static const quint32 _cPresetAutoIndex = 1;
