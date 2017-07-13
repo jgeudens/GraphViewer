@@ -77,36 +77,49 @@ public:
         bool bNegative;
         quint64 absoluteTime;
 
-        if (tickKey < 0)
-        {
-            bNegative = true;
-            absoluteTime = -1 * tickKey;
-        }
-        else
-        {
-            bNegative = false;
-            absoluteTime = tickKey;
-        }
-
         if (bSmallScale)
         {
-            tickLabel = QString("%1").arg(absoluteTime);
+            tickLabel = QString("%1").arg(tickKey);
         }
         else
         {
-            /* Round number to a day */
-            absoluteTime %= Util::cSecondsInADay;
+            if (tickKey < 0)
+            {
+                bNegative = true;
+                absoluteTime = -1 * tickKey;
+            }
+            else
+            {
+                bNegative = false;
+                absoluteTime = tickKey;
+            }
 
-            QTime time = QTime::fromMSecsSinceStartOfDay(absoluteTime);
+            if (tickKey > QDateTime::fromString("2000-01-01", Qt::ISODate).toMSecsSinceEpoch())
+            {
+                /* Absolute date */
+                QDateTime dateTime;
+                dateTime.setMSecsSinceEpoch(tickKey);
+                tickLabel = dateTime.toString("dd/MM/yyyy \n" + Util::timeStringFormat());
+            }
+            else
+            {
+                /* Round number to a day */
+                absoluteTime %= Util::cSecondsInADay;
 
-            tickLabel = time.toString(Util::timeStringFormat());
+                QTime time = QTime::fromMSecsSinceStartOfDay(absoluteTime);
+
+                tickLabel = time.toString();
+            }
+
+            // Make sure minus sign is shown when tick number is negative
+            if (bNegative)
+            {
+                tickLabel = "-" + tickLabel;
+            }
         }
 
-        // Make sure minus sign is shown when tick number is negative
-        if (bNegative)
-        {
-            tickLabel = "-" + tickLabel;
-        }
+
+
 
         return tickLabel;
     }
