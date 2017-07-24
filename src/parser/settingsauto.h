@@ -29,6 +29,7 @@ private:
 
     ParserModel * _pParserModel;
 
+    bool isAbsoluteDate(QString rawData);
     bool isComment(QString line);
     bool parseFields(QStringList previewData, QLocale locale, QChar fieldSeparator);
     quint32 nextDataLine(quint32 startIdx, QStringList previewData, bool *bOk);

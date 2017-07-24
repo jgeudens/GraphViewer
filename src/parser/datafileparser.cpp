@@ -1,13 +1,19 @@
 #include <QtWidgets>
 
+
 #include "util.h"
 #include "datafileparser.h"
+
+const QString DataFileParser::_cPattern = QString("\\s*(\\d{1,2})[\\-\\/\\s](\\d{1,2})[\\-\\/\\s](\\d{4})\\s*([0-2][0-9]):([0-5][0-9]):([0-5][0-9])[.,]?(\\d{0,3})");
 
 DataFileParser::DataFileParser(ParserModel *pParserModel)
 {
     _pParserModel = pParserModel;
     _fileContentsEnd = 0;
     _fileEndPos = 0;
+
+    _dateParseRegex.setPattern(_cPattern);
+    _dateParseRegex.optimize();
 }
 
 DataFileParser::~DataFileParser()
@@ -131,7 +137,7 @@ bool DataFileParser::readData()
 
             for (qint32 i = _pParserModel->column(); i < paramList.size(); i++)
             {
-                bool bError = false;
+                bool bOk = true;
 
                 // Remove group separator
                 QString tmpData = paramList[i].simplified().replace(_pParserModel->groupSeparator(), "");
@@ -142,18 +148,27 @@ bool DataFileParser::readData()
                     tmpData = tmpData.replace(_pParserModel->decimalSeparator(), QLocale::system().decimalPoint());
                 }
 
-                double number = QLocale::system().toDouble(tmpData, &bError);
+                double number;
                 if (tmpData.simplified().isEmpty())
                 {
                     number = 0;
-                    bError = true;
+                    bOk = false;
                 }
                 else
                 {
-                    number = QLocale::system().toDouble(tmpData, &bError);
+                    number = QLocale::system().toDouble(tmpData, &bOk);
+
+                    if (bOk == false)
+                    {
+                         // Check for date when time column
+                        if ((quint32)i == _pParserModel->column())
+                        {
+                            number = (double)parseDateTime(tmpData, &bOk);
+                        }
+                    }
                 }
 
-                if (bError == false)
+                if (bOk == false)
                 {
                     QString error = QString(tr("Invalid data (while processing data)\n\n Line %1:\n\"%2\"").arg(index + 1).arg(_fileContents[index]));
                     Util::showError(error);
@@ -317,6 +332,53 @@ bool DataFileParser::isCommentLine(QString line)
     }
 
     return bRet;
+}
+
+qint64 DataFileParser::parseDateTime(QString rawData, bool *bOk)
+{
+
+    qDebug() << "";
+    qDebug() << rawData;
+
+    QRegularExpressionMatch match = _dateParseRegex.match(rawData);
+
+    QString day;
+    QString month;
+    QString year;
+    QString hours;
+    QString minutes;
+    QString seconds;
+    QString milliseconds;
+
+    if (match.hasMatch())
+    {
+        day = match.captured(1);
+        month = match.captured(2);
+        year = match.captured(3);
+        hours = match.captured(4);
+        minutes = match.captured(5);
+        seconds = match.captured(6);
+        milliseconds = match.captured(7);
+    }
+    if (milliseconds.isEmpty())
+    {
+        milliseconds = "0";
+    }
+
+    QString dateStr = QString("%1-%2-%3 %4:%5:%6.%7").arg(day,2, '0')
+                        .arg(month,2, '0')
+                        .arg(year)
+                        .arg(hours,2, '0')
+                        .arg(minutes,2, '0')
+                        .arg(seconds,2, '0')
+                        .arg(milliseconds,3, '0');
+
+    const QDateTime date = QDateTime::fromString(dateStr, "dd-MM-yyyy hh:mm:ss.zzz");
+
+    *bOk = date.isValid();
+
+    return date.toMSecsSinceEpoch();
+
 }
 
 void DataFileParser::correctStmStudioData(void)

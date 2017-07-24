@@ -1,6 +1,8 @@
 #include <QFile>
 #include <QLocale>
 
+#include <QRegularExpression>
+
 #include "settingsauto.h"
 #include "util.h"
 
@@ -108,6 +110,15 @@ bool SettingsAuto::timeInMilliSeconds()
     return _bTimeInMilliSeconds;
 }
 
+bool SettingsAuto::isAbsoluteDate(QString rawData)
+{
+
+    QRegularExpression re("\\d{2,4}.*\\d{2}.*\\d{2,4}\\s*\\d{1,2}:\\d{1,2}:\\d{1,2}.*");
+    QRegularExpressionMatch match = re.match(rawData);
+
+    return match.hasMatch();
+}
+
 bool SettingsAuto::isComment(QString line)
 {
     bool bRet = false;
@@ -170,13 +181,22 @@ bool SettingsAuto::parseFields(QStringList previewData, QLocale locale, QChar fi
             {
                 QStringList fields = previewData[parseIdx].split(fieldSeparator);
 
-                foreach(QString field, fields)
+                for (qint32 idx = 1; idx < fields.size(); idx++)
                 {
-                    bool bOk;
-                    locale.toDouble(field, &bOk);
-                    if (!bOk)
+                    const QString field = fields[idx];
+
+                    if (isAbsoluteDate(field))
                     {
-                        return false;
+                        _column = idx;
+                    }
+                    else
+                    {
+                        bool bOk;
+                        locale.toDouble(field, &bOk);
+                        if (!bOk)
+                        {
+                            return false;
+                        }
                     }
                 }
             }
