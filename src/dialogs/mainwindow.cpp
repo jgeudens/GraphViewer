@@ -120,6 +120,9 @@ MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
     _pUi->customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_pUi->customPlot, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
+    /* handle focus change */
+    connect(QApplication::instance(), SIGNAL(focusChanged(QWidget *, QWidget *)), this, SLOT(appFocusChanged(QWidget *, QWidget *)));
+
     // Default to full auto scaling
     _pGuiModel->setxAxisScale(BasicGraphView::SCALE_AUTO);
     _pGuiModel->setyAxisScale(BasicGraphView::SCALE_AUTO);
@@ -509,6 +512,15 @@ void MainWindow::dropEvent(QDropEvent *e)
     {
         const QString &fileName = url.toLocalFile();
         _pLoadDataFileDialog->open(fileName);
+    }
+}
+
+void MainWindow::appFocusChanged(QWidget * old, QWidget * now)
+{
+    Q_UNUSED(now);
+    if (old != NULL)
+    {
+        _pGuiModel->setCursorValues(false);
     }
 }
 

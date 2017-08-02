@@ -71,6 +71,7 @@ private slots:
     void showContextMenu(const QPoint& pos);
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
+    void appFocusChanged(QWidget * old, QWidget * now);
     void loadDataFileAccepted();
     void updateData(void);
 
