@@ -1,6 +1,4 @@
 #include "myqcpaxis.h"
-#include "QDebug"
-
 
 MyQCPAxis::MyQCPAxis(QCPAxisRect *parent, AxisType type):
     QCPAxis(parent, type)

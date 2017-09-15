@@ -274,7 +274,6 @@ void GuiModel::setMarkerExpressionMask(quint32 mask)
 {
     if (_markerExpressionMask != mask)
     {
-        qDebug() << "Marker bits changed:" << mask;
         _markerExpressionMask = mask;
 
         emit markerExpressionMaskChanged();

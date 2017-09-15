@@ -336,10 +336,6 @@ bool DataFileParser::isCommentLine(QString line)
 
 qint64 DataFileParser::parseDateTime(QString rawData, bool *bOk)
 {
-
-    qDebug() << "";
-    qDebug() << rawData;
-
     QRegularExpressionMatch match = _dateParseRegex.match(rawData);
 
     QString day;

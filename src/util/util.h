@@ -167,8 +167,6 @@ public:
             tickLabel = QString("Difference is too large!");
         }
 
-
-
         return tickLabel;
     }
     

@@ -17,9 +17,6 @@
 #include "legend.h"
 #include "datafileparser.h"
 #include "loadfiledialog.h"
-
-
-#include <QDebug>
 #include <QDateTime>
 
 MainWindow::MainWindow(QStringList cmdArguments, QWidget *parent) :
