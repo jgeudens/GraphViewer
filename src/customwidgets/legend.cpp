@@ -1,6 +1,7 @@
 
 
 #include <QStyleOption>
+#include <QDebug>
 #include <QPainter>
 #include <QMouseEvent>
 
@@ -21,6 +22,31 @@ Legend::Legend(QWidget *parent) : QFrame(parent)
 
     _pLayout->addWidget(_pNoGraphs);
     setLayout(_pLayout);
+
+    // For rightclick menu
+    _pLegendMenu = new QMenu(parent);
+
+    _pToggleVisibilityAction = _pLegendMenu->addAction("Toggle item visibility");
+    _pToggleVisibilityAction->setEnabled(false);
+
+    (void)_pLegendMenu->addSeparator();
+    _pHideAllAction = _pLegendMenu->addAction("Hide all");
+    _pHideAllAction->setEnabled(false);
+
+    _pShowAllAction = _pLegendMenu->addAction("Show all");
+    _pShowAllAction->setEnabled(false);
+
+    connect(_pToggleVisibilityAction, &QAction::triggered, this, &Legend::toggleVisibilityClicked);
+    connect(_pHideAllAction, &QAction::triggered, this, &Legend::hideAll);
+    connect(_pShowAllAction, &QAction::triggered, this, &Legend::showAll);
+
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &Legend::customContextMenuRequested, this, &Legend::showContextMenu);
+}
+
+Legend::~Legend()
+{
+    delete _pLegendMenu;
 }
 
 void Legend::setGraphview(BasicGraphView * pGraphView)
@@ -57,13 +83,8 @@ void Legend::mouseDoubleClickEvent(QMouseEvent * event)
 {
     Q_UNUSED(event);
 
-    qint32 idx = itemUnderCursor();
-    if (idx != -1)
-    {
-        const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(idx);
-
-        _pGraphDataModel->setVisible(graphIdx, !_pGraphDataModel->isVisible(graphIdx));
-    }
+    const qint32 idx = itemUnderCursor();
+    toggleItemVisibility(idx);
 }
 
 void Legend::updateDataInLegend()
@@ -115,10 +136,18 @@ void Legend::updateLegend()
         }
 
         _pNoGraphs->setVisible(false);
+
+        _pToggleVisibilityAction->setEnabled(true);
+        _pHideAllAction->setEnabled(true);
+        _pShowAllAction->setEnabled(true);
     }
     else
     {
         _pNoGraphs->setVisible(true);
+
+        _pToggleVisibilityAction->setEnabled(false);
+        _pHideAllAction->setEnabled(false);
+        _pShowAllAction->setEnabled(false);
     }
 }
 
@@ -206,7 +235,9 @@ qint32 Legend::itemUnderCursor()
 
     for (qint32 idx = 0u; idx < _items.size(); idx++)
     {
-        if (_items[idx]->underMouse())
+        QRect widgetRect = _items[idx]->rect();
+        QPoint mousePos = _items[idx]->mapFromGlobal(QCursor::pos());
+        if(widgetRect.contains(mousePos))
         {
             widgetIdx = idx;
             break;
@@ -216,3 +247,51 @@ qint32 Legend::itemUnderCursor()
     return widgetIdx;
 }
 
+void Legend::toggleItemVisibility(qint32 idx)
+{
+    if (idx != -1)
+    {
+        const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(idx);
+
+        _pGraphDataModel->setVisible(graphIdx, !_pGraphDataModel->isVisible(graphIdx));
+    }
+}
+
+void Legend::showContextMenu(const QPoint& pos)
+{
+    _popupMenuItem = itemUnderCursor();
+
+    if (_popupMenuItem == -1)
+    {
+        _pToggleVisibilityAction->setEnabled(false);
+    }
+    else
+    {
+        _pToggleVisibilityAction->setEnabled(true);
+    }
+
+    _pLegendMenu->popup(mapToGlobal(pos));
+}
+
+void Legend::toggleVisibilityClicked()
+{
+    toggleItemVisibility(_popupMenuItem);
+}
+
+void Legend::hideAll()
+{
+    for(qint32 idx = 0; idx < _pGraphDataModel->size(); idx++)
+    {
+        const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(idx);
+        _pGraphDataModel->setVisible(graphIdx, false);
+    }
+}
+
+void Legend::showAll()
+{
+    for(qint32 idx = 0; idx < _pGraphDataModel->size(); idx++)
+    {
+        const qint32 graphIdx = _pGraphDataModel->convertToGraphIndex(idx);
+        _pGraphDataModel->setVisible(graphIdx, true);
+    }
+}
