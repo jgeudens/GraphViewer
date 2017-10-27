@@ -6,6 +6,8 @@
 #include "settingsauto.h"
 #include "util.h"
 
+const QString SettingsAuto::_cNotANumber = QString("nan");
+
 SettingsAuto::SettingsAuto()
 {
 }
@@ -119,6 +121,11 @@ bool SettingsAuto::isAbsoluteDate(QString rawData)
     return match.hasMatch();
 }
 
+bool SettingsAuto::isNaN(QString rawData)
+{
+    return rawData.trimmed().toLower() == _cNotANumber;
+}
+
 bool SettingsAuto::isComment(QString line)
 {
     bool bRet = false;
@@ -188,6 +195,10 @@ bool SettingsAuto::parseFields(QStringList previewData, QLocale locale, QChar fi
                     if (isAbsoluteDate(field))
                     {
                         _column = idx;
+                    }
+                    else if (isNaN(field))
+                    {
+                        /* Ignore data */
                     }
                     else
                     {

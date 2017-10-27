@@ -21,6 +21,8 @@ public:
     qint32 labelRow();
     bool timeInMilliSeconds();
 
+    static bool isNaN(QString rawData);
+
 signals:
 
 public slots:
@@ -42,6 +44,8 @@ private:
     quint32 _column;
     qint32 _labelRow;
     bool _bTimeInMilliSeconds;
+
+    static const QString _cNotANumber;
 
 };
 

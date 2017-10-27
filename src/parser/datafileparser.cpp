@@ -3,6 +3,7 @@
 
 #include "util.h"
 #include "datafileparser.h"
+#include "settingsauto.h"
 
 const QString DataFileParser::_cPattern = QString("\\s*(\\d{1,2})[\\-\\/\\s](\\d{1,2})[\\-\\/\\s](\\d{4})\\s*([0-2][0-9]):([0-5][0-9]):([0-5][0-9])[.,]?(\\d{0,3})");
 
@@ -153,6 +154,10 @@ bool DataFileParser::readData()
                 {
                     number = 0;
                     bOk = false;
+                }
+                else if (SettingsAuto::isNaN(tmpData))
+                {
+                    number = qQNaN();
                 }
                 else
                 {
