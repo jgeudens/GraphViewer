@@ -162,7 +162,7 @@ void LoadFileDialog::updateFieldSeparator()
     else
     {
         _pUi->comboFieldSeparator->setCurrentIndex(comboIndex);
-        _pUi->lineCustomFieldSeparator->setText('\0');
+        _pUi->lineCustomFieldSeparator->setText(QString(""));
     }
 
     updatePreview();
